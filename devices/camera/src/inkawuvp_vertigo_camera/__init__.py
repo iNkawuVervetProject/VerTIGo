@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import Optional
 from threading import Thread
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 import os
 from inkawuvp_vertigo_camera.camera_stream import CameraParameter, CameraStream
 
@@ -25,6 +25,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
+@app.middleware("http")
+async def log_request(request: Request, call_next):
+    if debug == False:
+        return await call_next(request)
+    req = await request.body()
+    print(req)
+    return await call_next(req)
+
+
 @app.get("/camera")
 async def get_camera_settings() -> CameraParameter:
     global stream
@@ -34,7 +43,7 @@ async def get_camera_settings() -> CameraParameter:
 
 
 @app.post("/camera")
-async def start_camera(params: CameraParameter)-> CameraParameter:
+async def start_camera(params: CameraParameter) -> CameraParameter:
     global stream
     global streamThread
     if stream is not None:

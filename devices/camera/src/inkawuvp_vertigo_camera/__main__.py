@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import time
 from threading import Thread
-from inkawuvp_vertigo_camera import app
+from inkawuvp_vertigo_camera import app, debug
 
 import uvicorn
 from argparse import ArgumentParser
@@ -23,8 +23,11 @@ def stream(args):
 
 
 def serve(args):
+    global debug
     try:
-        uvicorn.run(app, port=args.port, log_level="info", host=args.host)
+        if args.testvideo == True:
+            debug = True
+        uvicorn.run(app, port=int(args.port), log_level="info", host=args.host)
     except KeyboardInterrupt:
         pass
 
@@ -46,8 +49,13 @@ args_serve.add_argument(
     "--host", default="127.0.0.1", help="address to listen to (default: 127.0.0.1)"
 )
 args_serve.add_argument(
-    "--port", default=5040, help="port to listen to (default: 5040)"
+    "--port", default=5040, type=int, help="port to listen to (default: 5040)"
 )
+args_serve.add_argument(
+    "--testvideo", action="store_true", default=False, help="Use videotestsrc"
+)
+
+
 args_stream = subparsers.add_parser(
     "stream",
     help="directly start a stream from commandline without exposing a webserver",
