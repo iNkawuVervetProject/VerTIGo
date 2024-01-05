@@ -4,7 +4,7 @@ import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 import { server, stream } from '$lib/application_state';
 import { camera, startCamera, stopCamera } from '$lib/server/stub_state';
 import type { CameraParameter } from '$lib/types';
-import { error, json, type RequestHandler } from '@sveltejs/kit';
+import { error, HttpError_1, isHttpError, json, type RequestHandler } from '@sveltejs/kit';
 import { get } from 'svelte/store';
 
 const FAKE_BACKEND = PUBLIC_NO_LOCAL_DEV_ENDPOINT === '0' && dev;
@@ -17,17 +17,18 @@ export const DELETE: RequestHandler = async ({ fetch }) => {
 			stopCamera();
 			return json(null);
 		} catch (err: any) {
-			return error(404, err.toString());
+			error(404, err.toString());
 		}
 	} else {
 		try {
 			const resp = await fetch(CAMERA_URL, { method: 'DELETE' });
-			if (resp.status === 200) {
-				server.stream?.set('');
+			if (resp.status !== 200) {
+				return new Response(await resp.text(), { status: resp.status });
 			}
+			server.stream?.set('');
 			return json(await resp.json());
 		} catch (err) {
-			return error(502, `bad gateway: ${err.message}`);
+			error(502, `bad gateway: ${err}`);
 		}
 	}
 };
@@ -42,7 +43,7 @@ function streamPath(params: Partial<CameraParameter>): string {
 export const GET: RequestHandler = async ({ fetch }) => {
 	if (FAKE_BACKEND) {
 		if (get(stream) == '') {
-			return error(404, 'camera is not started');
+			error(404, 'camera is not started');
 		} else {
 			return json(camera);
 		}
@@ -50,13 +51,13 @@ export const GET: RequestHandler = async ({ fetch }) => {
 		try {
 			const resp = await fetch(CAMERA_URL);
 			if (resp.status !== 200) {
-				return error(resp.status, await resp.text());
+				return new Response(await resp.text(), { status: resp.status });
 			}
 			const params = (await resp.json()) as CameraParameter;
 			server.stream?.set(streamPath(params));
 			return json(params);
 		} catch (err) {
-			return error(502, `bad gateway: ${err.message}`);
+			error(502, `bad gateway: ${err}`);
 		}
 	}
 };
@@ -73,7 +74,7 @@ export const POST: RequestHandler = async ({ fetch, request }) => {
 		try {
 			return json(startCamera(params));
 		} catch (err: any) {
-			return error(400, err.toString());
+			error(400, err.toString());
 		}
 	} else {
 		try {
@@ -82,13 +83,14 @@ export const POST: RequestHandler = async ({ fetch, request }) => {
 				body: JSON.stringify(params)
 			});
 			if (resp.status !== 200) {
-				return error(resp.status, await resp.text());
+				// do not use error here.
+				return new Response(await resp.text(), { status: resp.status });
 			}
 			params = (await resp.json()) as CameraParameter;
 			server.stream?.set(streamPath(params));
 			return json(params);
 		} catch (err: any) {
-			return error(502, `bad gateway: ${err}`);
+			error(502, `bad gateway: ${err}`);
 		}
 	}
 };

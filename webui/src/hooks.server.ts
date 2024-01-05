@@ -23,8 +23,8 @@ function _connect() {
 	}
 
 	const eventURL = `http://${BACKEND_HOST}/events`;
-	console.log('reading events from ', eventURL);
 	const source = new EventSource(eventURL);
+	console.log('Reading events from ', eventURL);
 	setEventSource(source);
 	source.onerror = (evt: any) => {
 		if (evt.message === '') {
@@ -84,7 +84,7 @@ async function proxyRequest(
 	try {
 		return await fetch(proxyRequest);
 	} catch (err) {
-		return error(502, `bad gateway: ${err}`);
+		error(502, `bad gateway: ${err}`);
 	}
 }
 
