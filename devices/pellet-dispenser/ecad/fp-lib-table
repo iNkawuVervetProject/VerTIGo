@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "common")(type "KiCad")(uri "/home/atuleu/devel/git.tuleu.science/atuleu/zaci/devices/common/ecad/common.pretty")(options "")(descr ""))
+)
