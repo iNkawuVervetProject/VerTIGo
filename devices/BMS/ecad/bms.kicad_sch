@@ -1,0 +1,60 @@
+(kicad_sch (version 20230121) (generator eeschema)
+
+  (uuid 2750adef-b5be-4626-99c2-4bad1886215e)
+
+  (paper "A4")
+
+  (lib_symbols
+  )
+
+
+  (sheet (at 101.6 41.91) (size 40.64 22.86) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid 94b45b33-d1a4-47be-b5db-fdf2f6a9e961)
+    (property "Sheetname" "Battery Charger" (at 101.6 41.1984 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "charger.kicad_sch" (at 101.6 65.3546 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (pin "VSYS" output (at 142.24 45.72 0)
+      (effects (font (size 1.27 1.27)) (justify right))
+      (uuid b6d547b5-3f31-40de-9109-64849a1b0519)
+    )
+    (pin "VIN" input (at 101.6 45.72 180)
+      (effects (font (size 1.27 1.27)) (justify left))
+      (uuid 8c5725d6-6cdd-48fd-9dd4-66b8f4e659e5)
+    )
+    (pin "VBAT" bidirectional (at 101.6 50.8 180)
+      (effects (font (size 1.27 1.27)) (justify left))
+      (uuid c3e615f5-192d-43b1-ab07-b4ac69450fee)
+    )
+    (instances
+      (project "bms"
+        (path "/2750adef-b5be-4626-99c2-4bad1886215e" (page "2"))
+      )
+    )
+  )
+
+  (sheet (at 101.6 73.66) (size 40.64 30.48) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid bedffa65-6b8b-49c3-a19c-9215fd200946)
+    (property "Sheetname" "Battery Gauge" (at 101.6 72.9484 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "gauge.kicad_sch" (at 101.6 104.7246 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "bms"
+        (path "/2750adef-b5be-4626-99c2-4bad1886215e" (page "3"))
+      )
+    )
+  )
+
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)
