@@ -5029,6 +5029,17 @@
 		)
 		(uuid "147ad258-0ded-4655-8863-c1742d4da7a5")
 	)
+	(label "BOOT"
+		(at 156.21 48.26 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "20cdacfb-b883-44d2-8ba1-e881b740da99")
+	)
 	(label "FB"
 		(at 156.21 43.18 0)
 		(fields_autoplaced yes)

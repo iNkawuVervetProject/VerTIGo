@@ -131,7 +131,7 @@
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator")
 		(tags "resistor")
 		(property "Reference" "R2"
-			(at 0 1.5 360)
+			(at 0 1.5 0)
 			(layer "F.SilkS")
 			(uuid "78b91ed2-cd66-4bc8-a767-5f2af61199a2")
 			(effects
@@ -142,7 +142,7 @@
 			)
 		)
 		(property "Value" "220"
-			(at 0 1.43 360)
+			(at 0 1.43 0)
 			(layer "F.Fab")
 			(uuid "491b5842-7ddd-4af0-a4fa-fe36eb1a436c")
 			(effects
@@ -294,7 +294,7 @@
 			(uuid "2118fd67-3581-404e-83d3-e4bdf219b131")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "4d156fb6-d955-4703-b8e0-469099f65731")
 			(effects
@@ -1045,6 +1045,7 @@
 			(size 3.2 3.2)
 			(drill 3.2)
 			(layers "F&B.Cu" "*.Mask")
+			(solder_mask_margin 1.9)
 			(clearance 2)
 			(uuid "7bf104fc-6896-479d-b9c5-4b2f7d1d4fc7")
 		)
@@ -1531,6 +1532,105 @@
 		)
 		(layer "Edge.Cuts")
 		(uuid "f5bd43b6-a888-4e32-a1df-213f26740fc5")
+	)
+	(dimension
+		(type aligned)
+		(layer "Dwgs.User")
+		(uuid "056732c9-6dd4-4ea8-a8ae-20caaaed1693")
+		(pts
+			(xy 79 56) (xy 104 56)
+		)
+		(height -6)
+		(gr_text "25.0000 mm"
+			(at 91.5 48.85 0)
+			(layer "Dwgs.User")
+			(uuid "056732c9-6dd4-4ea8-a8ae-20caaaed1693")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(format
+			(prefix "")
+			(suffix "")
+			(units 3)
+			(units_format 1)
+			(precision 4)
+		)
+		(style
+			(thickness 0.15)
+			(arrow_length 1.27)
+			(text_position_mode 0)
+			(extension_height 0.58642)
+			(extension_offset 0.5) keep_text_aligned)
+	)
+	(dimension
+		(type aligned)
+		(layer "Dwgs.User")
+		(uuid "48e3ef23-2302-4b4d-8277-8b9386a93ad4")
+		(pts
+			(xy 79 56) (xy 79 64)
+		)
+		(height 6.8)
+		(gr_text "8.0000 mm"
+			(at 71.05 51 90)
+			(layer "Dwgs.User")
+			(uuid "48e3ef23-2302-4b4d-8277-8b9386a93ad4")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(format
+			(prefix "")
+			(suffix "")
+			(units 3)
+			(units_format 1)
+			(precision 4)
+		)
+		(style
+			(thickness 0.15)
+			(arrow_length 1.27)
+			(text_position_mode 2)
+			(extension_height 0.58642)
+			(extension_offset 0.5) keep_text_aligned)
+	)
+	(dimension
+		(type aligned)
+		(layer "Dwgs.User")
+		(uuid "da0d3867-71d7-4b54-9ae7-5e0dfa34bbc1")
+		(pts
+			(xy 79 56) (xy 91 56)
+		)
+		(height -3)
+		(gr_text "12.0000 mm"
+			(at 85 51.85 0)
+			(layer "Dwgs.User")
+			(uuid "da0d3867-71d7-4b54-9ae7-5e0dfa34bbc1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(format
+			(prefix "")
+			(suffix "")
+			(units 3)
+			(units_format 1)
+			(precision 4)
+		)
+		(style
+			(thickness 0.15)
+			(arrow_length 1.27)
+			(text_position_mode 0)
+			(extension_height 0.58642)
+			(extension_offset 0.5) keep_text_aligned)
 	)
 	(segment
 		(start 94.225 58.8)
