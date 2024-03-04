@@ -59,7 +59,38 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        "lib_footprint_mismatch|103500000|47500000|89efe179-e83b-40db-abd4-3fc7739e57ac|00000000-0000-0000-0000-000000000000",
+        "lib_footprint_mismatch|103500000|70500000|7b1e0bcb-0f55-4467-868c-3b735d70c881|00000000-0000-0000-0000-000000000000",
+        "lib_footprint_mismatch|103500000|96500000|7e8d827e-a7ed-44d4-95fc-a91af7cef820|00000000-0000-0000-0000-000000000000",
+        "lib_footprint_mismatch|107300000|56065000|99b7300e-4701-4a23-a1de-7ebd0efe75f6|00000000-0000-0000-0000-000000000000",
+        "lib_footprint_mismatch|132470000|47480000|00000000-0000-0000-0000-00005a793e9f|00000000-0000-0000-0000-000000000000",
+        "lib_footprint_mismatch|161500000|47500000|0beff73c-ea66-46e4-96f9-c0c7195d2160|00000000-0000-0000-0000-000000000000",
+        "lib_footprint_mismatch|161500000|70500000|dc10826e-3352-4ed7-a04e-94816bfbf6c8|00000000-0000-0000-0000-000000000000",
+        "lib_footprint_mismatch|161500000|96500000|c5d6c104-5680-4140-a821-8340078f5018|00000000-0000-0000-0000-000000000000",
+        "lib_footprint_mismatch|187343337|33718154|a744af54-120d-4952-9219-c878a00816d2|00000000-0000-0000-0000-000000000000",
+        "silk_overlap|118195238|83854819|a5951523-7d90-4d7a-bc93-9c554659c056|84d7a6ce-f85d-4f33-8409-306e72c082ae",
+        "silk_overlap|118195238|83854819|a5951523-7d90-4d7a-bc93-9c554659c056|9fa26352-45f9-4c7f-953a-beec96b1f2ad",
+        "silk_overlap|157100000|51234378|dd130cf6-7a42-496d-8b3e-98aaff736677|5d38cbdf-c19d-40dc-8b41-a85c48453c90",
+        "silk_overlap|157100000|55367062|dd130cf6-7a42-496d-8b3e-98aaff736677|a6288b9a-be17-4b51-a9bb-312cb259dfe9",
+        "silk_overlap|157100000|59234378|3a774c64-a2da-49cc-b01a-e67533bd8c0f|7a278cce-8e57-48b3-9b4b-69ff4f990cd1",
+        "silk_overlap|157100000|63367062|1091db1e-b6a2-4c01-8f81-2cf7a3f488fb|3a774c64-a2da-49cc-b01a-e67533bd8c0f",
+        "silk_overlap|157100000|73934378|60ae36d8-54cc-4869-a13a-5d03418b28b1|d365027c-7cbe-42e3-8f62-c6873f068b77",
+        "silk_overlap|157100000|78067062|28be0376-3e24-49ec-80ae-f39687082024|60ae36d8-54cc-4869-a13a-5d03418b28b1",
+        "silk_overlap|157431792|55061743|284af4da-97f1-475a-8424-dd34a1fa2c5e|dd130cf6-7a42-496d-8b3e-98aaff736677",
+        "silk_overlap|157602559|63107271|5f6ad850-bc61-4bb7-9335-e01c87eb4336|3a774c64-a2da-49cc-b01a-e67533bd8c0f",
+        "silk_overlap|157602559|77807271|ce240792-37c9-47fc-91ec-e7f48c7eb5c6|60ae36d8-54cc-4869-a13a-5d03418b28b1",
+        "silk_overlap|158500000|55367062|f55b39ef-71b7-4ab1-9201-4619433a29c8|dd130cf6-7a42-496d-8b3e-98aaff736677",
+        "silk_overlap|158500000|63367062|ef3f1cd6-c178-41e6-9b69-d051db8572bd|3a774c64-a2da-49cc-b01a-e67533bd8c0f",
+        "silk_overlap|158500000|78067062|60ae36d8-54cc-4869-a13a-5d03418b28b1|60ac282b-9efb-4788-80df-f7d3537674f3",
+        "silk_overlap|225100000|73100000|bce4d179-646e-44cc-a74f-0a8f446b0ee5|81ac135e-0a24-4c84-8101-05c416f0072b",
+        "silk_overlap|225100000|73750000|3f65a24e-d6b8-4b22-a42c-506c105ecc5d|81ac135e-0a24-4c84-8101-05c416f0072b",
+        "silk_overlap|227775146|72450000|81ac135e-0a24-4c84-8101-05c416f0072b|8057d9f9-aeea-4cf1-a22e-ea8b2d24fe23",
+        "silk_overlap|227775146|72450000|81ac135e-0a24-4c84-8101-05c416f0072b|98be16bf-06a3-40f9-9b31-aac4713355db",
+        "silk_overlap|230300000|63638479|db4a271a-591e-48ea-a19f-bb8b85b565e6|94737b0a-84d5-4755-9799-882a6cbe4fb8",
+        "silk_overlap|230300000|72571522|0d570776-2f99-41c8-9420-18590682f80e|94737b0a-84d5-4755-9799-882a6cbe4fb8",
+        "silk_overlap|233000000|72571522|cc5ab9f6-bff9-4f23-ae8f-f5ea3cc3763d|94737b0a-84d5-4755-9799-882a6cbe4fb8"
+      ],
       "meta": {
         "version": 2
       },
@@ -459,7 +490,7 @@
     "classes": [
       {
         "bus_width": 12,
-        "clearance": 0.15,
+        "clearance": 0.2,
         "diff_pair_gap": 0.15,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.4,
@@ -476,7 +507,7 @@
       },
       {
         "bus_width": 12,
-        "clearance": 0.3,
+        "clearance": 0.2,
         "diff_pair_gap": 0.15,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.4,
@@ -487,6 +518,23 @@
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.2,
+        "via_diameter": 0.7,
+        "via_drill": 0.3,
+        "wire_width": 6
+      },
+      {
+        "bus_width": 12,
+        "clearance": 0.2,
+        "diff_pair_gap": 0.15,
+        "diff_pair_via_gap": 0.25,
+        "diff_pair_width": 0.4,
+        "line_style": 0,
+        "microvia_diameter": 0.3,
+        "microvia_drill": 0.1,
+        "name": "Power",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.5,
         "via_diameter": 0.7,
         "via_drill": 0.3,
         "wire_width": 6
@@ -501,6 +549,14 @@
       {
         "netclass": "I2C",
         "pattern": "/(GPIO.{slash})?S(DA|CL).*"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "\\+3V3.*"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "\\+5V.*"
       }
     ]
   },
@@ -604,6 +660,18 @@
           "group_by": false,
           "label": "Description",
           "name": "Description",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Power Rating",
+          "name": "Power Rating",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Tolerance",
+          "name": "Tolerance",
           "show": false
         }
       ],
