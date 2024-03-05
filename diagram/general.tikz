@@ -1,0 +1,137 @@
+\begin{tikzpicture}[%
+block/.style={
+	draw,
+	text width= 2.5cm,
+	align=center
+	},
+offtheshelve/.style={
+	block,
+	fill=blue!25!white,
+	},
+custom/.style={
+	block,
+	fill=blue!50!green!25!white,
+	},
+large/.style={
+	minimum height=1cm,
+	minimum width=6cm,
+	text width = 5cm,
+	},
+power/.style={draw=red!50!black,line width=1.5pt},
+signal/.style={draw=black,line width=1.5pt},
+small/.style={draw,line width=0.5pt},
+bus/.style={draw=black!25!white,line width=120pt},
+shiftnw/.style={shift={(-4pt,4pt)}},
+shiftse/.style={shift={(4pt,-4pt)}},
+]
+
+\path (0,0) node[offtheshelve,large, minimum height=3cm] (rpi) {Raspberry Pi 5};
+\path (rpi.north)
+	++(0,2.5cm) node[custom,large, minimum height=3cm] (HAT)
+		{\parbox[b][3.5cm]{5cm}{\centering Pi Custom HAT}};
+
+\path (HAT.south west)
+	++ (1.5,2) node[offtheshelve] (buck) {12V to 5V@8A Buck Converter}
+	++ (3,-1) node[custom] (temp) {On Board Temp. Sensor}
+	++ (0,1) node[custom] (qwiic) {QWIIC HUB}
+	++ (0,1) node[custom] (fan) {PC Fan Controller};
+
+\path (HAT.north)
+	++ (0,1.0cm) node[offtheshelve,large] (miniamp) {HiBerry Miniamp};
+
+\path (rpi.south)
+	++(0,-1.25cm) node[offtheshelve,large] (nvme) {NVME Base};
+
+
+\path (buck.west)
+	++(-5.0cm,0) node[large,offtheshelve] (ups) {OpenUPS}
+	++(0,2cm) node[custom,text width=5cm] (bat_intf) {Battery Connectors Interface}
+	++(0,2cm) node[large,offtheshelve] (bat) { RC LiFePo4 battery};
+
+\path (miniamp.east) ++(3,0) node[offtheshelve] (speakers) {Speakers};
+
+
+\path (rpi.west)
+	++(-5cm,0cm) node[offtheshelve,large,minimum height=3cm] (display) {Display}
+	++ (0cm,-2.75cm) node[offtheshelve,large] (touch) {Touch Interface};
+
+
+\path (rpi.east) ++(4,0) node[custom,large] (pellet) {\parbox[b][2.65cm]{5cm}{Pellet Dispenser Controller}};
+
+\path (pellet)
+	++(-1.5,-0.25) node[offtheshelve, minimum height=1cm] (pico) {Raspberry Pico};
+
+\path (pico)
+	++(0,1) node[custom] (qwiic_intf) {QWIIC Port}
+	++(3,0) node[custom] (motdrv) {Motor Driver};
+
+\path (nvme)
+	++(5.5,0) node[custom] (ir) {IR sensors}
+	++(3,0) node[offtheshelve] (motor) {12V Motor}
+	++(0,2.5) node[custom] (irdrv) {IR Sensor \\ Driver};
+
+
+\path (ups) ++(0,-1.75) node[custom,large] (ext) {External Connector Interface};
+
+
+\path (speakers)
+	++ (-1,-1) node[offtheshelve] (fan1) {PC FAN}
+	++ (3,0) node[offtheshelve] (fan2) {PC FAN};
+
+\path[draw] ([shiftnw] miniamp.north west) node [above right] {Embedded Computer}
+	-| ([shiftse] nvme.south east)
+	-| ([shiftnw] miniamp.north west);
+
+\path[draw] ([shiftnw] bat.north west) node [above right] {Battery Management System}
+	-| ([shiftse] ups.south east)
+	-| ([shiftnw] bat.north west);
+
+
+
+\path[power] (bat_intf.south) ++(0.5,0) -- ([shift={(0.5,0)}] ups.north) node[midway, right] {6 - 24V};
+\path[signal,small] (bat_intf.south) ++(-0.5,0) -- ([shift={(-0.5,0)}] ups.north) node[midway, left] {cell balancing};
+\path[signal,small] (bat_intf.south) ++(-0.25,0) -- ([shift={(-0.25,0)}] ups.north);
+\path[signal,small] (bat_intf.south)  -- (ups.north);
+
+\path[power] (bat.south) ++(1,0) -- ([shift={(1,0)}] bat_intf.north) node[midway, right] {6 - 24V};
+\path[signal,small] (bat.south) ++(-0.5,0) -- ([shift={(-0.5,0)}] bat_intf.north) node[midway, left] {cell balancing};
+\path[signal,small] (bat.south) ++(-0.25,0) -- ([shift={(-0.25,0)}] bat_intf.north);
+\path[signal,small] (bat.south)  -- (bat_intf.north);
+\path[signal,small] (bat.south) ++(0.25,0) -- ([shift={(0.25,0)}] bat_intf.north);
+\path[signal,small] (bat.south) ++(0.5,0) -- ([shift={(0.5,0)}] bat_intf.north);
+
+\path[power] (ups.east) -- node[midway,above] {12V} (buck.west) ;
+
+\path[power] (buck.south) |- ++(-3,-0.5) node[above,shift={(0.5,0)}] {5V} |- ([shift={(0,0.5)}] display.east);
+
+\path[signal] (display.east) -- (rpi.west) node[midway,above] {HDMI};
+\path[signal] (rpi.west) ++ (0,-0.5) --++ (-1.5,0) node[above,shift={(0.5,0)}] {USB} |- (touch.east);
+
+\path[bus] (rpi) -- node[fill=black!25!white]{GPIO Header} (HAT);
+\path[bus] (miniamp) -- node[fill=black!25!white]{GPIO Header} (HAT);
+\path[bus] (rpi) -- node[fill=black!25!white]{PCI Express} (nvme);
+
+\path[signal] (miniamp) -- (speakers);
+
+
+\path[power] (HAT.east) ++ (0,0.5) -| (motdrv) node[midway,above left]{12V};
+
+\path[signal,dotted] (pico.west) ++(0,-0.3)-| ([shift={(0,-0.6)}] rpi.east) node[near start,above] {USB};
+
+\path[signal] (qwiic.east) -| (qwiic_intf);
+
+\path[signal] (motor) |- ([shift={(1.5,0)}] pellet.south);
+\path[signal] (ir) |- ([shift={(-1.5,0)}] pellet.south);
+
+\path[power] (ext) -- (ups) node[midway,right] {12V};
+
+\path[power] (ext.west) ++(0,0.35) -- ++(-1,0) node[left]{12V Wall Adapter};
+\path[signal] (ext.west)  -- ++(-1,0) node[left]{USB Socket};
+\path[signal] (ext.west) ++(0,-0.35) -- ++(-1,0) node[left]{SD Card Adapter};
+
+\path[signal] (ext.east) -- ++(1,0) |- ([shift={(0,1)}] rpi);
+
+\path[signal] (fan) -| (fan1);
+\path[signal] (fan) -| (fan2);
+
+\end{tikzpicture}
