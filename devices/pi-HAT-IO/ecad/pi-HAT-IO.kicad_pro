@@ -636,7 +636,13 @@
           "group_by": false,
           "label": "Dielectric",
           "name": "Dielectric",
-          "show": false
+          "show": true
+        },
+        {
+          "group_by": false,
+          "label": "Manufacturer",
+          "name": "Manufacturer",
+          "show": true
         },
         {
           "group_by": false,
@@ -666,13 +672,13 @@
           "group_by": false,
           "label": "Power Rating",
           "name": "Power Rating",
-          "show": false
+          "show": true
         },
         {
           "group_by": false,
           "label": "Tolerance",
           "name": "Tolerance",
-          "show": false
+          "show": true
         }
       ],
       "filter_string": "",
