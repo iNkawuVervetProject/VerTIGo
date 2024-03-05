@@ -23,6 +23,9 @@ fp-info-cache
 # Exported BOM files
 *.xml
 *.csv
+!BoM.csv
 
 *.zip
 *.bak
+output/
+*.lck
