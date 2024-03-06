@@ -1,0 +1,6 @@
+"Reference","Value","Datasheet","Footprint","Qty","DNP","MPN"
+"C1","10n","~","Capacitor_SMD:C_0603_1608Metric","1","","CL10B103KB8NNNC"
+"J1","SM03B-SRSS-TB","~","common:JST_SH_SM03B-SRSS-TB_1x03-1MP_P1.00mm_Horizontal","1","","SM03B-SRSS-TB"
+"R1","100","~","Resistor_SMD:R_0603_1608Metric","1","","RC0603FR-07100L"
+"R2","220","~","Resistor_SMD:R_0603_1608Metric","1","","RC0603FR-07220L"
+"U1","EE-SY1201","https://www.sharpsde.com/fileadmin/products/Optoelectronics/Isolation%20Devices/Specs_Photointerrupter/GP2S700HCP_03Oct05_DS_D3-A02201FEN.pdf","OptoDevice:Sharp_GP2S700HCP","1","","EE-SY1201"
