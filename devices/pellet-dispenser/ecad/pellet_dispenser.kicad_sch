@@ -4,6 +4,13 @@
 	(generator_version "8.0")
 	(uuid "36739d04-9134-4586-acd6-3dd244432714")
 	(paper "A3")
+	(title_block
+		(title "ZACI - Pellet Dispenser Controller")
+		(date "2024-03-07")
+		(rev "A")
+		(company "Universitée de Lausanne")
+		(comment 1 "Licensed under CERN-OHL-S v2 or any later version")
+	)
 	(lib_symbols
 		(symbol "Connector:TestPoint"
 			(pin_numbers hide)
@@ -4712,6 +4719,17 @@
 		)
 		(uuid "cddd46c2-433f-4a0d-900d-0d2fc4d6b11d")
 	)
+	(text "This source is distributed WITHOUT ANY EXPRESS OR IMPLIED\nWARRANTY, INCLUDING OF MERCHANTABILITY, SATISFACTORY\nQUALITY AND FITNESS FOR A PARTICULAR PURPOSE. Please see\nthe CERN-OHL-S v2 for applicable conditions."
+		(exclude_from_sim no)
+		(at 300.99 258.064 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "fd8a79eb-aa1f-4066-a7fb-130135dcc233")
+	)
 	(label "PRS0"
 		(at 198.12 80.01 180)
 		(fields_autoplaced yes)
@@ -5580,7 +5598,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "SM03B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 311.15 34.29 0)
 			(effects
 				(font
@@ -5805,7 +5823,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "SM03B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 309.88 106.68 0)
 			(effects
 				(font
@@ -5963,7 +5981,7 @@
 				)
 			)
 		)
-		(property "Value" "SM03B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 35.56 39.37 0)
 			(effects
 				(font
@@ -6071,7 +6089,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "~"
+		(property "Datasheet" "https://fscdn.rohm.com/en/products/databook/datasheet/discrete/transistor/mosfet/re1c002untcl-e.pdf"
 			(at 275.59 111.76 0)
 			(effects
 				(font
@@ -6160,7 +6178,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf"
 			(at 165.1 71.12 0)
 			(effects
 				(font
@@ -6739,7 +6757,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "0.15"
+		(property "Value" "0.316"
 			(at 144.78 233.68 0)
 			(effects
 				(font
@@ -6793,7 +6811,7 @@
 				(justify left)
 			)
 		)
-		(property "Power Rating" "200mW"
+		(property "Power Rating" "2W"
 			(at 148.59 236.22 0)
 			(effects
 				(font
@@ -6811,7 +6829,7 @@
 				(hide yes)
 			)
 		)
-		(property "MPN" "KDV06FR150ET"
+		(property "MPN" "  RLC73PD3AR316FTDG"
 			(at 142.24 233.68 0)
 			(effects
 				(font
@@ -6820,7 +6838,7 @@
 				(hide yes)
 			)
 		)
-		(property "Manufacturer" " Ohmite"
+		(property "Manufacturer" "TE Connectivity Passive Product"
 			(at 142.24 233.68 0)
 			(effects
 				(font
@@ -6863,7 +6881,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "5015"
+		(property "Value" "RCUCTE"
 			(at 182.88 212.5979 0)
 			(effects
 				(font
@@ -7590,7 +7608,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "SM03B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 309.88 72.39 0)
 			(effects
 				(font
@@ -7747,7 +7765,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "5015"
+		(property "Value" "RCUCTE"
 			(at 182.88 222.7579 0)
 			(effects
 				(font
@@ -8033,7 +8051,7 @@
 				)
 			)
 		)
-		(property "Value" "SM03B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 164.846 120.904 90)
 			(effects
 				(font
@@ -8141,7 +8159,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "~"
+		(property "Datasheet" "https://fscdn.rohm.com/en/products/databook/datasheet/discrete/transistor/mosfet/re1c002untcl-e.pdf"
 			(at 275.59 39.37 0)
 			(effects
 				(font
@@ -8214,7 +8232,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "S2B-PH-K"
+		(property "Value" "JST PH"
 			(at 162.56 222.25 0)
 			(effects
 				(font
@@ -8250,7 +8268,7 @@
 				(hide yes)
 			)
 		)
-		(property "MPN" "S2B-XH-A-1"
+		(property "MPN" "S2B-PH-K"
 			(at 160.02 224.79 0)
 			(effects
 				(font
@@ -8502,7 +8520,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "S2B-PH-K"
+		(property "Value" "JST PH"
 			(at 39.37 199.3901 0)
 			(effects
 				(font
@@ -8538,7 +8556,7 @@
 				(hide yes)
 			)
 		)
-		(property "MPN" "S2B-XH-A-1"
+		(property "MPN" "S2B-PH-K"
 			(at 41.91 201.93 0)
 			(effects
 				(font
@@ -8588,7 +8606,7 @@
 				)
 			)
 		)
-		(property "Value" "434133025816"
+		(property "Value" "Test"
 			(at 48.26 69.85 0)
 			(effects
 				(font
@@ -8691,7 +8709,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "~"
+		(property "Datasheet" "https://www.diodes.com/assets/Datasheets/DMG2305UX.pdf"
 			(at 226.06 40.64 0)
 			(effects
 				(font
@@ -8764,7 +8782,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "S2B-PH-K"
+		(property "Value" "JST PH"
 			(at 162.56 214.63 0)
 			(effects
 				(font
@@ -8800,7 +8818,7 @@
 				(hide yes)
 			)
 		)
-		(property "MPN" "S2B-XH-A-1"
+		(property "MPN" "S2B-PH-K"
 			(at 160.02 212.09 0)
 			(effects
 				(font
@@ -8983,7 +9001,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "0.15"
+		(property "Value" "0.25"
 			(at 125.73 233.68 0)
 			(effects
 				(font
@@ -9037,7 +9055,7 @@
 				(justify left)
 			)
 		)
-		(property "Power Rating" "200mW"
+		(property "Power Rating" "2W"
 			(at 129.54 236.22 0)
 			(effects
 				(font
@@ -9055,7 +9073,7 @@
 				(hide yes)
 			)
 		)
-		(property "MPN" "KDV06FR150ET"
+		(property "MPN" "CSRN2512FKR250"
 			(at 123.19 233.68 0)
 			(effects
 				(font
@@ -9064,7 +9082,7 @@
 				(hide yes)
 			)
 		)
-		(property "Manufacturer" " Ohmite"
+		(property "Manufacturer" "Stackpole Electronics Inc "
 			(at 123.19 233.68 0)
 			(effects
 				(font
@@ -9125,7 +9143,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "~"
+		(property "Datasheet" "https://fscdn.rohm.com/en/products/databook/datasheet/discrete/transistor/mosfet/re1c002untcl-e.pdf"
 			(at 275.59 77.47 0)
 			(effects
 				(font
@@ -9332,7 +9350,7 @@
 				)
 			)
 		)
-		(property "Value" "SM04B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 39.37 123.19 0)
 			(effects
 				(font
