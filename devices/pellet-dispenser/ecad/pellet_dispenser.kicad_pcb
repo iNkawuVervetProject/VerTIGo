@@ -166,7 +166,7 @@
 				)
 			)
 		)
-		(property "Value" "SM03B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 0 3.98 90)
 			(layer "F.Fab")
 			(uuid "82fe75b5-6c43-4444-9505-8bb721b2ec20")
@@ -219,6 +219,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "5b8bc77b-458d-4fbd-b42e-6afa21140a7b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "JST"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "80be5fc7-6c3a-4c95-992d-8d15d198b0c3")
 			(effects
 				(font
 					(size 1 1)
@@ -519,6 +532,32 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "DRV8848PWPR"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "714d8564-053a-41cd-bc2e-b2e64892ffe1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Texas Instruments"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "97fad9ec-397f-48ee-a260-a82e5c56dd70")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -1025,6 +1064,19 @@
 				)
 			)
 		)
+		(property "Manufacturer" "Samsung Electro-Mechanics"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f6b8b4ac-3b0b-4bc8-9cee-e16e9ee2981f")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/99c73dfd-1afc-4d22-9598-785169205629")
 		(sheetname "Root")
@@ -1188,7 +1240,7 @@
 				)
 			)
 		)
-		(property "Value" "0.15"
+		(property "Value" "0.316"
 			(at 0 2.62 180)
 			(layer "F.Fab")
 			(uuid "4b2631f3-2b66-4786-b76e-78e4f6daca33")
@@ -1261,7 +1313,7 @@
 				)
 			)
 		)
-		(property "Power Rating" "200mW"
+		(property "Power Rating" "2W"
 			(at 0 0 180)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1287,12 +1339,25 @@
 				)
 			)
 		)
-		(property "MPN" "KDV06FR150ET"
+		(property "MPN" " RLC73PD3AR316FTDG"
 			(at 0 0 180)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "912874c9-7ba2-4ed8-aaa2-d3e93b6025fe")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "TE Connectivity Passive Product"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6115e854-3d55-44d6-9998-29198ee1c38b")
 			(effects
 				(font
 					(size 1 1)
@@ -1562,12 +1627,25 @@
 				)
 			)
 		)
-		(property "MPN" "CL21B104KACNNNC"
+		(property "MPN" "CL10B104KB8NNWC"
 			(at 0 0 180)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "1d3182dd-39f8-4f2f-8dd9-531d9a0f5ed1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Samsung Electro-Mechanics"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d894d81c-20d0-4b5b-8ce9-9257c9959f57")
 			(effects
 				(font
 					(size 1 1)
@@ -1738,7 +1816,7 @@
 				)
 			)
 		)
-		(property "Value" "0.15"
+		(property "Value" "0.25"
 			(at 0 2.62 0)
 			(layer "F.Fab")
 			(uuid "503a95dc-122e-4486-9e47-2cfdf17443a7")
@@ -1811,7 +1889,7 @@
 				)
 			)
 		)
-		(property "Power Rating" "200mW"
+		(property "Power Rating" "2W"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1837,12 +1915,25 @@
 				)
 			)
 		)
-		(property "MPN" "KDV06FR150ET"
+		(property "MPN" "CSRN2512FKR250"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "cff28409-e345-4a3f-9799-3353a47e5cc8")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Stackpole Electronics Inc "
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "cec02b5d-f397-4f96-a5cb-49cb8d33b04c")
 			(effects
 				(font
 					(size 1 1)
@@ -2014,7 +2105,7 @@
 				)
 			)
 		)
-		(property "Value" "S2B-PH-K"
+		(property "Value" "JST PH"
 			(at 1 7.45 0)
 			(layer "F.Fab")
 			(uuid "f5a66c70-4557-4207-a5b9-11f40d5872a7")
@@ -2061,12 +2152,25 @@
 				)
 			)
 		)
-		(property "MPN" "S2B-XH-A-1"
+		(property "MPN" "S2B-PH-K"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f8c6c55f-d434-46af-908e-cc348cfe58fa")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "JST"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4d760631-562a-4d5c-8c71-dc87e4cb7380")
 			(effects
 				(font
 					(size 1 1)
@@ -2566,7 +2670,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -2587,6 +2691,32 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "SC0915"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6e8dbed5-1cae-4674-8b0d-173a3c329253")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Raspberry Pi Foundation"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4d7d3ff8-6cda-4475-b913-1a5066896927")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -4381,7 +4511,7 @@
 				)
 			)
 		)
-		(property "Value" "434133025816"
+		(property "Value" "Test"
 			(at 0 2.55 90)
 			(layer "F.Fab")
 			(uuid "d75db890-0a97-4c7e-93e5-3c455df116dc")
@@ -4434,6 +4564,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "69eb10df-9098-4580-b09c-86f728f6ccd2")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" " Würth Elektronik"
+			(at 0 0 -90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b158b3ab-bd4b-4c9d-8c76-6edc8118b05f")
 			(effects
 				(font
 					(size 1 1)
@@ -4746,7 +4889,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://fscdn.rohm.com/en/products/databook/datasheet/discrete/transistor/mosfet/re1c002untcl-e.pdf"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -4776,6 +4919,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "b11ba977-1f21-4e0c-8e04-405c10842a3e")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Rohm Semiconductor"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "34055743-9215-4e39-91bc-8dc671ce97f6")
 			(effects
 				(font
 					(size 1 1)
@@ -4999,7 +5155,7 @@
 				)
 			)
 		)
-		(property "Value" "SM03B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 0 3.98 90)
 			(layer "F.Fab")
 			(uuid "68fa4961-2366-4205-bfe7-fbb38c550e1e")
@@ -5052,6 +5208,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "51c2b4dc-f0d1-49eb-9cbb-7dd0a2c0aeb5")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "JST"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "82dc7348-f008-4a9b-a60f-2c6459654baa")
 			(effects
 				(font
 					(size 1 1)
@@ -5309,7 +5478,7 @@
 				)
 			)
 		)
-		(property "Value" "S2B-PH-K"
+		(property "Value" "JST PH"
 			(at 1 7.45 180)
 			(layer "F.Fab")
 			(uuid "67b2d7e7-4e79-4bc7-90bb-feefb6d6bafe")
@@ -5353,6 +5522,32 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "S2B-PH-K"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "956ef2d5-a3fa-4f92-b809-3d73590d8e56")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "JST"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ee485145-a8cd-4f5e-8b5e-a0ffbfd7be9a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -5825,7 +6020,7 @@
 				)
 			)
 		)
-		(property "Value" "SM04B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 0 3.98 180)
 			(layer "F.Fab")
 			(uuid "f1b73252-6484-4413-9506-41011ba4a672")
@@ -5878,6 +6073,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "c04b141b-bc11-4735-886f-851c5a7b485a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "JST"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6de4e83c-a4f5-485d-ab2a-035871848f74")
 			(effects
 				(font
 					(size 1 1)
@@ -6243,12 +6451,25 @@
 				)
 			)
 		)
-		(property "MPN" "CL21A106KAYNNNG"
+		(property "MPN" "CL21A225KAFNNNG"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "17bbe963-e59e-4740-8acc-2f72e226b79b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Samsung Electro-Mechanics"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6339b09c-d881-4676-97a0-45745044a9ba")
 			(effects
 				(font
 					(size 1 1)
@@ -6442,7 +6663,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://fscdn.rohm.com/en/products/databook/datasheet/discrete/transistor/mosfet/re1c002untcl-e.pdf"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -6472,6 +6693,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "4707fd05-88e1-4038-a827-fcbede278450")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Rohm Semiconductor"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "88aaa8df-b4d5-46ed-ad50-37bc3799691c")
 			(effects
 				(font
 					(size 1 1)
@@ -6695,7 +6929,7 @@
 				)
 			)
 		)
-		(property "Value" "S2B-PH-K"
+		(property "Value" "JST PH"
 			(at 1 7.45 0)
 			(layer "F.Fab")
 			(uuid "3dd11842-9c26-4c2c-b5ed-7c550faff38a")
@@ -6742,12 +6976,25 @@
 				)
 			)
 		)
-		(property "MPN" "S2B-XH-A-1"
+		(property "MPN" "S2B-PH-K"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "c65e03da-81c1-480d-ae1c-726876cd2e34")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "JST"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "2d210ed4-dc92-4844-a687-909e58fd428a")
 			(effects
 				(font
 					(size 1 1)
@@ -7246,7 +7493,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.diodes.com/assets/Datasheets/DMG2305UX.pdf"
 			(at 0 0 -90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -7267,6 +7514,32 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "DMG2305UX"
+			(at 0 0 -90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c6611d19-9930-4862-a2cb-9ee4fa6af69c")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Diodes Incorporated"
+			(at 0 0 -90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "14a4ce96-477f-43bc-be27-66b2f17277a8")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -7487,7 +7760,7 @@
 				)
 			)
 		)
-		(property "Value" "SM03B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 0 3.98 90)
 			(layer "F.Fab")
 			(uuid "ab1ad3ad-be72-485c-abb5-52cfe799ec1d")
@@ -7540,6 +7813,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "c97f0699-00d7-4b37-87f6-428bba854b37")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "JST"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "abec53c3-9def-4c76-856d-b16b0556a368")
 			(effects
 				(font
 					(size 1 1)
@@ -7819,7 +8105,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://fscdn.rohm.com/en/products/databook/datasheet/discrete/transistor/mosfet/re1c002untcl-e.pdf"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -7849,6 +8135,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f238d992-006c-499c-94f4-00479ea38123")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Rohm Semiconductor"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1717b6b6-e477-44a2-85db-5a16cf867e75")
 			(effects
 				(font
 					(size 1 1)
@@ -8181,7 +8480,7 @@
 				)
 			)
 		)
-		(property "Value" "5015"
+		(property "Value" "RCUCTE"
 			(at 0 2.25 -90)
 			(layer "F.Fab")
 			(uuid "3f2b4148-1179-4db8-9645-326adca1f238")
@@ -8225,6 +8524,32 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RCUCTE"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "32e7d6ea-4c4f-4a25-8935-1b104eea0e88")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "KOA Speer Electronics, Inc."
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0c7d65ea-c73e-4cc5-b5d6-af610789a94c")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -8403,7 +8728,7 @@
 				)
 			)
 		)
-		(property "Value" "5015"
+		(property "Value" "RCUCTE"
 			(at 0 2.25 -90)
 			(layer "F.Fab")
 			(uuid "f24f126b-e2fb-482a-8bae-1d919f8e6bf1")
@@ -8447,6 +8772,32 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RCUCTE"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "479a9222-c132-42b8-ab10-836fb19b7b64")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "KOA Speer Electronics, Inc."
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "85704a7d-e3ef-4693-9bcf-c790b37ca61d")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -9211,7 +9562,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Value" "SM03B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 0 -3.98 0)
 			(layer "B.Fab")
 			(uuid "3554925f-6b45-4eac-84ea-e62c438ac37d")
@@ -9268,6 +9619,20 @@
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "16a38a71-216c-462b-8659-9b9fa1cd2a0e")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Manufacturer" "JST"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "6f5a032a-3ac5-4e72-a483-c7f0b6418380")
 			(effects
 				(font
 					(size 1 1)
@@ -10221,7 +10586,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Value" "SM03B-SRSS-TB"
+		(property "Value" "JST SH"
 			(at 0 -3.98 0)
 			(layer "B.Fab")
 			(uuid "0a0d8cbd-199d-4197-a57d-058729c77d98")
@@ -10278,6 +10643,20 @@
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "7317511e-e7f2-458c-bd35-5b0f065c27e2")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Manufacturer" "JST"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "36b880aa-3830-43ad-832a-213faf51e35b")
 			(effects
 				(font
 					(size 1 1)
