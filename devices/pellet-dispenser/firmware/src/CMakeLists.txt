@@ -1,5 +1,11 @@
-set(SRC_FILES main.cpp Display.cpp)
-set(HDR_FILES Display.hpp)
+set(SRC_FILES
+	main.cpp #
+	Display.cpp #
+	Button.cpp
+)
+set(HDR_FILES Display.hpp #
+			  Display.cpp #
+)
 
 add_executable(pellet-dispenser ${SRC_FILES} ${HDR_FILES})
 

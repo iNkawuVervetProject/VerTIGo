@@ -1,3 +1,4 @@
+#include "Button.hpp"
 #include "Display.hpp"
 #include "pico/stdlib.h"
 #include "pico/time.h"
@@ -11,9 +12,17 @@ int main() {
 
 	auto displayTimeout = get_absolute_time();
 
+	auto testButton = Button(17);
+
 	while (true) {
 		auto curTime = get_absolute_time();
+
 		// Critical task here
+
+		if (testButton.Process(curTime)) {
+			Display::Get().ButtonPressed = testButton.Pressed;
+			Display::Get().PressCount += testButton.Pressed ? 1 : 0;
+		}
 
 		if (absolute_time_diff_us(curTime, displayTimeout) <= 0) {
 			Display::Get().Print(curTime);
