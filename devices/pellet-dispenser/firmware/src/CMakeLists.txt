@@ -1,6 +1,7 @@
-set(SRC_FILES main.cpp)
+set(SRC_FILES main.cpp Display.cpp)
+set(HDR_FILES Display.hpp)
 
-add_executable(pellet-dispenser ${SRC_FILES})
+add_executable(pellet-dispenser ${SRC_FILES} ${HDR_FILES})
 
 target_link_libraries(pellet-dispenser pico_stdlib)
 

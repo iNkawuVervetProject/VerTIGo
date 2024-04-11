@@ -1,16 +1,23 @@
+#include "Display.hpp"
 #include "pico/stdlib.h"
+#include "pico/time.h"
+
 #include <stdio.h>
+
+#define DISPLAY_PERIOD_MS 200
 
 int main() {
 	setup_default_uart();
 
-	int n = 0;
-	printf("\033[2J Welcome to pellet dispenser debug output.\n\n");
-	while (true) {
-		n++;
+	auto displayTimeout = get_absolute_time();
 
-		printf("\033[Auptime: %ds\n", n);
-		sleep_ms(1000);
+	while (true) {
+		auto curTime = get_absolute_time();
+		// Critical task here
+
+		if (absolute_time_diff_us(curTime, displayTimeout) <= 0) {
+			Display::Get().Print(curTime);
+			displayTimeout = delayed_by_ms(displayTimeout, DISPLAY_PERIOD_MS);
+		}
 	}
-	return 0;
 }
