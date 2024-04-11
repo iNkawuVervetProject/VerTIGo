@@ -14,9 +14,10 @@ include(OpenOCD)
 
 pico_sdk_init()
 
-add_executable(pellet-dispenser src/main.c)
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED 1)
 
-target_link_libraries(pellet-dispenser pico_stdlib)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED 1)
 
-pico_add_extra_outputs(pellet-dispenser)
-add_openocd_upload_target(TARGET pellet-dispenser)
+add_subdirectory(src)
