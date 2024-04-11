@@ -61,16 +61,13 @@ function(add_openocd_upload_target)
 		message(FATAL_ERROR "You must specify one target to upload")
 	endif()
 
-	message(
-		FATAL_ERROR "target is ${ARGS_TARGET} $<TARGET_FILE:${ARGS_TARGET}>"
-	)
-
 	add_custom_target(
 		${ARGS_TARGET}-upload
 		COMMAND
 			${OPENOCD_EXECUTABLE} -f interface/cmsis-dap.cfg -c
 			"adapter speed 5000" -f target/rp2040.cfg -c
-			"program ${FOO} verify reset exit"
+			"program $<TARGET_FILE:${ARGS_TARGET}> verify reset exit"
+		DEPENDS ${ARGS_TARGET}
 	)
 
 endfunction()
