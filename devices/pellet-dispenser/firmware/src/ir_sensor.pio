@@ -1,0 +1,18 @@
+.program ir_sensor
+
+.side_set 1 opt pindirs
+
+	mov X, OSR          ; x is holding the config, simply put it in OSR
+	out Y, 16 side 1    ; get the on period (16 MSB of config) push high
+onloop:
+	jmp Y-- onloop [1]  ; keep the output high for MSB , delay to keep time tight
+	out X, 16 side 0    ; get the remaining period count to wait
+readloop:
+	jmp PIN decrement  ; if pin is low, go to end loop
+	jmp end
+decrement:
+	jmp Y-- readloop    ; else wait until it is low, while keeping track of time
+end:
+	in Y, 16            ; move Y to isr. autopush will trigger if set to 16
+endloop:                ; keep timing tight between on read and end loops
+	jmp Y-- endloop [1] ; wait for the whole cycle to finish. delay to keep time tigh
