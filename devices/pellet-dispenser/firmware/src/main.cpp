@@ -14,9 +14,9 @@
 int main() {
 	stdio_init_all();
 
-	// need a 10ms break before starting core1.... :(
+	// need to ensure a 10ms break before starting core1... (in the display
+	// loop). Otherwise, core1 will stop.
 	sleep_ms(10);
-	Display::Get();
 
 	auto displayTimeout = get_absolute_time();
 
@@ -30,19 +30,18 @@ int main() {
 		auto curTime = get_absolute_time();
 
 		// Critical task here
-
 		if (testButton.Process(curTime)) {
-			Display::Get().State().ButtonPressed = testButton.Pressed;
-			Display::Get().State().PressCount += testButton.Pressed ? 1 : 0;
+			Display::State().ButtonPressed = testButton.Pressed;
+			Display::State().PressCount += testButton.Pressed ? 1 : 0;
 		}
 
 		auto newValue = wheelSensor.Process(curTime);
 		if (newValue.has_value()) {
-			Display::Get().State().WheelValue = newValue.value();
+			Display::State().WheelValue = newValue.value();
 		}
 
 		if (absolute_time_diff_us(curTime, displayTimeout) <= 0) {
-			Display::Get().Print(curTime);
+			Display::Update(curTime);
 			displayTimeout = delayed_by_ms(displayTimeout, DISPLAY_PERIOD_MS);
 		}
 	}

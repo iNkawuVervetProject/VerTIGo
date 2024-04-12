@@ -15,21 +15,25 @@ public:
 		absolute_time_t Time          = nil_time;
 	};
 
-	inline Display::State &State() {
-		return d_state;
+	static inline Display::State &State() {
+		return Get().d_state;
 	}
 
-	void Print(const absolute_time_t time);
+	static inline void Update(absolute_time_t time) {
+		return Get().update(time);
+	}
+
+private:
+	static void printLoop();
 
 	inline static Display &Get() {
 		static Display instance;
 		return instance;
 	};
 
-private:
-	static void printLoop();
-
 	Display();
+
+	void update(absolute_time_t time);
 
 	struct State d_state;
 	queue_t      d_queue;

@@ -61,7 +61,7 @@ Display::Display() {
 	multicore_launch_core1(printLoop);
 }
 
-void Display::Print(const absolute_time_t time) {
+void Display::update(absolute_time_t time) {
 	struct State discard;
 	while (queue_try_remove(&d_queue, &discard)) {
 	}
