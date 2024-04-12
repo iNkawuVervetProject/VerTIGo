@@ -1,12 +1,15 @@
 #include "Display.hpp"
+
+#include "pico/multicore.h"
 #include "pico/time.h"
 #include "pico/types.h"
+#include "pico/util/queue.h"
 #include <array>
+#include <cstdint>
 #include <cstdio>
-#include <sstream>
 #include <string>
 
-Display::Display() {
+void formatHeader() {
 	std::string title = "Pellet Dispenser Rev A version 0.0.0";
 	printf(
 	    "\033[2J\n\033[30;46m%*s%*s\033[m\n\n\n",
@@ -17,14 +20,16 @@ Display::Display() {
 	);
 }
 
-void Display::Print(const absolute_time_t currentTime) {
+void formatState(const struct Display::State &s) {
 	std::array<char[200], 1> lines;
+
 	sprintf(
 	    lines[0],
-	    "uptime: %d pressed: %s pressCount: %d",
-	    to_ms_since_boot(currentTime) / 1000,
-	    ButtonPressed ? "true" : "false",
-	    PressCount
+	    "uptime: %d pressed: %s pressCount: %d, wheel: %d",
+	    to_ms_since_boot(s.Time) / 1000,
+	    s.ButtonPressed ? "true" : "false",
+	    s.PressCount,
+	    s.WheelValue
 	);
 
 	printf("\033[%dA\033[36m", lines.size() + 1);
@@ -35,4 +40,32 @@ void Display::Print(const absolute_time_t currentTime) {
 	    "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	    "━━━━━━━━━┛\n"
 	);
+}
+
+void Display::printLoop() {
+
+	formatHeader();
+	int i{0};
+
+	struct Display::State toDisplay;
+	auto	             &queue = Display::Get().d_queue;
+	while (true) {
+		queue_remove_blocking(&queue, &toDisplay);
+		formatState(toDisplay);
+	}
+}
+
+Display::Display() {
+	queue_init(&d_queue, sizeof(struct State), 1);
+
+	multicore_launch_core1(printLoop);
+}
+
+void Display::Print(const absolute_time_t time) {
+	struct State discard;
+	while (queue_try_remove(&d_queue, &discard)) {
+	}
+
+	d_state.Time = time;
+	queue_try_add(&d_queue, &d_state);
 }

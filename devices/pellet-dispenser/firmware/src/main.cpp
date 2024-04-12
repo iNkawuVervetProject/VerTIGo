@@ -1,5 +1,9 @@
 #include "Button.hpp"
 #include "Display.hpp"
+#include "IRSensor.hpp"
+#include "pico/multicore.h"
+#include "pico/platform.h"
+#include "pico/stdio.h"
 #include "pico/stdlib.h"
 #include "pico/time.h"
 
@@ -8,11 +12,19 @@
 #define DISPLAY_PERIOD_MS 200
 
 int main() {
-	setup_default_uart();
+	stdio_init_all();
+
+	// need a 10ms break before starting core1.... :(
+	sleep_ms(10);
+	Display::Get();
 
 	auto displayTimeout = get_absolute_time();
 
 	auto testButton = Button(17);
+
+	auto wheelSensor = BitBangIRSensor(21, 20);
+
+	wheelSensor.SetEnabled(true);
 
 	while (true) {
 		auto curTime = get_absolute_time();
@@ -20,8 +32,13 @@ int main() {
 		// Critical task here
 
 		if (testButton.Process(curTime)) {
-			Display::Get().ButtonPressed = testButton.Pressed;
-			Display::Get().PressCount += testButton.Pressed ? 1 : 0;
+			Display::Get().State().ButtonPressed = testButton.Pressed;
+			Display::Get().State().PressCount += testButton.Pressed ? 1 : 0;
+		}
+
+		auto newValue = wheelSensor.Process(curTime);
+		if (newValue.has_value()) {
+			Display::Get().State().WheelValue = newValue.value();
 		}
 
 		if (absolute_time_diff_us(curTime, displayTimeout) <= 0) {
