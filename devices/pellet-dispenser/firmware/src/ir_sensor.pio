@@ -2,17 +2,54 @@
 
 .side_set 1 opt pindirs
 
-	mov X, OSR          ; x is holding the config, simply put it in OSR
-	out Y, 16 side 1    ; get the on period (16 MSB of config) push high
+	mov X, OSR            ; x is holding the config, simply put it in OSR
+	out Y, 16 side 1      ; get the on period (16 LSB of config)
 onloop:
-	jmp Y-- onloop [1]  ; keep the output high for MSB , delay to keep time tight
-	out X, 16 side 0    ; get the remaining period count to wait
+	jmp Y-- onloop    [1] ; keep the output high for pulse, delay to keep time
+	                      ; tight
+	out Y, 16 side 0  [1] ; get the remaining period count to wait, keep the
+	                      ; timing tight with a delay
 readloop:
-	jmp PIN decrement  ; if pin is low, go to end loop
-	jmp end
+	jmp PIN decrement     ; if pin is low, go to end loop
+	jmp end               ; with the in command, it will make two clock cycle,
+	                      ; so timing is right
 decrement:
-	jmp Y-- readloop    ; else wait until it is low, while keeping track of time
+	jmp Y-- readloop      ; else wait until it is low, while keeping track of
+	                      ; time
 end:
-	in Y, 16            ; move Y to isr. autopush will trigger if set to 16
-endloop:                ; keep timing tight between on read and end loops
-	jmp Y-- endloop [1] ; wait for the whole cycle to finish. delay to keep time tigh
+	in Y, 32              ; move Y to isr. autopush will trigger
+endloop:                  ; keep timing tight between on read and end loops
+	jmp Y-- endloop   [1] ; wait for the whole cycle to finish. delay to keep
+	                      ; time tight
+% c-sdk {
+inline static void
+ir_sensor_program_init(PIO pio, uint sm, uint offset, uint pin) {
+	pio_sm_config config = ir_sensor_program_get_default_config(offset);
+	sm_config_set_sideset_pins(&config, pin);
+	sm_config_set_jmp_pin(&config, pin);
+	sm_config_set_in_shift(&config, true, true, 32);
+
+	pio_sm_set_pins_with_mask(pio, sm, (1u << pin), (1u << pin));
+	pio_sm_set_pindirs_with_mask(pio, sm, 0, (1u << pin));
+
+	pio_gpio_init(pio, pin);
+	pio_sm_init(pio, sm, offset, &config);
+}
+
+inline static void
+ir_sensor_program_configure(PIO pio, uint sm, uint16_t pulse, uint16_t period) {
+	if (period < pulse + 3) {
+		panic(
+		    "period (%d) should be greater than pulse + 3 (%d)",
+		    period,
+		    pulse
+		);
+	}
+
+	uint32_t config = (((uint32_t)period) << 16) + pulse;
+
+	pio_sm_put_blocking(pio, sm, config);
+	pio_sm_exec_wait_blocking(pio, sm, pio_encode_pull(false, false));
+}
+
+%}

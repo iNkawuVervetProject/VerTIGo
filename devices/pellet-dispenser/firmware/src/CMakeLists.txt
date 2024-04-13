@@ -2,7 +2,7 @@ set(SRC_FILES
 	main.cpp #
 	Display.cpp #
 	Button.cpp #
-	IRSensor.cpp
+	IRSensor.cpp #
 )
 set(HDR_FILES
 	Display.hpp #
