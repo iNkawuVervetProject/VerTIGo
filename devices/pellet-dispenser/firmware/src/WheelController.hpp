@@ -17,6 +17,7 @@ public:
 
 	int  Position();
 	void Move(int wanted);
+	void Stop();
 
 	bool Stalled() const;
 
@@ -27,6 +28,12 @@ private:
 		MOVING_TO_TARGET,
 		RAMPING_DOWN,
 	};
+
+	void SetIdle(absolute_time_t);
+	void SetRampingUp(absolute_time_t time);
+	void SetRampingDown(absolute_time_t time);
+	void SetMoving(absolute_time_t time);
+
 	std::optional<int> ProcessSensor(absolute_time_t time);
 
 	DRV8848        d_driver;
