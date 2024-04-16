@@ -25,11 +25,12 @@ void formatState(const struct Display::State &s) {
 
 	sprintf(
 	    lines[0],
-	    "uptime: %d pressed: %s pressCount: %d, wheel: %d",
+	    "uptime: %d button: {%s,%d}, wheel: {%d,%d}",
 	    to_ms_since_boot(s.Time) / 1000,
 	    s.ButtonPressed ? "true" : "false",
 	    s.PressCount,
-	    s.WheelValue
+	    s.WheelValue,
+	    s.WheelCount
 	);
 
 	printf("\033[%dA\033[36m", lines.size() + 1);

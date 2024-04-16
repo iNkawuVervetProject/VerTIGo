@@ -3,11 +3,13 @@ set(SRC_FILES
 	Display.cpp #
 	Button.cpp #
 	IRSensor.cpp #
+	PIOIRSensor.cpp
 )
 set(HDR_FILES
 	Display.hpp #
 	Button.hpp #
 	IRSensor.hpp #
+	PIOIRSensor.hpp
 )
 
 add_executable(pellet-dispenser ${SRC_FILES} ${HDR_FILES})

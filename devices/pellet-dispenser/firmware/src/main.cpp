@@ -1,6 +1,7 @@
 #include "Button.hpp"
 #include "Display.hpp"
 #include "IRSensor.hpp"
+#include "PIOIRSensor.hpp"
 #include "pico/multicore.h"
 #include "pico/platform.h"
 #include "pico/stdio.h"
@@ -22,7 +23,9 @@ int main() {
 
 	auto testButton = Button(17);
 
-	auto wheelSensor = BitBangIRSensor(21, 20);
+	auto wheelSensor =
+	    PIOIRSensor<1>({.Pio = pio0, .SensorPin = 21, .PeriodUS = 500}, 20);
+	// auto wheelSensor = BitBangIRSensor(21, 20);
 
 	wheelSensor.SetEnabled(true);
 
@@ -38,6 +41,7 @@ int main() {
 		auto newValue = wheelSensor.Process(curTime);
 		if (newValue.has_value()) {
 			Display::State().WheelValue = newValue.value();
+			Display::State().WheelCount++;
 		}
 
 		if (absolute_time_diff_us(curTime, displayTimeout) <= 0) {

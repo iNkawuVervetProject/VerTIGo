@@ -12,6 +12,7 @@ public:
 		bool            ButtonPressed = false;
 		int32_t         PressCount    = 0;
 		int32_t         WheelValue    = 0;
+		int32_t         WheelCount    = 0;
 		absolute_time_t Time          = nil_time;
 	};
 
