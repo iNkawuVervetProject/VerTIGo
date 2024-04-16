@@ -4,12 +4,6 @@
 #include <cmath>
 #include <optional>
 
-#define RAMP_UP_DURATION_US    10000
-#define RAMP_DOWN_DURATION_US  18000
-#define SENSOR_LOWER_THRESHOLD 160
-#define SENSOR_UPPER_THRESHOLD 220
-#define MAX_STEP_TIME_US       400000
-
 WheelController::WheelController(const Config &config)
     : d_driver{config}
     , d_sensor{config, config.SensorEnablePin}
@@ -144,7 +138,7 @@ void WheelController::SetIdle(absolute_time_t time) {
 	d_stateStart = time;
 
 	// invert the direction if too much step in one.
-	if (std::abs(d_position) > 20) {
+	if (std::abs(d_position) > STEP_THRESHOLD) {
 		d_direction *= -1;
 	}
 }

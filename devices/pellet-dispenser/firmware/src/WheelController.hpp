@@ -9,6 +9,13 @@
 
 class WheelController {
 public:
+	const static int  RAMP_UP_DURATION_US    = 10000;
+	const static int  RAMP_DOWN_DURATION_US  = 18000;
+	const static uint SENSOR_LOWER_THRESHOLD = 160;
+	const static uint SENSOR_UPPER_THRESHOLD = 220;
+	const static int  MAX_STEP_TIME_US       = 500000;
+	const static int  STEP_THRESHOLD         = 20;
+
 	struct Config : public DRV8848::Config, public PIOIRSensor<1>::Config {
 		uint SensorEnablePin;
 		int  Speed = 200;
