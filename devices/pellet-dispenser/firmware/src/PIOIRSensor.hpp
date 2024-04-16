@@ -24,7 +24,7 @@ public:
 	PIOIRSensor(const Config &config, T &&...enablePins)
 	    : d_pio{config.Pio}
 	    , d_pin{config.SensorPin}
-	    , d_enablePins{std::forward<uint>(enablePins...)}
+	    , d_enablePins{std::forward<const uint>(enablePins...)}
 	    , d_pulse{config.PulseUS}
 	    , d_period{config.PeriodUS} {
 

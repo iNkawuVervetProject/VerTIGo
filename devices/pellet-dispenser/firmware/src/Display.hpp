@@ -11,10 +11,7 @@ public:
 	struct State {
 		bool            ButtonPressed = false;
 		int32_t         PressCount    = 0;
-		uint32_t        WheelValue    = 0;
-		uint32_t        WheelMin      = 2000;
-		uint32_t        WheelMax      = 0;
-		uint32_t        WheelCount    = 0;
+		int             WheelIndex    = 0;
 		absolute_time_t Time          = nil_time;
 	};
 
