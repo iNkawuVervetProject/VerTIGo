@@ -2,7 +2,10 @@
 
 #include "DRV8848.hpp"
 #include "PIOIRSensor.hpp"
+#include "pico/time.h"
 #include "pico/types.h"
+#include <optional>
+#include <tuple>
 
 class WheelController {
 public:
@@ -11,15 +14,18 @@ public:
 		int  Speed = 200;
 	};
 
+	enum class Error {
+		NO_ERROR = 0,
+		BLOCKED  = 1,
+	};
+
 	WheelController(const Config &config);
 
-	void Process(absolute_time_t time);
+	std::tuple<std::optional<int>, Error> Process(absolute_time_t time);
 
 	int  Position();
 	void Move(int wanted);
 	void Stop();
-
-	bool Stalled() const;
 
 private:
 	enum class State {
@@ -29,10 +35,14 @@ private:
 		RAMPING_DOWN,
 	};
 
+	bool Stalled(absolute_time_t time) const;
+
 	void SetIdle(absolute_time_t);
 	void SetRampingUp(absolute_time_t time);
 	void SetRampingDown(absolute_time_t time);
 	void SetMoving(absolute_time_t time);
+
+	bool ChangeDirection(absolute_time_t time);
 
 	std::optional<int> ProcessSensor(absolute_time_t time);
 
@@ -40,9 +50,11 @@ private:
 	PIOIRSensor<1> d_sensor;
 	State          d_state = State::IDLE;
 	int            d_speed;
-	int            d_direction = 1;
-	bool           d_lastState = false;
+	int            d_direction       = 1;
+	bool           d_lastState       = false;
+	int            d_directionChange = 0;
 
 	int             d_position = -1, d_wanted = 0;
-	absolute_time_t d_rampStart;
+	absolute_time_t d_stateStart = nil_time;
+	absolute_time_t d_lastStep   = nil_time;
 };
