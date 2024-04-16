@@ -2,7 +2,7 @@
 
 .side_set 1 opt pindirs
 
-	mov OSR, X                 ; x is holding the config, simply put it in OSR
+	mov OSR, X     side 0      ; x is holding the config, simply put it in OSR
 	out Y, 16                  ; get the on period (16 LSB of config)
 onloop:                        ;
 	jmp Y-- onloop side 1 [1]  ; keep the output high for pulse, delay to keep
@@ -43,7 +43,6 @@ ir_sensor_program_init(PIO pio, uint sm, uint offset, uint pin) {
 	pio_gpio_init(pio, pin);
 
 	pio_sm_init(pio, sm, offset, &config);
-
 }
 
 inline static void

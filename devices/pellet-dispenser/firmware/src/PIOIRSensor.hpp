@@ -3,6 +3,7 @@
 #include "IRSensor.hpp"
 #include "hardware/gpio.h"
 #include "hardware/pio.h"
+#include "hardware/pio_instructions.h"
 #include "ir_sensor.pio.h"
 #include "pico/types.h"
 #include <optional>
@@ -29,8 +30,8 @@ public:
 
 		d_sm = pio_claim_unused_sm(d_pio, true);
 
-		auto offset = pio_add_program(d_pio, &ir_sensor_program);
-		ir_sensor_program_init(d_pio, d_sm, offset, d_pin);
+		d_offset = pio_add_program(d_pio, &ir_sensor_program);
+		ir_sensor_program_init(d_pio, d_sm, d_offset, d_pin);
 		ir_sensor_program_configure(d_pio, d_sm, d_pulse, d_period);
 
 		for (auto p : d_enablePins) {
@@ -57,8 +58,8 @@ public:
 			return;
 		}
 		if (enabled) {
-			pio_sm_restart(d_pio, d_sm);
 			pio_sm_set_pindirs_with_mask(d_pio, d_sm, 0, (1u << d_pin));
+			pio_sm_exec_wait_blocking(d_pio, d_sm, pio_encode_jmp(d_offset));
 		}
 		for (auto p : d_enablePins) {
 			gpio_put(p, enabled);
@@ -70,6 +71,7 @@ private:
 	PIO  d_pio;
 	uint d_sm;
 	uint d_pin;
+	uint d_offset;
 
 	std::array<uint, N> d_enablePins;
 

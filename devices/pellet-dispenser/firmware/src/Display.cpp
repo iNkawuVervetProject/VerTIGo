@@ -12,7 +12,7 @@
 void formatHeader() {
 	std::string title = "Pellet Dispenser Rev A version 0.0.0";
 	printf(
-	    "\033[2J\n\033[30;46m%*s%*s\033[m\n\n\n",
+	    "\n\033[30;46m%*s%*s\033[m\n\n\n",
 	    40 + title.size() / 2,
 	    title.c_str(),
 	    40 - title.size() / 2,
@@ -25,11 +25,13 @@ void formatState(const struct Display::State &s) {
 
 	sprintf(
 	    lines[0],
-	    "uptime: %d button: {%s,%d}, wheel: {%d,%d}",
+	    "uptime: %d button: {%s,%d}, wheel: {%d,min:%d,max:%d,%d}",
 	    to_ms_since_boot(s.Time) / 1000,
 	    s.ButtonPressed ? "true" : "false",
 	    s.PressCount,
 	    s.WheelValue,
+	    s.WheelMin,
+	    s.WheelMax,
 	    s.WheelCount
 	);
 

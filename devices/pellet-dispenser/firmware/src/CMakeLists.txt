@@ -4,18 +4,21 @@ set(SRC_FILES
 	Button.cpp #
 	IRSensor.cpp #
 	PIOIRSensor.cpp
+	DRV8848.cpp
 )
 set(HDR_FILES
 	Display.hpp #
 	Button.hpp #
 	IRSensor.hpp #
 	PIOIRSensor.hpp
+	DRV8848.hpp
 )
 
 add_executable(pellet-dispenser ${SRC_FILES} ${HDR_FILES})
 
 target_link_libraries(
 	pellet-dispenser pico_stdlib pico_multicore pico_util hardware_pio
+	hardware_pwm
 )
 
 pico_generate_pio_header(
