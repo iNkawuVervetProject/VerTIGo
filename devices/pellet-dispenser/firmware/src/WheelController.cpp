@@ -3,7 +3,8 @@
 #include "pico/types.h"
 #include <optional>
 
-#define RAMP_DURATION_US       1000000
+#define RAMP_UP_DURATION_US    10000
+#define RAMP_DOWN_DURATION_US  18000
 #define SENSOR_LOWER_THRESHOLD 160
 #define SENSOR_UPPER_THRESHOLD 220
 
@@ -29,39 +30,41 @@ void WheelController::Process(absolute_time_t time) {
 		return;
 	case State::RAMPING_UP: {
 		if (newPosition.has_value() && d_position == d_wanted) {
-			d_state     = State::RAMPING_DOWN;
+			printf("got ramping up\n\n\n");
+			d_state = State::IDLE;
+			d_driver.SetChannelB(0);
 			d_rampStart = time;
 			return;
 		}
 		int diff = absolute_time_diff_us(d_rampStart, time);
 
-		if (diff >= RAMP_DURATION_US) {
+		if (diff >= RAMP_UP_DURATION_US) {
 			d_driver.SetChannelB(d_direction * d_speed);
 			d_state     = State::MOVING_TO_TARGET;
 			d_rampStart = time;
 			return;
 		}
-		d_driver.SetChannelB((d_direction * d_speed * diff) / RAMP_DURATION_US);
+		d_driver.SetChannelB(
+		    (d_direction * d_speed * diff) / RAMP_UP_DURATION_US
+		);
 		return;
 	}
 	case State::RAMPING_DOWN: {
 		int diff = absolute_time_diff_us(d_rampStart, time);
-		if (diff >= RAMP_DURATION_US) {
+		if (diff >= RAMP_DOWN_DURATION_US) {
+			d_state = State::IDLE;
 			d_driver.SetChannelB(0);
-			d_state     = State::IDLE;
 			d_rampStart = time;
 			return;
 		}
-		d_driver.SetChannelB(
-		    (d_direction * d_speed * (RAMP_DURATION_US - diff)) /
-		    RAMP_DURATION_US
-		);
 		return;
 	}
 	case State::MOVING_TO_TARGET: {
 		if (newPosition.has_value() && d_position == d_wanted) {
-			d_state     = State::RAMPING_DOWN;
+			d_state = State::RAMPING_DOWN;
+			d_driver.SetChannelB(-1 * d_direction * d_speed);
 			d_rampStart = time;
+			printf("got full speed\n\n\n");
 		}
 		return;
 	}

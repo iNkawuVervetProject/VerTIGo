@@ -42,7 +42,7 @@ int main() {
 	        .PeriodUS  = 500,
 	    },
 	    .SensorEnablePin = 20,
-	    .Speed           = 500,
+	    .Speed           = 600,
 	});
 
 	while (true) {
