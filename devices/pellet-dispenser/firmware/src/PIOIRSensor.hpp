@@ -22,6 +22,7 @@ public:
 	    std::enable_if_t<sizeof...(T) == N, void> * = nullptr>
 	PIOIRSensor(const Config &config, T &&...enablePins)
 	    : d_pio{config.Pio}
+	    , d_pin{config.SensorPin}
 	    , d_enablePins{std::forward<uint>(enablePins...)}
 	    , d_pulse{config.PulseUS}
 	    , d_period{config.PeriodUS} {
@@ -29,7 +30,7 @@ public:
 		d_sm = pio_claim_unused_sm(d_pio, true);
 
 		auto offset = pio_add_program(d_pio, &ir_sensor_program);
-		ir_sensor_program_init(d_pio, d_sm, offset, config.SensorPin);
+		ir_sensor_program_init(d_pio, d_sm, offset, d_pin);
 		ir_sensor_program_configure(d_pio, d_sm, d_pulse, d_period);
 
 		for (auto p : d_enablePins) {
@@ -57,6 +58,7 @@ public:
 		}
 		if (enabled) {
 			pio_sm_restart(d_pio, d_sm);
+			pio_sm_set_pindirs_with_mask(d_pio, d_sm, 0, (1u << d_pin));
 		}
 		for (auto p : d_enablePins) {
 			gpio_put(p, enabled);
@@ -67,6 +69,7 @@ public:
 private:
 	PIO  d_pio;
 	uint d_sm;
+	uint d_pin;
 
 	std::array<uint, N> d_enablePins;
 
