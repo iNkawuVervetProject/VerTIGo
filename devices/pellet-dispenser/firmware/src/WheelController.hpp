@@ -27,6 +27,7 @@ public:
 	};
 
 	WheelController(const Config &config);
+	~WheelController();
 
 	std::tuple<std::optional<int>, Error> Process(absolute_time_t time);
 
@@ -42,16 +43,17 @@ private:
 		RAMPING_DOWN,
 	};
 
-	bool Stalled(absolute_time_t time) const;
+	bool stalled(absolute_time_t time) const;
+	void processNFaultIRQ(uint, uint32_t event);
 
-	void SetIdle(absolute_time_t);
-	void SetRampingUp(absolute_time_t time);
-	void SetRampingDown(absolute_time_t time);
-	void SetMoving(absolute_time_t time);
+	void setIdle(absolute_time_t);
+	void setRampingUp(absolute_time_t time);
+	void setRampingDown(absolute_time_t time);
+	void setMoving(absolute_time_t time);
 
-	bool ChangeDirection(absolute_time_t time);
+	bool changeDirection(absolute_time_t time);
 
-	std::optional<int> ProcessSensor(absolute_time_t time);
+	std::optional<int> processSensor(absolute_time_t time);
 
 	DRV8848        d_driver;
 	PIOIRSensor<1> d_sensor;

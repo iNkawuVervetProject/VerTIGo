@@ -9,6 +9,10 @@ public:
 	};
 
 	DRV8848(const Config &config);
+	~DRV8848();
+
+	DRV8848(const DRV8848 &other)            = delete;
+	DRV8848 &operator=(const DRV8848 &other) = delete;
 
 	void SetEnabled(bool on);
 	void SetChannelA(int value);
@@ -26,6 +30,8 @@ private:
 	private:
 		uint d_slices[2], d_channels[2];
 	};
+
+	void nFaultIRQ(uint, uint32_t event);
 
 	uint    d_nSleep, d_nFault;
 	Channel d_A, d_B;
