@@ -25,11 +25,9 @@ WheelController::Process(absolute_time_t time) {
 		break;
 	case State::RAMPING_UP: {
 		if (Stalled(time)) {
-			if (d_directionChange == 0) {
-				if (!ChangeDirection(time)) {
-					SetIdle(time);
-					return {std::nullopt, Error::BLOCKED};
-				}
+			if (!ChangeDirection(time)) {
+				SetIdle(time);
+				return {std::nullopt, Error::BLOCKED};
 			}
 			break;
 		}
@@ -135,7 +133,8 @@ void WheelController::SetIdle(absolute_time_t time) {
 	d_state = State::IDLE;
 	d_driver.SetEnabled(false);
 	d_sensor.SetEnabled(false);
-	d_stateStart = time;
+	d_stateStart      = time;
+	d_directionChange = 0;
 
 	// invert the direction if too much step in one.
 	if (std::abs(d_position) > STEP_THRESHOLD) {
@@ -144,9 +143,8 @@ void WheelController::SetIdle(absolute_time_t time) {
 }
 
 void WheelController::SetRampingUp(absolute_time_t time) {
-	d_stateStart      = time;
-	d_lastStep        = time;
-	d_directionChange = 0;
+	d_stateStart = time;
+	d_lastStep   = time;
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
 	d_driver.SetChannelB(0);
