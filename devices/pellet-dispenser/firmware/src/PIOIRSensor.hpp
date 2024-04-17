@@ -24,7 +24,7 @@ public:
 	PIOIRSensor(const Config &config, T &&...enablePins)
 	    : d_pio{config.Pio}
 	    , d_pin{config.SensorPin}
-	    , d_enablePins{std::forward<const uint>(enablePins...)}
+	    , d_enablePins{std::forward<T>(enablePins)...}
 	    , d_pulse{config.PulseUS}
 	    , d_period{config.PeriodUS} {
 
@@ -41,7 +41,7 @@ public:
 		}
 	}
 
-	std::optional<uint32_t> Process(absolute_time_t time) override {
+	std::optional<uint> Process(absolute_time_t time) override {
 		uint32_t res = 0xffffffff;
 		// drain all readings
 		while (pio_sm_is_rx_fifo_empty(d_pio, d_sm) == false) {

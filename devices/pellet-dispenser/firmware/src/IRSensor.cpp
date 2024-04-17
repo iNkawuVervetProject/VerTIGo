@@ -38,7 +38,7 @@ void BitBangIRSensor::SetEnabled(bool value) {
 	}
 }
 
-std::optional<uint32_t> BitBangIRSensor::Process(const absolute_time_t time) {
+std::optional<uint> BitBangIRSensor::Process(const absolute_time_t time) {
 	if (gpio_get(d_enablePin) == false) {
 		return std::nullopt;
 	}

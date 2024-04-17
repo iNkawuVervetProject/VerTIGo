@@ -15,7 +15,7 @@ class IRSensor {
 public:
 	virtual ~IRSensor() = default;
 
-	virtual std::optional<uint32_t> Process(const absolute_time_t) = 0;
+	virtual std::optional<uint> Process(const absolute_time_t) = 0;
 
 	virtual void SetEnabled(bool) = 0;
 };
@@ -24,7 +24,7 @@ class BitBangIRSensor : public IRSensor {
 public:
 	BitBangIRSensor(uint pin, uint enablePin);
 
-	std::optional<uint32_t> Process(absolute_time_t time) override;
+	std::optional<uint> Process(absolute_time_t time) override;
 
 	void SetEnabled(bool) override;
 

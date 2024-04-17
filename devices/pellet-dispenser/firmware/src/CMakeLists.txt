@@ -6,6 +6,7 @@ set(SRC_FILES
 	PIOIRSensor.cpp
 	DRV8848.cpp
 	WheelController.cpp
+	PelletCounter.cpp
 )
 set(HDR_FILES
 	Display.hpp #
@@ -14,6 +15,7 @@ set(HDR_FILES
 	PIOIRSensor.hpp
 	DRV8848.hpp
 	WheelController.hpp
+	PelletCounter.hpp
 )
 
 add_executable(pellet-dispenser ${SRC_FILES} ${HDR_FILES})
