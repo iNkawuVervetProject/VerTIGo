@@ -20,10 +20,11 @@ int main() {
 
 	// need to ensure a 10ms break before starting core1... (in the display
 	// loop). Otherwise, core1 will stop.
-	printf("\033[2J\033[m");
 	sleep_ms(10);
 
-	auto displayTimeout = get_absolute_time();
+	printf("\033[2J\033[m");
+
+	auto displayTimeout = make_timeout_time_ms(DISPLAY_PERIOD_MS);
 
 	auto testButton = Button(17);
 
@@ -42,8 +43,10 @@ int main() {
 	        .PeriodUS  = 500,
 	    },
 	    .SensorEnablePin = 20,
-	    .Speed           = 600,
+	    .Speed           = 1024,
 	});
+
+	wheel.Start();
 
 	while (true) {
 		auto curTime = get_absolute_time();
@@ -62,8 +65,8 @@ int main() {
 			Display::State().WheelIndex = newPos.value();
 			wheel.Stop();
 		}
-		if (error != WheelController::Error::NO_ERROR) {
-			printf("Got error: %d", error);
+		if (error != Error::NO_ERROR) {
+			Display::PushError({.Time = curTime, .Error = error});
 		}
 
 		if (absolute_time_diff_us(curTime, displayTimeout) <= 0) {

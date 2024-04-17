@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DRV8848.hpp"
+#include "Error.hpp"
 #include "PIOIRSensor.hpp"
 #include "pico/time.h"
 #include "pico/types.h"
@@ -24,12 +25,6 @@ public:
 		bool UseChannelA = false;
 	};
 
-	enum class Error {
-		NO_ERROR     = 0,
-		BLOCKED      = 1,
-		SENSOR_ISSUE = 2,
-	};
-
 	WheelController(const Config &config);
 	~WheelController();
 
@@ -48,7 +43,6 @@ private:
 		RAMPING_DOWN,
 	};
 
-	void processNFaultIRQ(uint, uint32_t event);
 	bool stalled(absolute_time_t time) const;
 
 	void setIdle(absolute_time_t);
@@ -60,15 +54,15 @@ private:
 
 	std::optional<int> processSensor(absolute_time_t time);
 
-	DRV8848        d_driver;
-	PIOIRSensor<1> d_sensor;
+	DRV8848                 d_driver;
+	PIOIRSensor<1>          d_sensor;
 	const DRV8848::Channel &d_channel;
 
-	State          d_state = State::IDLE;
-	int            d_speed;
-	int            d_direction       = 1;
-	bool           d_lastState       = false;
-	int            d_directionChange = 0;
+	State d_state = State::IDLE;
+	int   d_speed;
+	int   d_direction       = 1;
+	bool  d_lastState       = false;
+	int   d_directionChange = 0;
 
 	int             d_position   = -1;
 	absolute_time_t d_stateStart = nil_time;

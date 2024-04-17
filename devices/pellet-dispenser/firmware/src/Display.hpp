@@ -1,13 +1,20 @@
 #pragma once
 
+#include "Error.hpp"
 #include "pico/time.h"
 #include "pico/types.h"
 #include "pico/util/queue.h"
 
 #include <cstdint>
+#include <vector>
 
 class Display {
 public:
+	struct TimedError {
+		absolute_time_t Time;
+		::Error         Error;
+	};
+
 	struct State {
 		bool            ButtonPressed = false;
 		int32_t         PressCount    = 0;
@@ -17,6 +24,10 @@ public:
 
 	static inline Display::State &State() {
 		return Get().d_state;
+	}
+
+	static inline void PushError(const TimedError &error) {
+		queue_try_add(&Get().d_errorQueue, &error);
 	}
 
 	static inline void Update(absolute_time_t time) {
@@ -36,5 +47,5 @@ private:
 	void update(absolute_time_t time);
 
 	struct State d_state;
-	queue_t      d_queue;
+	queue_t      d_stateQueue, d_errorQueue;
 };

@@ -6,6 +6,8 @@
 #include <memory>
 #include <optional>
 
+#include <cstdio>
+
 WheelController::WheelController(const Config &config)
     : d_driver{config}
     , d_sensor{config, config.SensorEnablePin}
@@ -14,7 +16,7 @@ WheelController::WheelController(const Config &config)
 	setIdle(get_absolute_time());
 }
 
-std::tuple<std::optional<int>, WheelController::Error>
+std::tuple<std::optional<int>, Error>
 WheelController::Process(absolute_time_t time) {
 	auto newPosition = processSensor(time);
 	if (newPosition.has_value()) {
@@ -26,10 +28,13 @@ WheelController::Process(absolute_time_t time) {
 
 	switch (d_state) {
 	case State::IDLE:
+		if (absolute_time_diff_us(d_stateStart, time) >= 500000) {
+			d_sensor.SetEnabled(false);
+		}
 		break;
 	case State::RAMPING_UP: {
 		if (stalled(time)) {
-			err = Error::BLOCKED;
+			err = Error::WHEEL_CONTROLLER_MOTOR_FAULT;
 			if (!changeDirection(time)) {
 				setIdle(time);
 			}
@@ -55,7 +60,7 @@ WheelController::Process(absolute_time_t time) {
 	}
 	case State::MOVING_TO_TARGET: {
 		if (stalled(time)) {
-			err = Error::BLOCKED;
+			err = Error::WHEEL_CONTROLLER_MOTOR_FAULT;
 			if (!changeDirection(time)) {
 				setRampingDown(time);
 			}
@@ -63,7 +68,7 @@ WheelController::Process(absolute_time_t time) {
 		}
 
 		if (absolute_time_diff_us(d_lastStep, time) >= HIGH_STEP_TIME_US) {
-			err = Error::SENSOR_ISSUE;
+			err = Error::WHEEL_CONTROLLER_SENSOR_ISSUE;
 		}
 
 		break;
@@ -81,7 +86,6 @@ void WheelController::Start() {
 	if (d_state != State::IDLE) {
 		return;
 	}
-
 	setRampingUp(get_absolute_time());
 }
 
@@ -122,7 +126,6 @@ std::optional<int> WheelController::processSensor(absolute_time_t time) {
 void WheelController::setIdle(absolute_time_t time) {
 	d_state = State::IDLE;
 	d_driver.SetEnabled(false);
-	d_sensor.SetEnabled(false);
 	d_stateStart      = time;
 	d_directionChange = 0;
 	d_lastStep        = nil_time;
@@ -134,6 +137,7 @@ void WheelController::setIdle(absolute_time_t time) {
 }
 
 void WheelController::setRampingUp(absolute_time_t time) {
+	d_state      = State::RAMPING_UP;
 	d_stateStart = time;
 	d_lastStep   = time;
 	d_driver.SetEnabled(true);
@@ -142,6 +146,7 @@ void WheelController::setRampingUp(absolute_time_t time) {
 }
 
 void WheelController::setRampingDown(absolute_time_t time) {
+	d_state      = State::RAMPING_DOWN;
 	d_stateStart = time;
 	d_lastStep   = nil_time;
 	d_driver.SetEnabled(true);
@@ -151,6 +156,7 @@ void WheelController::setRampingDown(absolute_time_t time) {
 
 void WheelController::setMoving(absolute_time_t time) {
 	d_stateStart = time;
+	d_state      = State::MOVING_TO_TARGET;
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
 	d_channel.Set(d_speed * d_direction);
