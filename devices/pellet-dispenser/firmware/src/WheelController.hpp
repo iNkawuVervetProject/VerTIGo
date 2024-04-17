@@ -11,18 +11,18 @@
 class WheelController {
 public:
 	const static int  RAMP_UP_DURATION_US    = 10000;
-	const static int  RAMP_DOWN_DURATION_US  = 18000;
 	const static uint SENSOR_LOWER_THRESHOLD = 160;
 	const static uint SENSOR_UPPER_THRESHOLD = 220;
-	const static int  HIGH_STEP_TIME_US      = 200 * 1000;
-	const static int  MAX_STEP_TIME_US       = 5 * 1000 * 1000;
+	const static int  HIGH_STEP_TIME_US      = 200 * 1000;      //
+	const static int  MAX_STEP_TIME_US       = 5 * 1000 * 1000; // 5s
 
 	const static int STEP_THRESHOLD = 20;
 
 	struct Config : public DRV8848::Config, public PIOIRSensor<1>::Config {
 		uint SensorEnablePin;
-		int  Speed       = 200;
-		bool UseChannelA = false;
+		int  Speed              = 200;
+		int  RampDownDurationUS = 20000;
+		bool UseChannelA        = false;
 	};
 
 	WheelController(const Config &config);
@@ -60,6 +60,8 @@ private:
 
 	State d_state = State::IDLE;
 	int   d_speed;
+	int   d_rampDownDurationUS;
+
 	int   d_direction       = 1;
 	bool  d_lastState       = false;
 	int   d_directionChange = 0;

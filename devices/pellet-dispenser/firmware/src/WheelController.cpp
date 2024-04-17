@@ -12,7 +12,8 @@ WheelController::WheelController(const Config &config)
     : d_driver{config}
     , d_sensor{config, config.SensorEnablePin}
     , d_channel{config.UseChannelA ? d_driver.A() : d_driver.B()}
-    , d_speed{config.Speed} {
+    , d_speed{config.Speed}
+    , d_rampDownDurationUS{config.RampDownDurationUS} {
 	setIdle(get_absolute_time());
 }
 
@@ -52,7 +53,7 @@ WheelController::Process(absolute_time_t time) {
 	}
 	case State::RAMPING_DOWN: {
 		int diff = absolute_time_diff_us(d_stateStart, time);
-		if (diff >= RAMP_DOWN_DURATION_US) {
+		if (diff >= d_rampDownDurationUS) {
 			setIdle(time);
 			break;
 		}

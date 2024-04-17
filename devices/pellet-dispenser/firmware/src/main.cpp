@@ -43,7 +43,17 @@ int main() {
 	        .PeriodUS  = 500,
 	    },
 	    .SensorEnablePin = 20,
-	    .Speed           = 1024,
+
+	    // seems a linear relationship with 5ms of rampdown per 128th of speed
+	    // 256 -> 5
+	    // 384 -> 10
+	    // 512 -> 15
+	    // 640 -> 20
+	    // 768 -> 25
+	    // 1024 -> 35
+
+	    .Speed              = 512,
+	    .RampDownDurationUS = 15 * 1000,
 	});
 
 	wheel.Start();
