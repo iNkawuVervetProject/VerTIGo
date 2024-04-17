@@ -1,9 +1,15 @@
 #pragma once
 
+#include "pico/time.h"
 #include "pico/types.h"
+#include <functional>
+#include <memory>
 
 class DRV8848 {
 public:
+	const static uint    PWM_RESOLUTION        = (1 << 10);
+	constexpr static int FAULT_ON_THRESHOLD_US = 300 * 1000; // 300ms
+
 	struct Config {
 		uint nSleep, nFault, AIn1, AIn2, BIn1, BIn2;
 	};
@@ -21,9 +27,6 @@ public:
 	DRV8848(const Config &config);
 	~DRV8848();
 
-	DRV8848(const DRV8848 &other)            = delete;
-	DRV8848 &operator=(const DRV8848 &other) = delete;
-
 	void SetEnabled(bool on);
 
 	inline const Channel &A() const {
@@ -39,6 +42,9 @@ public:
 private:
 	void nFaultIRQ(uint, uint32_t event);
 
-	uint    d_nSleep, d_nFault;
-	Channel d_A, d_B;
+	std::unique_ptr<std::function<void()>> d_irqCallback;
+
+	uint            d_nSleep, d_nFault;
+	Channel         d_A, d_B;
+	absolute_time_t d_faultStart = nil_time;
 };

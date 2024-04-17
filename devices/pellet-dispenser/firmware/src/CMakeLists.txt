@@ -7,6 +7,7 @@ set(SRC_FILES
 	DRV8848.cpp
 	WheelController.cpp
 	PelletCounter.cpp
+	IRQManager.cpp
 )
 set(HDR_FILES
 	Display.hpp #
@@ -16,6 +17,7 @@ set(HDR_FILES
 	DRV8848.hpp
 	WheelController.hpp
 	PelletCounter.hpp
+	IRQManager.hpp
 )
 
 add_executable(pellet-dispenser ${SRC_FILES} ${HDR_FILES})

@@ -53,11 +53,18 @@ int main() {
 			Display::State().ButtonPressed = testButton.Pressed;
 			Display::State().PressCount += testButton.Pressed ? 1 : 0;
 			if (testButton.Pressed) {
-				wheel.Move(1);
+				wheel.Start();
 			}
 		}
 
-		wheel.Process(curTime);
+		auto [newPos, error] = wheel.Process(curTime);
+		if (newPos.has_value()) {
+			Display::State().WheelIndex = newPos.value();
+			wheel.Stop();
+		}
+		if (error != WheelController::Error::NO_ERROR) {
+			printf("Got error: %d", error);
+		}
 
 		if (absolute_time_diff_us(curTime, displayTimeout) <= 0) {
 			Display::State().WheelIndex = wheel.Position();

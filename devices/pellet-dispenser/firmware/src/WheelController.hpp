@@ -13,8 +13,10 @@ public:
 	const static int  RAMP_DOWN_DURATION_US  = 18000;
 	const static uint SENSOR_LOWER_THRESHOLD = 160;
 	const static uint SENSOR_UPPER_THRESHOLD = 220;
-	const static int  MAX_STEP_TIME_US       = 500000;
-	const static int  STEP_THRESHOLD         = 20;
+	const static int  HIGH_STEP_TIME_US      = 200 * 1000;
+	const static int  MAX_STEP_TIME_US       = 5 * 1000 * 1000;
+
+	const static int STEP_THRESHOLD = 20;
 
 	struct Config : public DRV8848::Config, public PIOIRSensor<1>::Config {
 		uint SensorEnablePin;
@@ -23,8 +25,9 @@ public:
 	};
 
 	enum class Error {
-		NO_ERROR = 0,
-		BLOCKED  = 1,
+		NO_ERROR     = 0,
+		BLOCKED      = 1,
+		SENSOR_ISSUE = 2,
 	};
 
 	WheelController(const Config &config);
@@ -32,8 +35,9 @@ public:
 
 	std::tuple<std::optional<int>, Error> Process(absolute_time_t time);
 
-	int  Position();
-	void Move(int wanted);
+	int Position();
+
+	void Start();
 	void Stop();
 
 private:
@@ -44,8 +48,8 @@ private:
 		RAMPING_DOWN,
 	};
 
-	bool stalled(absolute_time_t time) const;
 	void processNFaultIRQ(uint, uint32_t event);
+	bool stalled(absolute_time_t time) const;
 
 	void setIdle(absolute_time_t);
 	void setRampingUp(absolute_time_t time);
@@ -66,7 +70,7 @@ private:
 	bool           d_lastState       = false;
 	int            d_directionChange = 0;
 
-	int             d_position = -1, d_wanted = 0;
+	int             d_position   = -1;
 	absolute_time_t d_stateStart = nil_time;
 	absolute_time_t d_lastStep   = nil_time;
 };

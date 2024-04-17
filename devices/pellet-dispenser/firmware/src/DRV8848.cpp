@@ -1,6 +1,8 @@
 #include "DRV8848.hpp"
+#include "IRQManager.hpp"
 #include "hardware/gpio.h"
 #include "hardware/pwm.h"
+#include "pico/time.h"
 #include <algorithm>
 
 #include <cstdio>
@@ -21,6 +23,22 @@ DRV8848::DRV8848(const Config &config)
 
 	gpio_set_dir(d_nFault, 0);
 	gpio_set_pulls(d_nFault, true, false);
+
+	IRQManager::Instance().Register(
+	    d_nFault,
+	    GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL,
+	    [this](uint, uint32_t events) {
+		    if (events & GPIO_IRQ_EDGE_RISE) {
+			    d_faultStart = nil_time;
+		    } else if (events & GPIO_IRQ_EDGE_FALL) {
+			    d_faultStart = get_absolute_time();
+		    }
+	    }
+	);
+}
+
+DRV8848::~DRV8848() {
+	IRQManager::Instance().Unregister(d_nFault);
 }
 
 void DRV8848::SetEnabled(bool on) {
@@ -28,7 +46,9 @@ void DRV8848::SetEnabled(bool on) {
 }
 
 bool DRV8848::HasFault() const {
-	return !gpio_get(d_nFault);
+	return (d_faultStart != nil_time) &&
+	       (absolute_time_diff_us(d_faultStart, get_absolute_time()) >=
+	        FAULT_ON_THRESHOLD_US);
 }
 
 DRV8848::Channel::Channel(uint in1, uint in2) {
