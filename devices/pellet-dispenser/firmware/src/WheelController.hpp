@@ -18,7 +18,8 @@ public:
 
 	struct Config : public DRV8848::Config, public PIOIRSensor<1>::Config {
 		uint SensorEnablePin;
-		int  Speed = 200;
+		int  Speed       = 200;
+		bool UseChannelA = false;
 	};
 
 	enum class Error {
@@ -57,6 +58,8 @@ private:
 
 	DRV8848        d_driver;
 	PIOIRSensor<1> d_sensor;
+	const DRV8848::Channel &d_channel;
+
 	State          d_state = State::IDLE;
 	int            d_speed;
 	int            d_direction       = 1;

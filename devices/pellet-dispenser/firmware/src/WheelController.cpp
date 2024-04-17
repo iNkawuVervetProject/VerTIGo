@@ -9,6 +9,7 @@
 WheelController::WheelController(const Config &config)
     : d_driver{config}
     , d_sensor{config, config.SensorEnablePin}
+    , d_channel{config.UseChannelA ? d_driver.A() : d_driver.B()}
     , d_speed{config.Speed} {
 	setIdle(get_absolute_time());
 	Move(1);
@@ -45,9 +46,7 @@ WheelController::Process(absolute_time_t time) {
 			setMoving(time);
 			break;
 		}
-		d_driver.SetChannelB(
-		    (d_direction * d_speed * diff) / RAMP_UP_DURATION_US
-		);
+		d_channel.Set((d_direction * d_speed * diff) / RAMP_UP_DURATION_US);
 		break;
 	}
 	case State::RAMPING_DOWN: {
@@ -149,21 +148,21 @@ void WheelController::setRampingUp(absolute_time_t time) {
 	d_lastStep   = time;
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
-	d_driver.SetChannelB(0);
+	d_channel.Set(0);
 }
 
 void WheelController::setRampingDown(absolute_time_t time) {
 	d_stateStart = time;
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
-	d_driver.SetChannelB(-512 * d_direction);
+	d_channel.Set(-512 * d_direction);
 }
 
 void WheelController::setMoving(absolute_time_t time) {
 	d_stateStart = time;
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
-	d_driver.SetChannelB(d_speed * d_direction);
+	d_channel.Set(d_speed * d_direction);
 }
 
 bool WheelController::changeDirection(absolute_time_t time) {

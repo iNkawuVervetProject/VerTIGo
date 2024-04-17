@@ -27,14 +27,6 @@ void DRV8848::SetEnabled(bool on) {
 	gpio_put(d_nSleep, on);
 }
 
-void DRV8848::SetChannelA(int value) {
-	d_A.Set(value);
-}
-
-void DRV8848::SetChannelB(int value) {
-	d_B.Set(value);
-}
-
 bool DRV8848::HasFault() const {
 	return !gpio_get(d_nFault);
 }
@@ -60,7 +52,7 @@ DRV8848::Channel::Channel(uint in1, uint in2) {
 	Set(0);
 }
 
-void DRV8848::Channel::Set(int value) {
+void DRV8848::Channel::Set(int value) const {
 	size_t activeIndex = 1;
 	if (value < 0) {
 		activeIndex = 0;
