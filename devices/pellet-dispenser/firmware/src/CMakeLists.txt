@@ -8,6 +8,7 @@ set(SRC_FILES
 	WheelController.cpp
 	PelletCounter.cpp
 	IRQManager.cpp
+	FlashStorage.cpp
 )
 set(HDR_FILES
 	Display.hpp #
@@ -18,13 +19,19 @@ set(HDR_FILES
 	WheelController.hpp
 	PelletCounter.hpp
 	IRQManager.hpp
+	FlashStorage.hpp
 )
 
 add_executable(pellet-dispenser ${SRC_FILES} ${HDR_FILES})
 
 target_link_libraries(
-	pellet-dispenser pico_stdlib pico_multicore pico_util hardware_pio
+	pellet-dispenser
+	pico_stdlib
+	pico_multicore
+	pico_util
+	hardware_pio
 	hardware_pwm
+	hardware_flash
 )
 
 pico_generate_pio_header(

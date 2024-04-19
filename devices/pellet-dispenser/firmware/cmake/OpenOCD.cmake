@@ -1,16 +1,5 @@
 find_program(OPENOCD_EXECUTABLE openocd)
 
-if(OPENOCD_EXECUTABLE)
-	execute_process(
-		COMMAND ${OPENOCD_EXECUTABLE} "--version"
-		ERROR_VARIABLE OCD_VERSION
-		OUTPUT_QUIET
-	)
-	string(REGEX REPLACE ".*Open On-Chip Debugger ([0-9]+\\.[0-9]+\\.[0-9]+).*"
-						 "\\1" OPENOCD_VERSION ${OCD_VERSION}
-	)
-endif()
-
 if(NOT OPENOCD_EXECUTABLE OR OPENOCD_VERSION VERSION_LESS "0.12.0")
 	if(OPENOCD_EXECUTABLE)
 		message(

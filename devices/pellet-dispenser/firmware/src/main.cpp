@@ -1,6 +1,7 @@
 #include "Button.hpp"
 #include "DRV8848.hpp"
 #include "Display.hpp"
+#include "FlashStorage.hpp"
 #include "IRSensor.hpp"
 #include "PIOIRSensor.hpp"
 #include "WheelController.hpp"
@@ -23,6 +24,9 @@ int main() {
 	sleep_ms(10);
 
 	printf("\033[2J\033[m");
+	FlashStorage<int>::Save(1);
+	FlashStorage<double>::Save(2.0);
+	printf("\n\n\n\n\n\n\n\n");
 
 	auto displayTimeout = make_timeout_time_ms(DISPLAY_PERIOD_MS);
 
