@@ -1,19 +1,22 @@
 #include "Display.hpp"
 
+#include "Defer.hpp"
 #include "Error.hpp"
 #include "pico/multicore.h"
 #include "pico/time.h"
 #include "pico/types.h"
 #include "pico/util/queue.h"
+
 #include <array>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <string>
 
 static const char *resetState   = "\033[4A";
 static const char *advanceState = "\n\n\n\n";
 
-void formatHeader() {
+void Display::formatHeader() {
 	std::string title = "Pellet Dispenser Rev A version 0.0.0";
 	printf(
 	    "\n\033[30;46m%*s%*s\033[m\n%s",
@@ -25,7 +28,9 @@ void formatHeader() {
 	);
 }
 
-void formatState(const struct Display::State &s) {
+void Display::formatState() {
+	struct State s;
+	queue_remove_blocking(&d_stateQueue, &s);
 	int ms      = to_ms_since_boot(s.Time);
 	int seconds = ms / 1000;
 	ms          = ms - seconds * 1000;
@@ -53,28 +58,62 @@ void formatState(const struct Display::State &s) {
 	);
 }
 
-Error formatError(Error last, const std::vector<Display::TimedError> &errors) {
-	if (errors.empty()) {
+Error Display::formatError(Error last) {
+	if (queue_is_empty(&d_errorQueue)) {
 		return last;
 	}
 	printf("%s", resetState);
-	for (const auto &[ts, e] : errors) {
-		if (e == last) {
+	defer {
+		printf("%s", advanceState);
+	};
+	struct Display::TimedError error;
+	while (true) {
+		if (queue_try_remove(&d_errorQueue, &error) == false) {
+			break;
+		}
+		if (error.Error == last) {
 			continue;
 		}
-		last    = e;
-		uint us = to_us_since_boot(ts);
-		uint s  = us / 1000000;
-		us -= s * 1000000;
-		printf(
-		    "\033[30;43m       %06d.%06ds: \033[33;40m %-54s ┃\n",
-		    s,
-		    us,
-		    GetErrorDescription(e)
-		);
+		last = error.Error;
+		printf("\033[30;43m");
+		printTime(error.Time);
+		printf("\033[33;40m %-54s ┃\n", GetErrorDescription(error.Error));
 	}
-	printf("%s", advanceState);
+
 	return last;
+}
+
+void Display::formatMessage() {
+	if (queue_is_empty(&d_messageQueue)) {
+		return;
+	}
+	printf("%s", resetState);
+	defer {
+		printf("%s", advanceState);
+	};
+	struct Message msg;
+	while (true) {
+		if (queue_try_remove(&d_messageQueue, &msg) == false) {
+			break;
+		}
+		size_t n = strlen(d_buffer.data() + msg.Start);
+		for (size_t i = 0; i < n; i += 54) {
+			printf("\033[30;46m");
+			if (i == 0) {
+				printTime(msg.Time);
+			} else {
+				printf("                       ");
+			}
+			printf("\033[m %-.54s ┃\n", d_buffer.data() + msg.Start + i);
+		}
+	}
+}
+
+void Display::printTime(absolute_time_t time) {
+	uint us = to_us_since_boot(time);
+	uint s  = us / 1000000;
+	us -= s * 1000000;
+	printf("       %06d.%06ds: ", s, us);
 }
 
 void Display::printLoop() {
@@ -82,32 +121,22 @@ void Display::printLoop() {
 	formatHeader();
 	int i{0};
 
-	struct Display::State toDisplay;
-
 	auto &stateQueue = Display::Get().d_stateQueue;
-	auto &errorQueue = Display::Get().d_errorQueue;
+	auto &self       = Get();
 
-	std::vector<TimedError> newErrors;
-	Error                   last = Error::NO_ERROR;
+	Error last = Error::NO_ERROR;
+
 	while (true) {
-		queue_remove_blocking(&stateQueue, &toDisplay);
-
-		while (queue_is_empty(&errorQueue) == false) {
-			newErrors.push_back({});
-			queue_try_remove(&errorQueue, &newErrors.back());
-		}
-
-		last = formatError(last, newErrors);
-		newErrors.clear();
-
-		formatState(toDisplay);
+		last = self.formatError(last);
+		self.formatMessage();
+		self.formatState();
 	}
 }
 
 Display::Display() {
 	queue_init(&d_stateQueue, sizeof(struct State), 1);
 	queue_init(&d_errorQueue, sizeof(struct TimedError), 10);
-
+	queue_init(&d_messageQueue, sizeof(struct Message), 10);
 	multicore_launch_core1(printLoop);
 }
 

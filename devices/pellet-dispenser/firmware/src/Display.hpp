@@ -5,7 +5,10 @@
 #include "pico/types.h"
 #include "pico/util/queue.h"
 
+#include <array>
 #include <cstdint>
+#include <cstdio>
+#include <utility>
 #include <vector>
 
 class Display {
@@ -38,6 +41,31 @@ public:
 		return Get().update(time);
 	}
 
+	template <typename... Args>
+	static inline void Printf(const char *fmt, Args &&...args) {
+		auto  now     = get_absolute_time();
+		auto &self    = Get();
+		auto  written = snprintf(
+            self.d_buffer.data() + self.d_offset,
+            BufferSize - self.d_offset,
+            fmt,
+            std::forward<Args>(args)...
+        );
+
+		if (self.d_offset != 0 && self.d_offset + written >= BufferSize) {
+			self.d_offset = 0;
+			written       = snprintf(
+                self.d_buffer,
+                BufferSize,
+                fmt,
+                std::forward<Args>(args)...
+            );
+		}
+		Message msg = {.Start = self.d_offset, .Time = now};
+		queue_try_add(&self.d_messageQueue, &msg);
+		self.d_offset += written + 1;
+	}
+
 private:
 	static void printLoop();
 
@@ -46,6 +74,18 @@ private:
 		return instance;
 	};
 
+	struct Message {
+		size_t          Start;
+		absolute_time_t Time;
+	};
+
+	static void formatHeader();
+	static void printTime(absolute_time_t time);
+
+	Error formatError(Error last);
+	void        formatMessage();
+	void        formatState();
+
 	Display();
 
 	void update(absolute_time_t time);
@@ -53,5 +93,9 @@ private:
 	struct State d_state;
 	Error        d_last = Error::NO_ERROR;
 
-	queue_t      d_stateQueue, d_errorQueue;
+	static constexpr size_t BufferSize = 4096;
+
+	std::array<char, BufferSize> d_buffer;
+	size_t                       d_offset = 0;
+	queue_t                      d_stateQueue, d_errorQueue, d_messageQueue;
 };
