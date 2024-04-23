@@ -20,6 +20,7 @@ set(HDR_FILES
 	PelletCounter.hpp
 	IRQManager.hpp
 	FlashStorage.hpp
+	Defer.hpp
 )
 
 add_executable(pellet-dispenser ${SRC_FILES} ${HDR_FILES})
