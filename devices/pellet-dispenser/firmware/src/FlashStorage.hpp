@@ -4,7 +4,9 @@
 #include "hardware/flash.h"
 #include "hardware/regs/addressmap.h"
 #include "hardware/sync.h"
+
 #include <cstdint>
+#include <cstring>
 #include <stdexcept>
 #include <type_traits>
 
@@ -15,7 +17,6 @@ constexpr uint32_t stol_impl(const char *str, uint32_t value) {
 	if (*str == 0) {
 		return value;
 	}
-	assert('0' <= *str && *str <= '9');
 	return stol_impl(str + 1, (*str - '0' + 10 * value));
 };
 
@@ -23,11 +24,101 @@ constexpr uint32_t stol(const char *str) {
 	return stol_impl(str, 0);
 }
 
+constexpr char tolower(char c) {
+	if (c >= 65 && c <= 92) {
+		return c + 32;
+	}
+	return c;
+}
+
+constexpr int getMonFromAbbr(const char *_abbr) {
+	char abbr[3] = {tolower(_abbr[0]), tolower(_abbr[1]), tolower(_abbr[2])};
+
+	if (abbr[0] == 'j' && abbr[1] == 'a' && abbr[2] == 'n') {
+		return 0;
+	}
+	if (abbr[0] == 'f' && abbr[1] == 'e' && abbr[2] == 'b') {
+		return 1;
+	}
+	if (abbr[0] == 'm' && abbr[1] == 'a' && abbr[2] == 'r') {
+		return 2;
+	}
+	if (abbr[0] == 'a' && abbr[1] == 'p' && abbr[2] == 'r') {
+		return 3;
+	}
+	if (abbr[0] == 'm' && abbr[1] == 'a' && abbr[2] == 'y') {
+		return 4;
+	}
+	if (abbr[0] == 'j' && abbr[1] == 'u' && abbr[2] == 'n') {
+		return 5;
+	}
+	if (abbr[0] == 'j' && abbr[1] == 'u' && abbr[2] == 'l') {
+		return 6;
+	}
+	if (abbr[0] == 'a' && abbr[1] == 'u' && abbr[2] == 'g') {
+		return 7;
+	}
+	if (abbr[0] == 's' && abbr[1] == 'e' && abbr[2] == 'p') {
+		return 8;
+	}
+	if (abbr[0] == 'o' && abbr[1] == 'c' && abbr[2] == 't') {
+		return 9;
+	}
+	if (abbr[0] == 'n' && abbr[1] == 'o' && abbr[2] == 'v') {
+		return 10;
+	}
+	if (abbr[0] == 'd' && abbr[1] == 'e' && abbr[2] == 'c') {
+		return 11;
+	}
+	return (-1);
+}
+
+constexpr int64_t epochFromDateAndTime(const char *date, const char *time) {
+	char dayStr[3] = {date[4], date[5], 0};
+
+	uint32_t month = getMonFromAbbr(date);
+
+	uint32_t day  = stol(dayStr);
+	uint32_t year = stol(date + 7);
+
+	char hoursStr[3]   = {time[0], time[1], 0};
+	char minutesStr[3] = {time[3], time[4], 0};
+
+	int64_t hours   = stol(hoursStr);
+	int64_t minutes = stol(minutesStr);
+	int64_t seconds = stol(time + 6);
+
+	int64_t days = int64_t(year - 1970) * 365 + 31 * month + day;
+
+	return days * 24 * 3600 + hours * 3600 + minutes * 60 + seconds;
+}
+
 struct InstanceCounter {
 	inline static size_t Value = 0;
 };
 
+template <typename Lambda> struct Deferrer {
+	Lambda lambda;
+
+	~Deferrer() {
+		lambda();
+	};
+};
+
+struct Defer_void {};
+
+template <typename Lambda>
+Deferrer<Lambda> operator*(Defer_void, Lambda &&lambda) {
+	return {lambda};
+}
+
 } // namespace details
+
+// some
+#define fu_DEFER_UNIQUE_NAME_INNER(a, b) a##b
+#define fu_DEFER_UNIQUE_NAME(base, line) fu_DEFER_UNIQUE_NAME_INNER(base, line)
+#define fu_DEFER_NAME                    fu_DEFER_UNIQUE_NAME(zz_defer, __LINE__)
+#define defer                            auto fu_DEFER_NAME = details::Defer_void{} *[&]()
 
 struct FlashObjectHeader {
 	uint32_t UniqueCode;
@@ -37,9 +128,12 @@ template <
     class T,
     size_t   PagesPerObject = 1,
     size_t   SectorSize     = 1,
-    uint32_t UUID           = details::stol(__TIME__)>
+    uint32_t UUID =
+        uint32_t(details::epochFromDateAndTime(__DATE__, __TIME__ ""))>
 class FlashStorage : public details::InstanceCounter {
 public:
+	const static uint32_t MagicWord = UUID;
+
 	using Type = std::remove_cv_t<std::remove_reference_t<T>>;
 
 	static constexpr size_t MaxObjectSize =
@@ -68,6 +162,11 @@ public:
 	);
 
 	inline static bool Load(T &obj) {
+		uint interrupts = save_and_disable_interrupts();
+		defer {
+			restore_interrupts(interrupts);
+		};
+
 		const Type *valid = nullptr;
 		for (size_t i = 0; i < PagesPerSector * SectorSize;
 		     i += PagesPerObject) {
@@ -88,7 +187,16 @@ public:
 		return true;
 	}
 
-	inline static void Save(const T &obj) {
+	inline static void Save(const Type &obj) {
+		uint interrupts = save_and_disable_interrupts();
+		defer {
+			restore_interrupts(interrupts);
+		};
+
+		if (isSameThanSaved(obj)) {
+			return;
+		}
+
 		size_t i;
 		for (i = 0; i < PagesPerSector * SectorSize; i += PagesPerObject) {
 			const uint8_t *ptr = reinterpret_cast<const uint8_t *>(
@@ -108,9 +216,7 @@ public:
 		}
 
 		if (i == PagesPerSector * SectorSize) {
-			uint interrupts = save_and_disable_interrupts();
 			flash_range_erase(Offset, SectorSize * FLASH_SECTOR_SIZE);
-			restore_interrupts(interrupts);
 			i = 0;
 		}
 
@@ -118,18 +224,27 @@ public:
 		FlashObjectHeader h = {.UniqueCode = UUID};
 
 		memcpy(buffer, &h, sizeof(FlashObjectHeader));
-		memcpy(buffer + sizeof(FlashObjectHeader), &obj, sizeof(obj));
+		memcpy(buffer + sizeof(FlashObjectHeader), &obj, sizeof(Type));
+		memset(
+		    buffer + sizeof(FlashObjectHeader) + sizeof(Type),
+		    0xff,
+		    PagesPerObject * FLASH_PAGE_SIZE - sizeof(FlashObjectHeader) -
+		        sizeof(Type)
+		);
 
-		uint interrupts = save_and_disable_interrupts();
 		flash_range_program(
 		    Offset + i * PagesPerObject * FLASH_PAGE_SIZE,
 		    buffer,
 		    PagesPerObject * FLASH_PAGE_SIZE
 		);
-		restore_interrupts(interrupts);
 	}
 
 	static void Debug() {
+		int interrupts = save_and_disable_interrupts();
+		defer {
+			restore_interrupts(interrupts);
+		};
+
 		constexpr size_t lineSize = 16; // 4 * 20 = 80
 
 		constexpr static auto print4Bytes = [](const uint8_t *data) {
@@ -152,28 +267,53 @@ public:
 			printf(" |\n");
 		};
 
-		constexpr static auto printPage = [](const uint8_t *data) {
+		constexpr static auto printPage = [](const uint8_t *data, int index) {
+			constexpr static size_t lineLength = 32 * 3 + 11;
 			printf(
-			    "%.*s\n",
-			    32 * 3 + 4 + 8 + 3,
+			    "+- %Page:%02d %.*s+\n",
+			    index,
+			    lineLength - 10,
 			    "----------------------------------------------------------"
-			    "------------------------------------------"
+			    "----------------------------------------------------------"
 			);
 			printLine(data);
 			printLine(data + 32);
 			printLine(data + 64);
+			printLine(data + 96);
 			printf(
-			    "%.*s\n",
-			    32 * 3 + 4 + 8 + 3,
+			    "|%.*s|\n",
+			    lineLength,
+			    "                                                              "
+			    "                                                              "
+			);
+			printLine(data + 128);
+			printLine(data + 160);
+			printLine(data + 192);
+			printLine(data + 224);
+			printf(
+			    "+%.*s+\n",
+			    lineLength,
 			    "----------------------------------------------------------"
-			    "------------------------------------------"
+			    "----------------------------------------------------------"
 			);
 		};
-		for (size_t i = 0; i < SectorSize * FLASH_SECTOR_SIZE; i += 128) {
-			printLine(reinterpret_cast<const uint8_t *>(XIP_BASE + Offset + i));
+		for (size_t i = 0; i < SectorSize * FLASH_SECTOR_SIZE; i += 256) {
+			printPage(
+			    reinterpret_cast<const uint8_t *>(XIP_BASE + Offset + i),
+			    i / 256
+			);
 		}
 	}
 
-	    private : static constexpr uint Offset =
-		              PICO_FLASH_SIZE_BYTES - SectorSize * FLASH_SECTOR_SIZE;
-	};
+private:
+	static constexpr uint Offset =
+	    PICO_FLASH_SIZE_BYTES - SectorSize * FLASH_SECTOR_SIZE;
+
+	static bool isSameThanSaved(const Type &obj) {
+		Type saved;
+		if (!Load(saved)) {
+			return false;
+		}
+		return memcmp(&saved, &obj, sizeof(Type)) == 0;
+	}
+};

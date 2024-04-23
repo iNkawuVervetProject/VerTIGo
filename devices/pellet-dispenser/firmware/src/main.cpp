@@ -16,7 +16,9 @@
 
 #define DISPLAY_PERIOD_MS 200
 
-struct Config {};
+struct Config {
+	int Value = 34;
+};
 
 int main() {
 	stdio_init_all();
@@ -26,9 +28,7 @@ int main() {
 	sleep_ms(10);
 
 	printf("\033[2J\033[m");
-
-	FlashStorage<Config>::Debug();
-	printf("\n\n\n\n\n");
+	Config config;
 
 	auto displayTimeout = make_timeout_time_ms(DISPLAY_PERIOD_MS);
 
