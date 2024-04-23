@@ -1,36 +1,15 @@
 #pragma once
 
+#include "boards/pico.h"
 #include "hardware/flash.h"
-#include <cstdio>
+#include "hardware/regs/addressmap.h"
+#include "hardware/sync.h"
+#include <cstdint>
+#include <stdexcept>
 #include <type_traits>
-#include <typeinfo>
-
-#ifndef FLASH_STORAGE_NUMBER_OF_SECTORS
-#define FLASH_STORAGE_NUMBER_OF_SECTORS 1
-#endif
-
-#ifndef FLASH_STORAGE_NUMBER_OF_PAGES
-#define FLASH_STORAGE_NUMBER_OF_PAGES 1
-#endif
-
-#define FLASH_PAGES_PER_SECTOR (FLASH_SECTOR_SIZE / FLASH_PAGE_SIZE)
-
-static_assert(
-    (FLASH_STORAGE_NUMBER_OF_PAGES <= FLASH_PAGES_PER_SECTOR) &&
-        ((FLASH_PAGES_PER_SECTOR % FLASH_STORAGE_NUMBER_OF_PAGES) == 0),
-    "Invalid page size"
-);
 
 // Utils to comppute unique hash for a class
 namespace details {
-
-// compile time FNV-1a
-constexpr uint32_t
-Hash32_CT(const char *str, uint32_t basis = uint32_t(2166136261UL)) {
-	return *str == 0
-	           ? basis
-	           : Hash32_CT(str + 1, (basis ^ str[0]) * uint32_t(16777619UL));
-}
 
 constexpr uint32_t stol_impl(const char *str, uint32_t value) {
 	if (*str == 0) {
@@ -44,47 +23,157 @@ constexpr uint32_t stol(const char *str) {
 	return stol_impl(str, 0);
 }
 
-template <typename T> class TypeID {
-public:
-	constexpr static size_t typeID() {
-		return details::Hash32_CT(__PRETTY_FUNCTION__);
-	}
+struct InstanceCounter {
+	inline static size_t Value = 0;
 };
 
 } // namespace details
 
 struct FlashObjectHeader {
 	uint32_t UniqueCode;
-	uint16_t Hash;
-	uint16_t Size;
 };
 
-#ifdef FLASH_STORAGE_UUID
-static constexpr int32_t FlashStorageUUID = FLASH_STORAGE_UUID;
-#else
-static constexpr uint32_t FlashStorageUUID = details::stol(__TIME__);
-#endif
-
-template <class T> class FlashStorage {
+template <
+    class T,
+    size_t   PagesPerObject = 1,
+    size_t   SectorSize     = 1,
+    uint32_t UUID           = details::stol(__TIME__)>
+class FlashStorage : public details::InstanceCounter {
 public:
-	using Type                   = std::remove_cv_t<std::remove_reference_t<T>>;
-	constexpr static size_t Hash = details::TypeID<Type>::typeID();
+	using Type = std::remove_cv_t<std::remove_reference_t<T>>;
 
 	static constexpr size_t MaxObjectSize =
-	    FLASH_STORAGE_NUMBER_OF_PAGES * FLASH_PAGE_SIZE -
-	    sizeof(FlashObjectHeader);
+	    PagesPerObject * FLASH_PAGE_SIZE - sizeof(FlashObjectHeader);
+
+	static constexpr size_t PagesPerSector =
+	    FLASH_SECTOR_SIZE / FLASH_PAGE_SIZE;
+
+	static_assert(
+	    PagesPerObject > 0, "Invalid PagesPerObject: must be strictly positive"
+	);
+	static_assert(
+	    PagesPerObject <= PagesPerSector,
+	    "Invalid PagesPerObject: must fit in a single sector"
+	);
+	static_assert(
+	    PagesPerSector % PagesPerObject == 0,
+	    "Invalid PagesPerObject: must be a divisor of number of pages in a "
+	    "sector"
+	);
 
 	static_assert(
 	    sizeof(T) < MaxObjectSize,
 	    "Maximal Allowed Object Size exceeded, try Increase "
-	    "FLASH_STORAGE_NUMBER_OF_PAGES"
+	    "PagesPerObject"
 	);
 
 	inline static bool Load(T &obj) {
-		return false;
+		const Type *valid = nullptr;
+		for (size_t i = 0; i < PagesPerSector * SectorSize;
+		     i += PagesPerObject) {
+			const FlashObjectHeader *h = reinterpret_cast<FlashObjectHeader *>(
+			    XIP_BASE + Offset + i * FLASH_PAGE_SIZE
+			);
+			if (h->UniqueCode == UUID) {
+				valid = reinterpret_cast<const Type *>(
+				    reinterpret_cast<const uint8_t *>(h) +
+				    sizeof(FlashObjectHeader)
+				);
+			}
+		}
+		if (valid == nullptr) {
+			return false;
+		}
+		obj = *valid;
+		return true;
 	}
 
-	inline static void Save(const T &obj) {}
+	inline static void Save(const T &obj) {
+		size_t i;
+		for (i = 0; i < PagesPerSector * SectorSize; i += PagesPerObject) {
+			const uint8_t *ptr = reinterpret_cast<const uint8_t *>(
+			    XIP_BASE + Offset + i * FLASH_PAGE_SIZE
+			);
+			bool isFree = true;
+			for (size_t j = 0; j < sizeof(FlashObjectHeader) + sizeof(Type);
+			     j++) {
+				if (*(ptr + j) != 0xff) {
+					isFree = false;
+					break;
+				}
+			}
+			if (isFree == true) {
+				break;
+			}
+		}
 
-private:
-};
+		if (i == PagesPerSector * SectorSize) {
+			uint interrupts = save_and_disable_interrupts();
+			flash_range_erase(Offset, SectorSize * FLASH_SECTOR_SIZE);
+			restore_interrupts(interrupts);
+			i = 0;
+		}
+
+		uint8_t           buffer[PagesPerObject * FLASH_PAGE_SIZE];
+		FlashObjectHeader h = {.UniqueCode = UUID};
+
+		memcpy(buffer, &h, sizeof(FlashObjectHeader));
+		memcpy(buffer + sizeof(FlashObjectHeader), &obj, sizeof(obj));
+
+		uint interrupts = save_and_disable_interrupts();
+		flash_range_program(
+		    Offset + i * PagesPerObject * FLASH_PAGE_SIZE,
+		    buffer,
+		    PagesPerObject * FLASH_PAGE_SIZE
+		);
+		restore_interrupts(interrupts);
+	}
+
+	static void Debug() {
+		constexpr size_t lineSize = 16; // 4 * 20 = 80
+
+		constexpr static auto print4Bytes = [](const uint8_t *data) {
+			printf("%02X %02X %02X %02X", data[0], data[1], data[2], data[3]);
+		};
+		constexpr static auto print16Bytes = [](const uint8_t *data) {
+			print4Bytes(data);
+			printf("  ");
+			print4Bytes(data + 4);
+			printf(" . ");
+			print4Bytes(data + 8);
+			printf("  ");
+			print4Bytes(data + 12);
+		};
+		constexpr static auto printLine = [](const uint8_t *data) {
+			printf("| ");
+			print16Bytes(data);
+			printf(" - ");
+			print16Bytes(data + 16);
+			printf(" |\n");
+		};
+
+		constexpr static auto printPage = [](const uint8_t *data) {
+			printf(
+			    "%.*s\n",
+			    32 * 3 + 4 + 8 + 3,
+			    "----------------------------------------------------------"
+			    "------------------------------------------"
+			);
+			printLine(data);
+			printLine(data + 32);
+			printLine(data + 64);
+			printf(
+			    "%.*s\n",
+			    32 * 3 + 4 + 8 + 3,
+			    "----------------------------------------------------------"
+			    "------------------------------------------"
+			);
+		};
+		for (size_t i = 0; i < SectorSize * FLASH_SECTOR_SIZE; i += 128) {
+			printLine(reinterpret_cast<const uint8_t *>(XIP_BASE + Offset + i));
+		}
+	}
+
+	    private : static constexpr uint Offset =
+		              PICO_FLASH_SIZE_BYTES - SectorSize * FLASH_SECTOR_SIZE;
+	};

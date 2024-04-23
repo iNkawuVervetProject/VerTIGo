@@ -16,6 +16,8 @@
 
 #define DISPLAY_PERIOD_MS 200
 
+struct Config {};
+
 int main() {
 	stdio_init_all();
 
@@ -25,7 +27,8 @@ int main() {
 
 	printf("\033[2J\033[m");
 
-	printf("UUID: %d\n\n\n\n\n\n", FlashStorageUUID);
+	FlashStorage<Config>::Debug();
+	printf("\n\n\n\n\n");
 
 	auto displayTimeout = make_timeout_time_ms(DISPLAY_PERIOD_MS);
 

@@ -12,6 +12,8 @@ include(ExternalProject)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(OpenOCD)
 
+set(PICO_CXX_ENABLE_EXCEPTIONS 1)
+
 pico_sdk_init()
 
 set(CMAKE_C_STANDARD 17)

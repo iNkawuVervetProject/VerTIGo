@@ -26,7 +26,6 @@ public:
 	};
 
 	WheelController(const Config &config);
-	~WheelController();
 
 	std::tuple<std::optional<int>, Error> Process(absolute_time_t time);
 
