@@ -31,23 +31,6 @@ int main() {
 
 	printf("\033[2J\033[m");
 
-	Display::Printf("coucou");
-	Display::Printf(
-	    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris ut "
-	    "turpis eget neque commodo volutpat. Etiam cursus convallis purus, "
-	    "placerat pretium justo sollicitudin id. Pellentesque mollis hendrerit "
-	    "tortor quis rutrum. Curabitur pharetra risus libero, nec ultrices "
-	    "orci sollicitudin eleifend. Fusce sed dapibus eros. Ut consectetur "
-	    "feugiat purus. Praesent auctor nisl nunc, vel semper orci pulvinar "
-	    "iaculis. Sed auctor tempor velit. Sed eu fringilla magna. Quisque "
-	    "maximus augue non odio sagittis, vitae iaculis lorem ultrices. "
-	    "Suspendisse potenti. Aenean volutpat enim tempus, consequat ipsum "
-	    "vulputate, pharetra sapien. Praesent sagittis augue eget velit "
-	    "hendrerit, eget laoreet nunc convallis. Sed pharetra ultricies "
-	    "aliquam. Pellentesque convallis justo id metus aliquam maximus quis "
-	    "eget lacus. Donec pellentesque pulvinar aliquet."
-	);
-
 	auto displayTimeout = make_timeout_time_ms(DISPLAY_PERIOD_MS);
 
 	auto testButton = Button(17);
@@ -80,6 +63,7 @@ int main() {
 
 		// Critical task here
 		if (testButton.Process(curTime)) {
+
 			Display::State().ButtonPressed = testButton.Pressed;
 			Display::State().PressCount += testButton.Pressed ? 1 : 0;
 			if (testButton.Pressed) {

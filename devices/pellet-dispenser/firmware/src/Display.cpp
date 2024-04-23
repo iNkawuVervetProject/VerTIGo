@@ -104,7 +104,16 @@ void Display::formatMessage() {
 			} else {
 				printf("                       ");
 			}
-			printf("\033[m %-.54s ┃\n", d_buffer.data() + msg.Start + i);
+			printf("\033[m %-.54s ", d_buffer.data() + msg.Start + i);
+			if (i + 54 < n) {
+				printf("\033[36m┃\n");
+			} else {
+				printf(
+				    "%.*s\033[36m┃\n",
+				    54 - n + i,
+				    "                                                      "
+				);
+			}
 		}
 	}
 }
