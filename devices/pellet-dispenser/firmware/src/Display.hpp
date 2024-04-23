@@ -55,7 +55,7 @@ public:
 		if (self.d_offset != 0 && self.d_offset + written >= BufferSize) {
 			self.d_offset = 0;
 			written       = snprintf(
-                self.d_buffer,
+                self.d_buffer.data(),
                 BufferSize,
                 fmt,
                 std::forward<Args>(args)...
