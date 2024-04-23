@@ -18,12 +18,16 @@
 
 #define DISPLAY_PERIOD_MS 200
 
+static Config config;
+
 int main() {
 	stdio_init_all();
+	auto endInit = make_timeout_time_us(10 * 1000);
+	FlashStorage<Config>::Load(config);
 
 	// need to ensure a 10ms break before starting core1... (in the display
 	// loop). Otherwise, core1 will stop.
-	sleep_ms(10);
+	sleep_until(endInit);
 
 	printf("\033[2J\033[m");
 	Config config;

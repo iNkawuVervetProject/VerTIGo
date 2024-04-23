@@ -1,12 +1,13 @@
 #include "WheelController.hpp"
+
 #include "hardware/gpio.h"
 #include "pico/time.h"
 #include "pico/types.h"
+
 #include <cmath>
+#include <cstdio>
 #include <memory>
 #include <optional>
-
-#include <cstdio>
 
 WheelController::WheelController(
     const StaticConfig &staticConfig, const Config &config

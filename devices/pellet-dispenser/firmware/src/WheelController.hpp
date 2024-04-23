@@ -17,10 +17,11 @@ public:
 	};
 
 	struct Config {
-		DRV8848::OutputChannel Channel           = DRV8848::OutputChannel::A;
-		uint                   Speed             = 200;
-		uint                   RampUpDuration_us = 10000;
-		uint                   RewindPulse_us    = 20000;
+		DRV8848::OutputChannel Channel = DRV8848::OutputChannel::A;
+
+		uint Speed             = 200;
+		uint RampUpDuration_us = 10000;
+		uint RewindPulse_us    = 20000;
 
 		uint SensorLowerThreshold = 160;
 		uint SensorUpperThreshold = 220;
