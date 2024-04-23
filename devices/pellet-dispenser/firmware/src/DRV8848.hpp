@@ -14,6 +14,11 @@ public:
 		uint nSleep, nFault, AIn1, AIn2, BIn1, BIn2;
 	};
 
+	enum class OutputChannel {
+		A = 0,
+		B = 1,
+	};
+
 	class Channel {
 	public:
 		Channel(uint in1, uint in2);
@@ -29,11 +34,18 @@ public:
 
 	void SetEnabled(bool on);
 
-	inline const Channel &A() const {
+	inline const class Channel &Channel(OutputChannel c) const {
+		if (c == OutputChannel::A) {
+			return d_A;
+		}
+		return d_B;
+	};
+
+	inline const class Channel &A() const {
 		return d_A;
 	}
 
-	inline const Channel &B() const {
+	inline const class Channel &B() const {
 		return d_B;
 	}
 
@@ -45,6 +57,6 @@ private:
 	std::unique_ptr<std::function<void()>> d_irqCallback;
 
 	uint            d_nSleep, d_nFault;
-	Channel         d_A, d_B;
+	class Channel   d_A, d_B;
 	absolute_time_t d_faultStart = nil_time;
 };

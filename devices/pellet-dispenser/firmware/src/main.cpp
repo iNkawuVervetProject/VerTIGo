@@ -1,10 +1,3 @@
-#include "Button.hpp"
-#include "DRV8848.hpp"
-#include "Display.hpp"
-#include "FlashStorage.hpp"
-#include "IRSensor.hpp"
-#include "PIOIRSensor.hpp"
-#include "WheelController.hpp"
 #include "pico/multicore.h"
 #include "pico/platform.h"
 #include "pico/stdio.h"
@@ -12,13 +5,18 @@
 #include "pico/time.h"
 #include "pico/types.h"
 
+#include "Button.hpp"
+#include "Config.hpp"
+#include "DRV8848.hpp"
+#include "Display.hpp"
+#include "FlashStorage.hpp"
+#include "IRSensor.hpp"
+#include "PIOIRSensor.hpp"
+#include "WheelController.hpp"
+
 #include <stdio.h>
 
 #define DISPLAY_PERIOD_MS 200
-
-struct Config {
-	int Value = 34;
-};
 
 int main() {
 	stdio_init_all();
@@ -34,33 +32,26 @@ int main() {
 
 	auto testButton = Button(17);
 
-	auto wheel = WheelController({
-	    DRV8848::Config{
-	        .nSleep = 2,
-	        .nFault = 9,
-	        .AIn1   = 3,
-	        .AIn2   = 6,
-	        .BIn1   = 8,
-	        .BIn2   = 7,
-	    },
-	    PIOIRSensor<1>::Config{
-	        .Pio       = pio0,
-	        .SensorPin = 21,
-	        .PeriodUS  = 500,
-	    },
-	    .SensorEnablePin = 20,
+	auto wheel = WheelController(
+	    {
+	        DRV8848::Config{
+	            .nSleep = 2,
+	            .nFault = 9,
+	            .AIn1   = 3,
+	            .AIn2   = 6,
+	            .BIn1   = 8,
+	            .BIn2   = 7,
+	        },
+	        PIOIRSensor<1>::Config{
+	            .Pio       = pio0,
+	            .SensorPin = 21,
+	            .PeriodUS  = 500,
+	        },
+	        .SensorEnablePin = 20,
 
-	    // seems a linear relationship with 5ms of rampdown per 128th of speed
-	    // 256 -> 5
-	    // 384 -> 10
-	    // 512 -> 15
-	    // 640 -> 20
-	    // 768 -> 25
-	    // 1024 -> 35
-
-	    .Speed              = 512,
-	    .RampDownDurationUS = 15 * 1000,
-	});
+	    },
+	    config.Wheel
+	);
 
 	wheel.Start();
 

@@ -8,12 +8,12 @@
 
 #include <cstdio>
 
-WheelController::WheelController(const Config &config)
-    : d_driver{config}
-    , d_sensor{config, config.SensorEnablePin}
-    , d_channel{config.UseChannelA ? d_driver.A() : d_driver.B()}
-    , d_speed{config.Speed}
-    , d_rampDownDurationUS{config.RampDownDurationUS} {
+WheelController::WheelController(
+    const StaticConfig &staticConfig, const Config &config
+)
+    : d_driver{staticConfig}
+    , d_sensor{staticConfig, staticConfig.SensorEnablePin}
+    , d_config{config} {
 	setIdle(get_absolute_time());
 }
 
@@ -44,16 +44,18 @@ WheelController::Process(absolute_time_t time) {
 
 		int diff = absolute_time_diff_us(d_stateStart, time);
 
-		if (diff >= RAMP_UP_DURATION_US) {
+		if (diff >= d_config.RampUpDuration_us) {
 			setMoving(time);
 			break;
 		}
-		d_channel.Set((d_direction * d_speed * diff) / RAMP_UP_DURATION_US);
+		Channel().Set(
+		    (d_direction * d_config.Speed * diff) / d_config.RampUpDuration_us
+		);
 		break;
 	}
 	case State::RAMPING_DOWN: {
 		int diff = absolute_time_diff_us(d_stateStart, time);
-		if (diff >= d_rampDownDurationUS) {
+		if (diff >= d_config.RewindPulse_us) {
 			setIdle(time);
 			break;
 		}
@@ -68,7 +70,7 @@ WheelController::Process(absolute_time_t time) {
 			break;
 		}
 
-		if (absolute_time_diff_us(d_lastStep, time) >= HIGH_STEP_TIME_US) {
+		if (absolute_time_diff_us(d_lastStep, time) >= d_config.HighStep_us) {
 			err = Error::WHEEL_CONTROLLER_SENSOR_ISSUE;
 		}
 
@@ -112,11 +114,11 @@ std::optional<int> WheelController::processSensor(absolute_time_t time) {
 	}
 
 	if (d_lastState) {
-		if (newValue.value() < SENSOR_LOWER_THRESHOLD) {
+		if (newValue.value() < d_config.SensorLowerThreshold) {
 			d_lastState = !d_lastState;
 		}
 	} else {
-		if (newValue.value() > SENSOR_UPPER_THRESHOLD) {
+		if (newValue.value() > d_config.SensorUpperThreshold) {
 			d_lastState = !d_lastState;
 			return d_position + d_direction;
 		}
@@ -132,7 +134,7 @@ void WheelController::setIdle(absolute_time_t time) {
 	d_lastStep        = nil_time;
 
 	// invert the direction if too much step in one.
-	if (std::abs(d_position) > STEP_THRESHOLD) {
+	if (std::abs(d_position) > d_config.StepReverseThreshold) {
 		d_direction *= -1;
 	}
 }
@@ -143,7 +145,7 @@ void WheelController::setRampingUp(absolute_time_t time) {
 	d_lastStep   = time;
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
-	d_channel.Set(0);
+	Channel().Set(0);
 }
 
 void WheelController::setRampingDown(absolute_time_t time) {
@@ -152,7 +154,7 @@ void WheelController::setRampingDown(absolute_time_t time) {
 	d_lastStep   = nil_time;
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
-	d_channel.Set(-512 * d_direction);
+	Channel().Set(-512 * d_direction);
 }
 
 void WheelController::setMoving(absolute_time_t time) {
@@ -160,7 +162,7 @@ void WheelController::setMoving(absolute_time_t time) {
 	d_state      = State::MOVING_TO_TARGET;
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
-	d_channel.Set(d_speed * d_direction);
+	Channel().Set(d_config.Speed * d_direction);
 }
 
 bool WheelController::changeDirection(absolute_time_t time) {
@@ -175,5 +177,5 @@ bool WheelController::changeDirection(absolute_time_t time) {
 bool WheelController::stalled(absolute_time_t time) const {
 	return d_driver.HasFault() ||
 	       (d_lastStep != nil_time &&
-	        absolute_time_diff_us(d_lastStep, time) >= MAX_STEP_TIME_US);
+	        absolute_time_diff_us(d_lastStep, time) >= d_config.MaxStep_us);
 }

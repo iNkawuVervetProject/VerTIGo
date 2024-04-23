@@ -2,6 +2,7 @@
 
 #include "DRV8848.hpp"
 #include "Error.hpp"
+#include "IRSensor.hpp"
 #include "PIOIRSensor.hpp"
 #include "pico/time.h"
 #include "pico/types.h"
@@ -10,22 +11,27 @@
 
 class WheelController {
 public:
-	const static int  RAMP_UP_DURATION_US    = 10000;
-	const static uint SENSOR_LOWER_THRESHOLD = 160;
-	const static uint SENSOR_UPPER_THRESHOLD = 220;
-	const static int  HIGH_STEP_TIME_US      = 200 * 1000;      //
-	const static int  MAX_STEP_TIME_US       = 5 * 1000 * 1000; // 5s
-
-	const static int STEP_THRESHOLD = 20;
-
-	struct Config : public DRV8848::Config, public PIOIRSensor<1>::Config {
-		uint SensorEnablePin;
-		int  Speed              = 200;
-		int  RampDownDurationUS = 20000;
-		bool UseChannelA        = false;
+	struct StaticConfig : public DRV8848::Config,
+	                      public ::PIOIRSensor<1>::Config {
+		uint SensorEnablePin = -1;
 	};
 
-	WheelController(const Config &config);
+	struct Config {
+		DRV8848::OutputChannel Channel           = DRV8848::OutputChannel::A;
+		uint                   Speed             = 200;
+		uint                   RampUpDuration_us = 10000;
+		uint                   RewindPulse_us    = 20000;
+
+		uint SensorLowerThreshold = 160;
+		uint SensorUpperThreshold = 220;
+
+		uint HighStep_us = 200 * 1000;
+		uint MaxStep_us  = 2 * 1000 * 1000;
+
+		uint StepReverseThreshold = 20;
+	};
+
+	WheelController(const StaticConfig &staticConfig, const Config &config);
 
 	std::tuple<std::optional<int>, Error> Process(absolute_time_t time);
 
@@ -42,6 +48,10 @@ private:
 		RAMPING_DOWN,
 	};
 
+	inline const class DRV8848::Channel &Channel() const {
+		return d_driver.Channel(d_config.Channel);
+	}
+
 	bool stalled(absolute_time_t time) const;
 
 	void setIdle(absolute_time_t);
@@ -53,17 +63,15 @@ private:
 
 	std::optional<int> processSensor(absolute_time_t time);
 
-	DRV8848                 d_driver;
-	PIOIRSensor<1>          d_sensor;
-	const DRV8848::Channel &d_channel;
+	const Config  &d_config;
+	DRV8848        d_driver;
+	PIOIRSensor<1> d_sensor;
 
 	State d_state = State::IDLE;
-	int   d_speed;
-	int   d_rampDownDurationUS;
 
-	int   d_direction       = 1;
-	bool  d_lastState       = false;
-	int   d_directionChange = 0;
+	int  d_direction       = 1;
+	bool d_lastState       = false;
+	int  d_directionChange = 0;
 
 	int             d_position   = -1;
 	absolute_time_t d_stateStart = nil_time;
