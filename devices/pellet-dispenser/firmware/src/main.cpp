@@ -5,8 +5,16 @@
 #include "pico/time.h"
 #include "pico/types.h"
 
+#ifdef USB_INTERFACE
 #include "bsp/board.h"
 #include "tusb.h"
+#else
+inline void board_init() {}
+
+inline void tusb_init() {}
+
+inline void tud_task() {}
+#endif
 
 #include "hardware/FlashStorage.hpp"
 
