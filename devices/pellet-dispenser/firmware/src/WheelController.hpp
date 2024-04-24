@@ -30,8 +30,6 @@ public:
 
 		uint HighStep_us = 200 * 1000;
 		uint MaxStep_us  = 2 * 1000 * 1000;
-
-		uint StepReverseThreshold = 20;
 	};
 
 	WheelController(const StaticConfig &staticConfig, const Config &config);
@@ -40,7 +38,7 @@ public:
 
 	int Position();
 
-	void Start();
+	void Start(int direction = 1);
 	void Stop();
 
 private:
@@ -62,8 +60,6 @@ private:
 	void setRampingDown(absolute_time_t time);
 	void setMoving(absolute_time_t time);
 
-	bool changeDirection(absolute_time_t time);
-
 	std::tuple<std::optional<int>, Error> processSensor(absolute_time_t time);
 
 	const Config  &d_config;
@@ -74,7 +70,6 @@ private:
 
 	int  d_direction       = 1;
 	bool d_lastState       = false;
-	int  d_directionChange = 0;
 
 	int             d_position   = -1;
 	absolute_time_t d_stateStart = nil_time;

@@ -4,6 +4,7 @@
 #include "pico/time.h"
 #include "pico/types.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <memory>
@@ -35,9 +36,7 @@ WheelController::Process(absolute_time_t time) {
 	case State::RAMPING_UP: {
 		if (stalled(time)) {
 			err = Error::WHEEL_CONTROLLER_MOTOR_FAULT;
-			if (!changeDirection(time)) {
-				setIdle(time);
-			}
+			setIdle(time);
 			break;
 		}
 
@@ -63,9 +62,7 @@ WheelController::Process(absolute_time_t time) {
 	case State::MOVING_TO_TARGET: {
 		if (stalled(time)) {
 			err = Error::WHEEL_CONTROLLER_MOTOR_FAULT;
-			if (!changeDirection(time)) {
-				setRampingDown(time);
-			}
+			setIdle(time);
 			break;
 		}
 
@@ -84,10 +81,11 @@ int WheelController::Position() {
 	return d_position;
 }
 
-void WheelController::Start() {
+void WheelController::Start(int direction) {
 	if (d_state != State::IDLE) {
 		return;
 	}
+	d_direction = direction > 0 ? 1 : -1;
 	setRampingUp(get_absolute_time());
 }
 
@@ -133,14 +131,8 @@ WheelController::processSensor(absolute_time_t time) {
 void WheelController::setIdle(absolute_time_t time) {
 	d_state = State::IDLE;
 	d_driver.SetEnabled(false);
-	d_stateStart      = time;
-	d_directionChange = 0;
-	d_lastStep        = nil_time;
-
-	// invert the direction if too much step in one.
-	if (std::abs(d_position) > d_config.StepReverseThreshold) {
-		d_direction *= -1;
-	}
+	d_stateStart = time;
+	d_lastStep   = nil_time;
 }
 
 void WheelController::setRampingUp(absolute_time_t time) {
@@ -167,15 +159,6 @@ void WheelController::setMoving(absolute_time_t time) {
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
 	Channel().Set(d_config.Speed * d_direction);
-}
-
-bool WheelController::changeDirection(absolute_time_t time) {
-	if (d_directionChange >= 1) {
-		return false;
-	}
-	d_direction = -1 * d_direction;
-	setRampingUp(time);
-	return true;
 }
 
 bool WheelController::stalled(absolute_time_t time) const {
