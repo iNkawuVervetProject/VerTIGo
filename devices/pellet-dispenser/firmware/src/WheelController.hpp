@@ -29,7 +29,7 @@ public:
 		uint SensorUpperThreshold = 220;
 
 		uint HighStep_us = 200 * 1000;
-		uint MaxStep_us  = 2 * 1000 * 1000;
+		uint MaxStep_us  = 800 * 1000;
 	};
 
 	WheelController(const StaticConfig &staticConfig, const Config &config);
