@@ -23,9 +23,9 @@
  *
  */
 
+#include "device/usbd.h"
 #include "pico/unique_id.h"
 #include "tusb.h"
-#include "usb_descriptors.h"
 
 /* A combination of interfaces must have a unique product id, since PC will save
  * device driver after the first plug. Same VID/PID with different interface e.g
@@ -75,10 +75,8 @@ uint8_t const *tud_descriptor_device_cb(void) {
 //--------------------------------------------------------------------+
 
 uint8_t const desc_hid_report[] = {
-    TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(REPORT_ID_KEYBOARD)),
-    TUD_HID_REPORT_DESC_MOUSE(HID_REPORT_ID(REPORT_ID_MOUSE)),
-    TUD_HID_REPORT_DESC_CONSUMER(HID_REPORT_ID(REPORT_ID_CONSUMER_CONTROL)),
-    TUD_HID_REPORT_DESC_GAMEPAD(HID_REPORT_ID(REPORT_ID_GAMEPAD))};
+    TUD_HID_REPORT_DESC_GENERIC_INOUT(CFG_TUD_HID_EP_BUFSIZE),
+};
 
 // Invoked when received GET HID REPORT DESCRIPTOR
 // Application return pointer to descriptor
@@ -94,34 +92,77 @@ uint8_t const *tud_hid_descriptor_report_cb(uint8_t instance) {
 
 enum { ITF_NUM_HID, ITF_NUM_TOTAL };
 
-#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN)
+#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_HID_INOUT_DESC_LEN)
 
-#define EPNUM_HID 0x81
+#define EPNUM_HID 0x01
 
 uint8_t const desc_configuration[] = {
     // Config number, interface count, string index, total length, attribute,
     // power in mA
-    TUD_CONFIG_DESCRIPTOR(
-        1,
-        ITF_NUM_TOTAL,
-        0,
-        CONFIG_TOTAL_LEN,
-        TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP,
-        100
-    ),
+    TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0, 100),
 
     // Interface number, string index, protocol, report descriptor len, EP In
     // address, size & polling interval
-    TUD_HID_DESCRIPTOR(
+    TUD_HID_INOUT_DESCRIPTOR(
         ITF_NUM_HID,
         0,
         HID_ITF_PROTOCOL_NONE,
         sizeof(desc_hid_report),
         EPNUM_HID,
+        EPNUM_HID | 0x80,
         CFG_TUD_HID_EP_BUFSIZE,
-        5
+        10
     )};
 
+#if TUD_OPT_HIGH_SPEED
+// Per USB specs: high speed capable device must report device_qualifier and
+// other_speed_configuration
+
+// other speed configuration
+uint8_t desc_other_speed_config[CONFIG_TOTAL_LEN];
+
+// device qualifier is mostly similar to device descriptor since we don't change
+// configuration based on speed
+tusb_desc_device_qualifier_t const desc_device_qualifier = {
+    .bLength         = sizeof(tusb_desc_device_qualifier_t),
+    .bDescriptorType = TUSB_DESC_DEVICE_QUALIFIER,
+    .bcdUSB          = USB_BCD,
+
+    .bDeviceClass    = 0x00,
+    .bDeviceSubClass = 0x00,
+    .bDeviceProtocol = 0x00,
+
+    .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
+    .bNumConfigurations = 0x01,
+    .bReserved          = 0x00};
+
+// Invoked when received GET DEVICE QUALIFIER DESCRIPTOR request
+// Application return pointer to descriptor, whose contents must exist long
+// enough for transfer to complete. device_qualifier descriptor describes
+// information about a high-speed capable device that would change if the device
+// were operating at the other speed. If not highspeed capable stall this
+// request.
+uint8_t const *tud_descriptor_device_qualifier_cb(void) {
+	return (uint8_t const *)&desc_device_qualifier;
+}
+
+// Invoked when received GET OTHER SEED CONFIGURATION DESCRIPTOR request
+// Application return pointer to descriptor, whose contents must exist long
+// enough for transfer to complete Configuration descriptor in the other speed
+// e.g if high speed then this is for full speed and vice versa
+uint8_t const *tud_descriptor_other_speed_configuration_cb(uint8_t index) {
+	(void)index; // for multiple configurations
+
+	// other speed config is basically configuration with type =
+	// OHER_SPEED_CONFIG
+	memcpy(desc_other_speed_config, desc_configuration, CONFIG_TOTAL_LEN);
+	desc_other_speed_config[1] = TUSB_DESC_OTHER_SPEED_CONFIG;
+
+	// this example use the same configuration for both high and full speed mode
+	return desc_other_speed_config;
+}
+
+#endif // highspeed
 #if TUD_OPT_HIGH_SPEED
 // Per USB specs: high speed capable device must report device_qualifier and
 // other_speed_configuration
@@ -192,8 +233,8 @@ char serial[2 * PICO_UNIQUE_BOARD_ID_SIZE_BYTES + 1];
 // array of pointer to string descriptors
 char const *string_desc_arr[] = {
     (const char[]){0x09, 0x04}, // 0: is supported language is English (0x0409)
-    "TinyUSB",                  // 1: Manufacturer
-    "TinyUSB Device",           // 2: Product
+    "University of Lausanne",   // 1: Manufacturer
+    "Pellet Dispenser",         // 2: Product
     serial,                     // 3: Serials, uses the flash ID
 };
 

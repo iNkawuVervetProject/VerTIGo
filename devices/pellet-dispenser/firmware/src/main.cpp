@@ -64,10 +64,10 @@ int main() {
 
 	while (true) {
 		tud_task();
-		auto curTime = get_absolute_time();
+		auto now = get_absolute_time();
 
 		// Critical task here
-		if (testButton.Process(curTime)) {
+		if (testButton.Process(now)) {
 
 			Display::State().ButtonPressed = testButton.Pressed;
 			Display::State().PressCount += testButton.Pressed ? 1 : 0;
@@ -76,51 +76,19 @@ int main() {
 			}
 		}
 
-		auto [newPos, error] = wheel.Process(curTime);
+		auto [newPos, error] = wheel.Process(now);
 		if (newPos.has_value()) {
 			Display::State().WheelIndex = newPos.value();
 			wheel.Stop();
 		}
 		if (error != Error::NO_ERROR) {
-			Display::PushError({.Time = curTime, .Error = error});
+			Display::PushError({.Time = now, .Error = error});
 		}
 
-		if (absolute_time_diff_us(curTime, displayTimeout) <= 0) {
+		if (absolute_time_diff_us(now, displayTimeout) <= 0) {
 			Display::State().WheelIndex = wheel.Position();
-			Display::Update(curTime);
+			Display::Update(now);
 			displayTimeout = delayed_by_ms(displayTimeout, DISPLAY_PERIOD_MS);
 		}
 	}
-}
-
-// Invoked when received GET_REPORT control request
-// Application must fill buffer report's content and return its length.
-// Return zero will cause the stack to STALL request
-uint16_t tud_hid_get_report_cb(
-    uint8_t           instance,
-    uint8_t           report_id,
-    hid_report_type_t report_type,
-    uint8_t          *buffer,
-    uint16_t          reqlen
-) {
-	// TODO not Implemented
-	(void)instance;
-	(void)report_id;
-	(void)report_type;
-	(void)buffer;
-	(void)reqlen;
-
-	return 0;
-}
-
-// Invoked when received SET_REPORT control request or
-// received data on OUT endpoint ( Report ID = 0, Type = 0 )
-void tud_hid_set_report_cb(
-    uint8_t           instance,
-    uint8_t           report_id,
-    hid_report_type_t report_type,
-    uint8_t const    *buffer,
-    uint16_t          bufsize
-) {
-	(void)instance;
 }

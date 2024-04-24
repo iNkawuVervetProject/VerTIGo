@@ -1,3 +1,5 @@
+option(USB_INTERFACE "Adds USB interface to the firmware" On)
+
 set(SRC_FILES
 	main.cpp #
 	Display.cpp #
@@ -9,8 +11,14 @@ set(SRC_FILES
 	PelletCounter.cpp
 	hardware/IRQManager.cpp
 	hardware/FlashStorage.cpp
-	usb/usb_descriptors.c
 )
+
+if(USB_INTERFACE)
+	set(USB_SRC_FILES usb/usb_descriptors.c usb/callbacks.cpp)
+	set(USB_HDR_FILES usb/tusb_config.h usb/usb_descriptors.h)
+	set(USB_LIBRARIES tinyusb_device tinyusb_board)
+endif()
+
 set(HDR_FILES
 	Display.hpp #
 	Button.hpp #
@@ -22,13 +30,14 @@ set(HDR_FILES
 	hardware/IRQManager.hpp
 	hardware/FlashStorage.hpp
 	utils/Defer.hpp
-	usb/tusb_config.h
-	usb/usb_descriptors.h
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/usb)
 
-add_executable(pellet-dispenser ${SRC_FILES} ${HDR_FILES})
+add_executable(
+	pellet-dispenser ${SRC_FILES} ${HDR_FILES} ${USB_SRC_FILES}
+					 ${USB_HDR_FILES}
+)
 
 target_compile_definitions(pellet-dispenser PUBLIC BOARD=pico)
 
@@ -41,8 +50,7 @@ target_link_libraries(
 	hardware_pio
 	hardware_pwm
 	hardware_flash
-	tinyusb_device
-	tinyusb_board
+	${USB_LIBRARIES}
 )
 
 pico_generate_pio_header(
