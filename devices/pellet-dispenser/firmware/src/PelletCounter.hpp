@@ -4,21 +4,25 @@
 
 #include <cstdint>
 #include <optional>
+#include <tuple>
 
 #include "hardware/PIOIRSensor.hpp"
 
 class PelletCounter {
 public:
-	struct Config : public PIOIRSensor<2>::Config {
+	struct StaticConfig : public PIOIRSensor<2>::Config {
 		uint IRPin, SensorEnablePin;
 	};
 
-	const static uint THRESHOLD_UP   = 200;
-	const static uint THRESHOLD_DOWN = 160;
+	struct Config {
+		uint SensorLowThreshold  = 100;
+		uint SensorHighThreshold = 200;
+	};
 
-	PelletCounter(const Config &config);
+	PelletCounter(const StaticConfig &staticConfig, const Config &config);
 
-	std::optional<uint> Process(absolute_time_t time);
+	std::tuple<std::optional<uint>, std::optional<uint>>
+	Process(absolute_time_t time);
 
 	void SetEnabled(bool enabled);
 
@@ -29,6 +33,8 @@ public:
 private:
 	PIOIRSensor<2> d_sensors;
 
-	bool d_state = false;
-	uint d_count = 0;
+	const Config &d_config;
+	bool          d_state     = false;
+	uint          d_count     = 0;
+	uint          d_lastValue = 0;
 };

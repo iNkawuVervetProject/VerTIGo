@@ -18,11 +18,16 @@ public:
 		::Error         Error;
 	};
 
+	struct PelletSensorState {
+		uint Count = 0, Last = 2000, Min = 2000, Max = 0;
+	};
+
 	struct State {
-		bool            ButtonPressed = false;
-		int32_t         PressCount    = 0;
-		int             WheelIndex    = 0;
-		absolute_time_t Time          = nil_time;
+		bool              ButtonPressed = false;
+		int32_t           PressCount    = 0;
+		int               WheelIndex    = 0;
+		PelletSensorState Pellet;
+		absolute_time_t   Time = nil_time;
 	};
 
 	static inline Display::State &State() {

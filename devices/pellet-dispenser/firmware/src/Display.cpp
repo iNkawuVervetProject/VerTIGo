@@ -14,8 +14,8 @@
 #include "Error.hpp"
 #include "utils/Defer.hpp"
 
-static const char *resetState   = "\033[4A";
-static const char *advanceState = "\n\n\n\n";
+static const char *resetState   = "\033[5A";
+static const char *advanceState = "\n\n\n\n\n";
 
 void Display::formatHeader() {
 	std::string title = "Pellet Dispenser Rev A version 0.0.0";
@@ -52,6 +52,16 @@ void Display::formatState() {
 	);
 
 	printf("\033[30;46m %20s: \033[m %-55d\033[36m┃\n", "Wheel", s.WheelIndex);
+
+	printf(
+	    "\033[30;46m %20s: \033[m count:%-4d last:%-4d min:%-4d max:%-21d "
+	    "\033[36m┃\n",
+	    "Pellet",
+	    s.Pellet.Count,
+	    s.Pellet.Last,
+	    s.Pellet.Min,
+	    s.Pellet.Max
+	);
 
 	printf(
 	    "███████████████████████━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

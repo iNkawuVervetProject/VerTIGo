@@ -1,5 +1,6 @@
 #pragma once
 
+#include "PelletCounter.hpp"
 #include "WheelController.hpp"
 #include "pico/types.h"
 
@@ -11,6 +12,7 @@ enum class OutputChannel {
 
 struct Config {
 	WheelController::Config Wheel;
+	PelletCounter::Config   Pellet;
 
 	uint          BackslashRewindPulseUS = 15 * 1000;
 	OutputChannel Channel                = OutputChannel::B;

@@ -1,3 +1,5 @@
+#include "PelletCounter.hpp"
+#include "hardware/DRV8848.hpp"
 #include "pico/multicore.h"
 #include "pico/platform.h"
 #include "pico/stdio.h"
@@ -33,6 +35,8 @@ int main() {
 	stdio_init_all();
 	auto endInit = make_timeout_time_us(10 * 1000);
 	FlashStorage<Config>::Load(config);
+	config.Wheel.Channel = DRV8848::OutputChannel::A;
+	config.Wheel.Speed   = 1024;
 
 	board_init();
 	tusb_init();
@@ -68,7 +72,21 @@ int main() {
 	    config.Wheel
 	);
 
+	auto pellet = PelletCounter(
+	    PelletCounter::StaticConfig{
+	        PIOIRSensor<2>::Config{
+	            .Pio       = pio0,
+	            .SensorPin = 26,
+	            .PeriodUS  = 1000,
+	        },
+	        .IRPin           = 27,
+	        .SensorEnablePin = 22,
+	    },
+	    config.Pellet
+	);
+
 	wheel.Start();
+	pellet.SetEnabled(true);
 
 	while (true) {
 		tud_task();
@@ -81,6 +99,8 @@ int main() {
 			Display::State().PressCount += testButton.Pressed ? 1 : 0;
 			if (testButton.Pressed) {
 				wheel.Start();
+				Display::State().Pellet.Min = 2000;
+				Display::State().Pellet.Max = 0;
 			}
 		}
 
@@ -93,8 +113,23 @@ int main() {
 			Display::PushError({.Time = now, .Error = error});
 		}
 
+		auto [count, sensor] = pellet.Process(now);
+
+		if (sensor.has_value()) {
+			Display::State().Pellet.Last = sensor.value();
+			Display::State().Pellet.Min =
+			    std::min(Display::State().Pellet.Min, sensor.value());
+			Display::State().Pellet.Max =
+			    std::max(Display::State().Pellet.Max, sensor.value());
+		}
+
+		if (count.has_value()) {
+			Display::State().Pellet.Count = count.value();
+		}
+
 		if (absolute_time_diff_us(now, displayTimeout) <= 0) {
 			Display::State().WheelIndex = wheel.Position();
+
 			Display::Update(now);
 			displayTimeout = delayed_by_ms(displayTimeout, DISPLAY_PERIOD_MS);
 		}
