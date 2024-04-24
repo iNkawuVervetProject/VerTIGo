@@ -11,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+#include "Button.hpp"
+
 class Display {
 public:
 	struct TimedError {
@@ -22,10 +24,15 @@ public:
 		uint Count = 0, Last = 2000, Min = 2000, Max = 0;
 	};
 
+	struct ButtonState {
+		enum Button::State State      = Button::State::RELEASED;
+		uint               PressCount = 0;
+	};
+
 	struct State {
-		bool              ButtonPressed = false;
-		int32_t           PressCount    = 0;
-		int               WheelIndex    = 0;
+
+		ButtonState       TestButton;
+		int               WheelIndex = 0;
 		PelletSensorState Pellet;
 		absolute_time_t   Time = nil_time;
 	};
@@ -88,8 +95,8 @@ private:
 	static void printTime(absolute_time_t time);
 
 	Error formatError(Error last);
-	void        formatMessage();
-	void        formatState();
+	void  formatMessage();
+	void  formatState();
 
 	Display();
 

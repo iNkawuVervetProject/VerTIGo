@@ -11,6 +11,7 @@ set(SRC_FILES
 	PelletCounter.cpp
 	hardware/IRQManager.cpp
 	hardware/FlashStorage.cpp
+	PelletDispenser.cpp
 )
 
 if(USB_INTERFACE)
@@ -30,6 +31,7 @@ set(HDR_FILES
 	hardware/IRQManager.hpp
 	hardware/FlashStorage.hpp
 	utils/Defer.hpp
+	PelletDispenser.hpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/usb)

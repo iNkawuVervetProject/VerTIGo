@@ -44,11 +44,12 @@ void Display::formatState() {
 	    ms,
 	    ""
 	);
+
 	printf(
 	    "\033[30;46m %20s: \033[m pressed:%s,count:%-39d\033[36m┃\n",
 	    "Button",
-	    s.ButtonPressed ? "1" : "0",
-	    s.PressCount
+	    s.TestButton.State == Button::State::RELEASED ? "0" : "1",
+	    s.TestButton.PressCount
 	);
 
 	printf("\033[30;46m %20s: \033[m %-55d\033[36m┃\n", "Wheel", s.WheelIndex);

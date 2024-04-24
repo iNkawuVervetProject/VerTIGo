@@ -24,4 +24,6 @@ set(CMAKE_C_STANDARD_REQUIRED 1)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED 1)
 
+add_compile_options("-Wno-c99-designator")
+
 add_subdirectory(src)
