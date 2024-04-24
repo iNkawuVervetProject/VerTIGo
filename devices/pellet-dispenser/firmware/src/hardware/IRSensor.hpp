@@ -2,7 +2,6 @@
 
 #include "hardware/gpio.h"
 #include "hardware/pio.h"
-#include "ir_sensor.pio.h"
 #include "pico/time.h"
 #include "pico/types.h"
 
@@ -11,11 +10,14 @@
 #include <optional>
 #include <type_traits>
 
+#include "../Error.hpp"
+#include "ir_sensor.pio.h"
+
 class IRSensor {
 public:
 	virtual ~IRSensor() = default;
 
-	virtual std::optional<uint> Process(const absolute_time_t) = 0;
+	virtual int Process(const absolute_time_t) = 0;
 
 	virtual void SetEnabled(bool) = 0;
 };
@@ -24,7 +26,7 @@ class BitBangIRSensor : public IRSensor {
 public:
 	BitBangIRSensor(uint pin, uint enablePin);
 
-	std::optional<uint> Process(absolute_time_t time) override;
+	int Process(absolute_time_t time) override;
 
 	void SetEnabled(bool) override;
 

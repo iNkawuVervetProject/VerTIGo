@@ -8,27 +8,32 @@ PelletCounter::PelletCounter(
     : d_sensors{staticConfig, staticConfig.IRPin, staticConfig.SensorEnablePin}
     , d_config{config} {}
 
-std::tuple<std::optional<uint>, std::optional<uint>>
-PelletCounter::Process(absolute_time_t time) {
+PelletCounter::Result PelletCounter::Process(absolute_time_t time) {
 	auto newValue = d_sensors.Process(time);
+	if (newValue < 0) {
+		return {std::nullopt, std::nullopt, Error::PELLET_COUNTER_SENSOR_ISSUE};
+	}
 
-	if (newValue.has_value() == false) {
-		return std::make_tuple(std::nullopt, std::nullopt);
+	if (newValue == 0) {
+		return {
+		    .Count       = std::nullopt,
+		    .SensorValue = std::nullopt,
+		};
 	}
 
 	if (d_state == false) {
-		if (newValue.value() >= d_config.SensorHighThreshold) {
+		if (newValue >= d_config.SensorHighThreshold) {
 			d_state = true;
 			++d_count;
-			return {d_count, newValue};
+			return {.Count = d_count, .SensorValue = newValue};
 		}
 	} else {
-		if (newValue.value() <= d_config.SensorLowThreshold) {
+		if (newValue <= d_config.SensorLowThreshold) {
 			d_state = false;
 		}
 	}
 
-	return {std::nullopt, newValue};
+	return {.Count = std::nullopt, .SensorValue = newValue};
 }
 
 bool PelletCounter::PelletPresence() const {

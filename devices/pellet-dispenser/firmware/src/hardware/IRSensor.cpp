@@ -38,9 +38,9 @@ void BitBangIRSensor::SetEnabled(bool value) {
 	}
 }
 
-std::optional<uint> BitBangIRSensor::Process(const absolute_time_t time) {
+int BitBangIRSensor::Process(const absolute_time_t time) {
 	if (gpio_get(d_enablePin) == false) {
-		return std::nullopt;
+		return 0;
 	}
 	auto rel = absolute_time_diff_us(d_start, time);
 	gpio_put(16, gpio_get(d_sensorPin));
@@ -49,7 +49,7 @@ std::optional<uint> BitBangIRSensor::Process(const absolute_time_t time) {
 
 	case WAIT_FOR_START:
 		if (rel < 0) {
-			return std::nullopt;
+			return 0;
 		}
 		gpio_set_dir(d_sensorPin, true);
 		gpio_put(d_sensorPin, true);
@@ -57,7 +57,7 @@ std::optional<uint> BitBangIRSensor::Process(const absolute_time_t time) {
 		break;
 	case PULSE:
 		if (rel < 10) {
-			return std::nullopt;
+			return 0;
 		}
 		gpio_set_dir(d_sensorPin, false);
 		d_state = READ;
@@ -67,9 +67,9 @@ std::optional<uint> BitBangIRSensor::Process(const absolute_time_t time) {
 		if (isLow || rel >= 1000) { // either low or timeouted
 			d_start = isLow ? delayed_by_ms(d_start, 1) : time;
 			d_state = WAIT_FOR_START;
-			return rel;
+			return isLow ? rel : -int(Error::IR_SENSOR_READOUT_ERROR);
 		}
 		break;
 	}
-	return std::nullopt;
+	return 0;
 }

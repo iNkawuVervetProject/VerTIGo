@@ -41,16 +41,21 @@ public:
 		}
 	}
 
-	std::optional<uint> Process(absolute_time_t time) override {
+	int Process(absolute_time_t time) override {
 		uint32_t res = 0xffffffff;
 		// drain all readings
 		while (pio_sm_is_rx_fifo_empty(d_pio, d_sm) == false) {
 			res = pio_sm_get_blocking(d_pio, d_sm);
 		}
 		if (res == 0xffffffff) {
-			return std::nullopt;
+			return 0;
 		}
-		return d_period - d_pulse - res;
+		int value = d_period - d_pulse - res;
+
+		if (value < 0) {
+			return -int(Error::IR_SENSOR_READOUT_ERROR);
+		}
+		return value;
 	}
 
 	void SetEnabled(bool enabled) override {

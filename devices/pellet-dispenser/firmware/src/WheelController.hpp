@@ -64,7 +64,7 @@ private:
 
 	bool changeDirection(absolute_time_t time);
 
-	std::optional<int> processSensor(absolute_time_t time);
+	std::tuple<std::optional<int>, Error> processSensor(absolute_time_t time);
 
 	const Config  &d_config;
 	DRV8848        d_driver;

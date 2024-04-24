@@ -19,10 +19,15 @@ public:
 		uint SensorHighThreshold = 200;
 	};
 
+	struct Result {
+		std::optional<uint> Count;
+		std::optional<uint> SensorValue;
+		enum Error          Error = Error::NO_ERROR;
+	};
+
 	PelletCounter(const StaticConfig &staticConfig, const Config &config);
 
-	std::tuple<std::optional<uint>, std::optional<uint>>
-	Process(absolute_time_t time);
+	Result Process(absolute_time_t time);
 
 	void SetEnabled(bool enabled);
 

@@ -113,18 +113,18 @@ int main() {
 			Display::PushError({.Time = now, .Error = error});
 		}
 
-		auto [count, sensor] = pellet.Process(now);
+		auto pelletRes = pellet.Process(now);
 
-		if (sensor.has_value()) {
-			Display::State().Pellet.Last = sensor.value();
-			Display::State().Pellet.Min =
-			    std::min(Display::State().Pellet.Min, sensor.value());
-			Display::State().Pellet.Max =
-			    std::max(Display::State().Pellet.Max, sensor.value());
+		if (pelletRes.SensorValue.has_value()) {
+			auto  value = pelletRes.SensorValue.value();
+			auto &state = Display::State().Pellet;
+			state.Last  = value;
+			state.Min   = std::min(state.Min, value);
+			state.Max   = std::max(state.Max, value);
 		}
 
-		if (count.has_value()) {
-			Display::State().Pellet.Count = count.value();
+		if (pelletRes.Count.has_value()) {
+			Display::State().Pellet.Count = pelletRes.Count.value();
 		}
 
 		if (absolute_time_diff_us(now, displayTimeout) <= 0) {

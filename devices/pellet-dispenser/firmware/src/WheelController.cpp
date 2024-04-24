@@ -20,13 +20,11 @@ WheelController::WheelController(
 
 std::tuple<std::optional<int>, Error>
 WheelController::Process(absolute_time_t time) {
-	auto newPosition = processSensor(time);
+	auto [newPosition, err] = processSensor(time);
 	if (newPosition.has_value()) {
 		d_position = newPosition.value();
 		d_lastStep = time;
 	}
-
-	Error err = Error::NO_ERROR;
 
 	switch (d_state) {
 	case State::IDLE:
@@ -72,7 +70,7 @@ WheelController::Process(absolute_time_t time) {
 		}
 
 		if (absolute_time_diff_us(d_lastStep, time) >= d_config.HighStep_us) {
-			err = Error::WHEEL_CONTROLLER_SENSOR_ISSUE;
+			err = Error::WHEEL_CONTROLLER_SENSOR_IRRESPONSIVE;
 		}
 
 		break;
@@ -108,23 +106,28 @@ void WheelController::Stop() {
 	}
 }
 
-std::optional<int> WheelController::processSensor(absolute_time_t time) {
+std::tuple<std::optional<int>, Error>
+WheelController::processSensor(absolute_time_t time) {
 	auto newValue = d_sensor.Process(time);
-	if (newValue.has_value() == false) {
-		return std::nullopt;
+	if (newValue == 0) {
+		return {std::nullopt, Error::NO_ERROR};
+	}
+
+	if (newValue < 0) {
+		return {std::nullopt, Error::WHEEL_CONTROLLER_SENSOR_ISSUE};
 	}
 
 	if (d_lastState) {
-		if (newValue.value() < d_config.SensorLowerThreshold) {
+		if (newValue < d_config.SensorLowerThreshold) {
 			d_lastState = !d_lastState;
 		}
 	} else {
-		if (newValue.value() > d_config.SensorUpperThreshold) {
+		if (newValue > d_config.SensorUpperThreshold) {
 			d_lastState = !d_lastState;
-			return d_position + d_direction;
+			return {d_position + d_direction, Error::NO_ERROR};
 		}
 	}
-	return std::nullopt;
+	return {std::nullopt, Error::NO_ERROR};
 }
 
 void WheelController::setIdle(absolute_time_t time) {
