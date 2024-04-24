@@ -1,13 +1,15 @@
 #pragma once
 
-#include "DRV8848.hpp"
-#include "Error.hpp"
-#include "IRSensor.hpp"
-#include "PIOIRSensor.hpp"
 #include "pico/time.h"
 #include "pico/types.h"
+
 #include <optional>
 #include <tuple>
+
+#include "hardware/DRV8848.hpp"
+#include "hardware/PIOIRSensor.hpp"
+
+#include "Error.hpp"
 
 class WheelController {
 public:

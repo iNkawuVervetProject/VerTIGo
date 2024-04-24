@@ -1,17 +1,19 @@
 #pragma once
 
-#include "PIOIRSensor.hpp"
 #include "pico/types.h"
+
 #include <cstdint>
 #include <optional>
 
+#include "hardware/PIOIRSensor.hpp"
+
 class PelletCounter {
 public:
-	struct Config : public PIOIRSensor<2>::Config{
-		uint     IRPin, SensorEnablePin;
+	struct Config : public PIOIRSensor<2>::Config {
+		uint IRPin, SensorEnablePin;
 	};
 
-	const static uint THRESHOLD_UP = 200;
+	const static uint THRESHOLD_UP   = 200;
 	const static uint THRESHOLD_DOWN = 160;
 
 	PelletCounter(const Config &config);

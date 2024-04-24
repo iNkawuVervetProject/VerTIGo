@@ -1,10 +1,9 @@
 #pragma once
 
-
 #include "pico/types.h"
-#include <functional>
 
 #include <array>
+#include <functional>
 
 class IRQManager {
 public:

@@ -1,10 +1,11 @@
 #include "DRV8848.hpp"
 #include "IRQManager.hpp"
+
 #include "hardware/gpio.h"
 #include "hardware/pwm.h"
 #include "pico/time.h"
-#include <algorithm>
 
+#include <algorithm>
 #include <cstdio>
 
 #define PWM_RESOLUTION (1 << 10)

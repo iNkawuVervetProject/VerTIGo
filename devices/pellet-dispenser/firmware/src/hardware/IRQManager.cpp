@@ -1,4 +1,5 @@
 #include "IRQManager.hpp"
+
 #include "hardware/gpio.h"
 
 void IRQManager::Register(uint gpio, uint32_t events, IRQHandler &&handler) {

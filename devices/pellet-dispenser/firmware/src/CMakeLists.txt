@@ -2,25 +2,25 @@ set(SRC_FILES
 	main.cpp #
 	Display.cpp #
 	Button.cpp #
-	IRSensor.cpp #
-	PIOIRSensor.cpp
-	DRV8848.cpp
+	hardware/IRSensor.cpp #
+	hardware/PIOIRSensor.cpp
+	hardware/DRV8848.cpp
 	WheelController.cpp
 	PelletCounter.cpp
-	IRQManager.cpp
-	FlashStorage.cpp
+	hardware/IRQManager.cpp
+	hardware/FlashStorage.cpp
 )
 set(HDR_FILES
 	Display.hpp #
 	Button.hpp #
-	IRSensor.hpp #
-	PIOIRSensor.hpp
-	DRV8848.hpp
+	hardware/IRSensor.hpp #
+	hardware/PIOIRSensor.hpp
+	hardware/DRV8848.hpp
 	WheelController.hpp
 	PelletCounter.hpp
-	IRQManager.hpp
-	FlashStorage.hpp
-	Defer.hpp
+	hardware/IRQManager.hpp
+	hardware/FlashStorage.hpp
+	utils/Defer.hpp
 )
 
 add_executable(pellet-dispenser ${SRC_FILES} ${HDR_FILES})
@@ -36,7 +36,7 @@ target_link_libraries(
 )
 
 pico_generate_pio_header(
-	pellet-dispenser ${CMAKE_CURRENT_SOURCE_DIR}/ir_sensor.pio
+	pellet-dispenser ${CMAKE_CURRENT_SOURCE_DIR}/hardware/ir_sensor.pio
 )
 
 pico_add_extra_outputs(pellet-dispenser)

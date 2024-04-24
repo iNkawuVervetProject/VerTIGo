@@ -5,13 +5,11 @@
 #include "pico/time.h"
 #include "pico/types.h"
 
+#include "hardware/FlashStorage.hpp"
+
 #include "Button.hpp"
 #include "Config.hpp"
-#include "DRV8848.hpp"
 #include "Display.hpp"
-#include "FlashStorage.hpp"
-#include "IRSensor.hpp"
-#include "PIOIRSensor.hpp"
 #include "WheelController.hpp"
 
 #include <stdio.h>

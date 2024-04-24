@@ -1,7 +1,5 @@
 #include "Display.hpp"
 
-#include "Defer.hpp"
-#include "Error.hpp"
 #include "pico/multicore.h"
 #include "pico/time.h"
 #include "pico/types.h"
@@ -12,6 +10,9 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+
+#include "Error.hpp"
+#include "utils/Defer.hpp"
 
 static const char *resetState   = "\033[4A";
 static const char *advanceState = "\n\n\n\n";
