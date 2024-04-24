@@ -14,6 +14,8 @@ include(OpenOCD)
 
 set(PICO_CXX_ENABLE_EXCEPTIONS 1)
 
+set(FAMILY rp2040)
+set(BOARD pico_sdk)
 pico_sdk_init()
 
 set(CMAKE_C_STANDARD 17)
