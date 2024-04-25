@@ -41,41 +41,8 @@ public:
 		return Get().d_state;
 	}
 
-	static inline void PushError(const TimedError &error) {
-		if (error.Error == Error::NO_ERROR || error.Error == Get().d_last) {
-			return;
-		}
-		Get().d_last = error.Error;
-		queue_try_add(&Get().d_errorQueue, &error);
-	}
-
 	static inline void Update(absolute_time_t time) {
 		return Get().update(time);
-	}
-
-	template <typename... Args>
-	static inline void Printf(const char *fmt, Args &&...args) {
-		auto  now     = get_absolute_time();
-		auto &self    = Get();
-		auto  written = snprintf(
-            self.d_buffer.data() + self.d_offset,
-            BufferSize - self.d_offset,
-            fmt,
-            std::forward<Args>(args)...
-        );
-
-		if (self.d_offset != 0 && self.d_offset + written >= BufferSize) {
-			self.d_offset = 0;
-			written       = snprintf(
-                self.d_buffer.data(),
-                BufferSize,
-                fmt,
-                std::forward<Args>(args)...
-            );
-		}
-		Message msg = {.Start = self.d_offset, .Time = now};
-		queue_try_add(&self.d_messageQueue, &msg);
-		self.d_offset += written + 1;
 	}
 
 private:
@@ -105,9 +72,5 @@ private:
 	struct State d_state;
 	Error        d_last = Error::NO_ERROR;
 
-	static constexpr size_t BufferSize = 4096;
-
-	std::array<char, BufferSize> d_buffer;
-	size_t                       d_offset = 0;
-	queue_t                      d_stateQueue, d_errorQueue, d_messageQueue;
+	queue_t d_stateQueue, d_errorQueue;
 };

@@ -37,7 +37,6 @@ void PelletDispenser::Process(absolute_time_t now) {
 	}
 
 	if (error != Error::NO_ERROR) {
-		Display::PushError({.Time = now, .Error = error});
 	}
 
 	auto pelletRes = d_pelletCounter.Process(now);

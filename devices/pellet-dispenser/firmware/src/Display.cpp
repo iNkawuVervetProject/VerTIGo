@@ -12,6 +12,7 @@
 #include <string>
 
 #include "Error.hpp"
+#include "Log.hpp"
 #include "utils/Defer.hpp"
 
 static const char *resetState   = "\033[5A";
@@ -96,32 +97,51 @@ Error Display::formatError(Error last) {
 }
 
 void Display::formatMessage() {
-	if (queue_is_empty(&d_messageQueue)) {
-		return;
-	}
-	printf("%s", resetState);
+	bool needReset = false;
 	defer {
-		printf("%s", advanceState);
-	};
-	struct Message msg;
-	while (true) {
-		if (queue_try_remove(&d_messageQueue, &msg) == false) {
-			break;
+		if (needReset == true) {
+			printf("%s", advanceState);
 		}
-		size_t n = strlen(d_buffer.data() + msg.Start);
+	};
+
+	static uint8_t colors[6] = {
+	    1, // FATAL - RED
+	    1, // ERROR - RED
+	    3, // WARNING - YELLOW
+	    6, // INFO - CYAN
+	    7, // DEBUG - WHITE
+	    4, // TRACE - BLUE
+	};
+
+	while (true) {
+
+		auto msg = Logger::Get().Pop();
+		if (msg.has_value() == false) {
+			return;
+		}
+
+		if (needReset == false) {
+			printf("%s", resetState);
+			needReset = true;
+		}
+
+		const char *msgStr = msg.value().Value;
+		size_t      n      = strlen(msgStr);
+		auto        c      = colors[size_t(msg.value().Level)];
+
 		for (size_t i = 0; i < n; i += 54) {
-			printf("\033[30;46m");
+			printf("\033[30;4%dm", c);
 			if (i == 0) {
-				printTime(msg.Time);
+				printTime(msg.value().Time);
 			} else {
 				printf("                       ");
 			}
-			printf("\033[m %-.54s ", d_buffer.data() + msg.Start + i);
+			printf("\033[m\033[3%dm %-.54s ", c, msgStr + i);
 			if (i + 54 < n) {
-				printf("\033[36m┃\n");
+				printf("┃\n");
 			} else {
 				printf(
-				    "%.*s\033[36m┃\n",
+				    "%.*s┃\n",
 				    54 - n + i,
 				    "                                                      "
 				);
@@ -157,7 +177,6 @@ void Display::printLoop() {
 Display::Display() {
 	queue_init(&d_stateQueue, sizeof(struct State), 1);
 	queue_init(&d_errorQueue, sizeof(struct TimedError), 10);
-	queue_init(&d_messageQueue, sizeof(struct Message), 10);
 	multicore_launch_core1(printLoop);
 }
 
