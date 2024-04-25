@@ -41,11 +41,15 @@ public:
 		return reporter;
 	}
 
-	void Report(Error e, uint timeout_us);
+	static inline void Report(Error err, uint timeout_us) {
+		Get().report(err, timeout_us);
+	};
 
 	void Process(absolute_time_t time);
 
 private:
+	void report(Error e, uint timeout_us);
+
 	std::array<absolute_time_t, NumErrors> d_firedErrors;
 
 	absolute_time_t d_next = nil_time;

@@ -9,7 +9,7 @@ struct Button {
 		PRESSED,
 		LONG_PRESS,
 	};
-	enum State State;
+	enum State State = State::RELEASED;
 
 	Button(uint pin);
 	std::optional<enum State> Process(absolute_time_t time);

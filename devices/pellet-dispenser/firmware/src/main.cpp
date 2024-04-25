@@ -1,6 +1,3 @@
-#include "Error.hpp"
-#include "PelletCounter.hpp"
-#include "PelletDispenser.hpp"
 #include "hardware/DRV8848.hpp"
 #include "pico/multicore.h"
 #include "pico/platform.h"
@@ -8,6 +5,8 @@
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include "pico/types.h"
+
+#include <stdio.h>
 
 #ifdef USB_INTERFACE
 #include "bsp/board.h"
@@ -25,9 +24,11 @@ inline void tud_task() {}
 #include "Button.hpp"
 #include "Config.hpp"
 #include "Display.hpp"
+#include "Error.hpp"
+#include "Log.hpp"
+#include "PelletCounter.hpp"
+#include "PelletDispenser.hpp"
 #include "WheelController.hpp"
-
-#include <stdio.h>
 
 #define DISPLAY_PERIOD_MS 200
 
@@ -50,6 +51,11 @@ int main() {
 	printf("\033[2J\033[m");
 
 	auto displayTimeout = make_timeout_time_ms(DISPLAY_PERIOD_MS);
+
+#ifndef NDEBUG
+	Logger::Get().SetLevel(Logger::Level::DEBUG);
+	Infof("Verbosity set to DEBUG");
+#endif
 
 	auto controller = PelletDispenser(
 	    {

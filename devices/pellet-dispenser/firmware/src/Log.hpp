@@ -35,8 +35,11 @@ public:
 
 	std::optional<Message> Pop();
 
-	void Logf(Level level, const char *fmt, ...)
-	    __attribute__((format(printf, 3, 4)));
+	void Logf(Level level, const char *fmt, va_list args);
+
+	inline void SetLevel(Level lvl) {
+		d_level = lvl;
+	}
 
 private:
 	Logger();
@@ -98,19 +101,27 @@ inline static void Infof(const char *fmt, ...) {
 inline static void Debugf(const char *fmt, ...)
     __attribute__((format(printf, 1, 2)));
 
+#ifndef NDEBUG
 inline static void Debugf(const char *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
 	Logger::Get().Logf(Logger::Level::DEBUG, fmt, args);
 	va_end(args);
 }
+#else
+inline static void Debugf(const char *fmt, ...) {}
+#endif
 
 inline static void Tracef(const char *fmt, ...)
     __attribute__((format(printf, 1, 2)));
 
+#ifndef NDEBUG
 inline static void Tracef(const char *fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	Logger::Get().Logf(Logger::Level::DEBUG, fmt, args);
+	Logger::Get().Logf(Logger::Level::TRACE, fmt, args);
 	va_end(args);
 }
+#else
+inline static void Tracef(const char *fmt, ...) {}
+#endif

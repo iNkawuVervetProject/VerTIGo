@@ -1,6 +1,7 @@
 #include "PelletDispenser.hpp"
 #include "Display.hpp"
 #include "Error.hpp"
+#include "Log.hpp"
 #include "pico/types.h"
 
 PelletDispenser::PelletDispenser(
@@ -38,7 +39,7 @@ void PelletDispenser::Process(absolute_time_t now) {
 	}
 
 	if (error != Error::NO_ERROR) {
-		ErrorReporter::Get().Report(
+		ErrorReporter::Report(
 		    error,
 		    500 * 1000
 		); // 500 ms for wheel controller errors
@@ -59,7 +60,7 @@ void PelletDispenser::Process(absolute_time_t now) {
 	}
 
 	if (pelletRes.Error != Error::NO_ERROR) {
-		ErrorReporter::Get().Report(pelletRes.Error, 2 * 1000);
+		ErrorReporter::Report(pelletRes.Error, 2 * 1000);
 	}
 }
 

@@ -4,7 +4,7 @@
 #include "pico/types.h"
 #include "utils/Defer.hpp"
 
-void ErrorReporter::Report(Error err, uint timeout_us) {
+void ErrorReporter::report(Error err, uint timeout_us) {
 	auto index = size_t(err);
 	if (index >= NumErrors) {
 		Debugf("unknown error %d reported", index);
@@ -27,7 +27,7 @@ void ErrorReporter::Report(Error err, uint timeout_us) {
 		return;
 	}
 
-	Warnf("%s", GetErrorDescription(err));
+	Errorf("%s", GetErrorDescription(err));
 
 	// TODO ? other callbacks or notifications?
 }

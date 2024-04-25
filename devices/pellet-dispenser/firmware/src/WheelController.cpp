@@ -1,5 +1,6 @@
 #include "WheelController.hpp"
 
+#include "Log.hpp"
 #include "hardware/gpio.h"
 #include "pico/time.h"
 #include "pico/types.h"
@@ -114,16 +115,17 @@ WheelController::processSensor(absolute_time_t time) {
 		return {
 		    std::nullopt,
 		    std::nullopt,
-		    Error::WHEEL_CONTROLLER_SENSOR_ISSUE};
+		    Error::WHEEL_CONTROLLER_SENSOR_ISSUE,
+		};
 	}
 
-	if (d_lastState) {
+	if (d_lastState == true) {
 		if (newValue < d_config.SensorLowerThreshold) {
-			d_lastState = !d_lastState;
+			d_lastState = false;
 		}
 	} else {
 		if (newValue > d_config.SensorUpperThreshold) {
-			d_lastState = !d_lastState;
+			d_lastState = true;
 			return {d_position + d_direction, newValue, Error::NO_ERROR};
 		}
 	}

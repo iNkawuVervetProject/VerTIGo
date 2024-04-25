@@ -8,6 +8,8 @@
 #include "pico/types.h"
 #include <optional>
 
+#include "../Log.hpp"
+
 template <size_t N, std::enable_if_t<N >= 1, void> * = nullptr>
 class PIOIRSensor : public IRSensor {
 public:
@@ -30,6 +32,10 @@ public:
 
 		d_sm = pio_claim_unused_sm(d_pio, true);
 
+		if (pio_can_add_program(d_pio, &ir_sensor_program) == false) {
+			panic("cannot add program");
+		}
+
 		d_offset = pio_add_program(d_pio, &ir_sensor_program);
 		ir_sensor_program_init(d_pio, d_sm, d_offset, d_pin);
 		ir_sensor_program_configure(d_pio, d_sm, d_pulse, d_period);
@@ -46,6 +52,7 @@ public:
 		// drain all readings
 		while (pio_sm_is_rx_fifo_empty(d_pio, d_sm) == false) {
 			res = pio_sm_get_blocking(d_pio, d_sm);
+			Tracef("got new value: %x", res);
 		}
 		if (res == 0xffffffff) {
 			return 0;
