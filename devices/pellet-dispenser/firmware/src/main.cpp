@@ -1,3 +1,4 @@
+#include "Error.hpp"
 #include "PelletCounter.hpp"
 #include "PelletDispenser.hpp"
 #include "hardware/DRV8848.hpp"
@@ -56,7 +57,7 @@ int main() {
 	            PIOIRSensor<2>::Config{
 	                .Pio       = pio0,
 	                .SensorPin = 26,
-	                .PeriodUS  = 1000,
+	                .PeriodUS  = 500,
 	            },
 	            .IRPin           = 27,
 	            .SensorEnablePin = 22,
@@ -87,6 +88,7 @@ int main() {
 	while (true) {
 		tud_task();
 		auto now = get_absolute_time();
+		ErrorReporter::Get().Process(now);
 
 		controller.Process(now);
 

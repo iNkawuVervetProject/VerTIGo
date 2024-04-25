@@ -19,9 +19,8 @@ WheelController::WheelController(
 	setIdle(get_absolute_time());
 }
 
-std::tuple<std::optional<int>, Error>
-WheelController::Process(absolute_time_t time) {
-	auto [newPosition, err] = processSensor(time);
+WheelController::Result WheelController::Process(absolute_time_t time) {
+	auto [newPosition, sensorValue, err] = processSensor(time);
 	if (newPosition.has_value()) {
 		d_position = newPosition.value();
 		d_lastStep = time;
@@ -74,7 +73,7 @@ WheelController::Process(absolute_time_t time) {
 	}
 	}
 
-	return {newPosition, err};
+	return {.Position = newPosition, .SensorValue = sensorValue, .Error = err};
 }
 
 int WheelController::Position() {
@@ -104,15 +103,18 @@ void WheelController::Stop() {
 	}
 }
 
-std::tuple<std::optional<int>, Error>
+std::tuple<std::optional<int>, std::optional<uint>, Error>
 WheelController::processSensor(absolute_time_t time) {
 	auto newValue = d_sensor.Process(time);
 	if (newValue == 0) {
-		return {std::nullopt, Error::NO_ERROR};
+		return {std::nullopt, std::nullopt, Error::NO_ERROR};
 	}
 
 	if (newValue < 0) {
-		return {std::nullopt, Error::WHEEL_CONTROLLER_SENSOR_ISSUE};
+		return {
+		    std::nullopt,
+		    std::nullopt,
+		    Error::WHEEL_CONTROLLER_SENSOR_ISSUE};
 	}
 
 	if (d_lastState) {
@@ -122,10 +124,10 @@ WheelController::processSensor(absolute_time_t time) {
 	} else {
 		if (newValue > d_config.SensorUpperThreshold) {
 			d_lastState = !d_lastState;
-			return {d_position + d_direction, Error::NO_ERROR};
+			return {d_position + d_direction, newValue, Error::NO_ERROR};
 		}
 	}
-	return {std::nullopt, Error::NO_ERROR};
+	return {std::nullopt, newValue, Error::NO_ERROR};
 }
 
 void WheelController::setIdle(absolute_time_t time) {

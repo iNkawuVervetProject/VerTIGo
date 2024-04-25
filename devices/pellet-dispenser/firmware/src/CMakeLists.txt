@@ -13,6 +13,7 @@ set(SRC_FILES
 	hardware/FlashStorage.cpp
 	PelletDispenser.cpp
 	Log.cpp
+	Error.cpp
 )
 
 if(USB_INTERFACE)

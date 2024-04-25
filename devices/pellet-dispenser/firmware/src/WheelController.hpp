@@ -34,7 +34,13 @@ public:
 
 	WheelController(const StaticConfig &staticConfig, const Config &config);
 
-	std::tuple<std::optional<int>, Error> Process(absolute_time_t time);
+	struct Result {
+		std::optional<int>  Position;
+		std::optional<uint> SensorValue;
+		enum Error          Error;
+	};
+
+	Result Process(absolute_time_t time);
 
 	int Position();
 
@@ -60,7 +66,8 @@ private:
 	void setRampingDown(absolute_time_t time);
 	void setMoving(absolute_time_t time);
 
-	std::tuple<std::optional<int>, Error> processSensor(absolute_time_t time);
+	std::tuple<std::optional<int>, std::optional<uint>, Error>
+	processSensor(absolute_time_t time);
 
 	const Config  &d_config;
 	DRV8848        d_driver;

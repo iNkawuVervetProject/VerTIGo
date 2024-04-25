@@ -1,5 +1,6 @@
 #include "PelletDispenser.hpp"
 #include "Display.hpp"
+#include "Error.hpp"
 #include "pico/types.h"
 
 PelletDispenser::PelletDispenser(
@@ -30,13 +31,17 @@ void PelletDispenser::Process(absolute_time_t now) {
 		}
 	}
 
-	auto [newPos, error] = d_wheelController.Process(now);
+	auto [newPos, newSensorValue, error] = d_wheelController.Process(now);
 	if (newPos.has_value()) {
 		Display::State().WheelIndex = newPos.value();
 		d_wheelController.Stop();
 	}
 
 	if (error != Error::NO_ERROR) {
+		ErrorReporter::Get().Report(
+		    error,
+		    500 * 1000
+		); // 500 ms for wheel controller errors
 	}
 
 	auto pelletRes = d_pelletCounter.Process(now);
@@ -51,6 +56,10 @@ void PelletDispenser::Process(absolute_time_t now) {
 
 	if (pelletRes.Count.has_value()) {
 		Display::State().Pellet.Count = pelletRes.Count.value();
+	}
+
+	if (pelletRes.Error != Error::NO_ERROR) {
+		ErrorReporter::Get().Report(pelletRes.Error, 2 * 1000);
 	}
 }
 
