@@ -11,7 +11,7 @@ set(SRC_FILES
 	PelletCounter.cpp
 	hardware/IRQManager.cpp
 	hardware/FlashStorage.cpp
-	PelletDispenser.cpp
+	Controller.cpp
 	Log.cpp
 	Error.cpp
 )
@@ -33,7 +33,7 @@ set(HDR_FILES
 	hardware/IRQManager.hpp
 	hardware/FlashStorage.hpp
 	utils/Defer.hpp
-	PelletDispenser.hpp
+	Controller.hpp
 	Log.hpp
 )
 

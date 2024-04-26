@@ -23,11 +23,11 @@ inline void tud_task() {}
 
 #include "Button.hpp"
 #include "Config.hpp"
+#include "Controller.hpp"
 #include "Display.hpp"
 #include "Error.hpp"
 #include "Log.hpp"
 #include "PelletCounter.hpp"
-#include "PelletDispenser.hpp"
 #include "WheelController.hpp"
 
 #define DISPLAY_PERIOD_MS 200
@@ -57,7 +57,7 @@ int main() {
 	Infof("Verbosity set to DEBUG");
 #endif
 
-	auto controller = PelletDispenser(
+	auto controller = Controller(
 	    {
 	        PelletCounter::StaticConfig{
 	            PIOIRSensor<2>::Config{
