@@ -32,7 +32,7 @@ void Display::formatHeader() {
 
 void Display::formatState() {
 	struct State s;
-	queue_remove_blocking(&d_stateQueue, &s);
+	d_queue.RemoveBlocking(s);
 	int ms      = to_ms_since_boot(s.Time);
 	int seconds = ms / 1000;
 	ms          = ms - seconds * 1000;
@@ -69,31 +69,6 @@ void Display::formatState() {
 	    "███████████████████████━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	    "━━━━━━━━━┛\n"
 	);
-}
-
-Error Display::formatError(Error last) {
-	if (queue_is_empty(&d_errorQueue)) {
-		return last;
-	}
-	printf("%s", resetState);
-	defer {
-		printf("%s", advanceState);
-	};
-	struct Display::TimedError error;
-	while (true) {
-		if (queue_try_remove(&d_errorQueue, &error) == false) {
-			break;
-		}
-		if (error.Error == last) {
-			continue;
-		}
-		last = error.Error;
-		printf("\033[30;43m");
-		printTime(error.Time);
-		printf("\033[33;40m %-54s ┃\n", GetErrorDescription(error.Error));
-	}
-
-	return last;
 }
 
 void Display::formatMessage() {
@@ -162,28 +137,22 @@ void Display::printLoop() {
 	formatHeader();
 	int i{0};
 
-	auto &stateQueue = Display::Get().d_stateQueue;
-	auto &self       = Get();
-
-	Error last = Error::NO_ERROR;
+	auto &self = Get();
 
 	while (true) {
-		last = self.formatError(last);
 		self.formatMessage();
 		self.formatState();
 	}
 }
 
 Display::Display() {
-	queue_init(&d_stateQueue, sizeof(struct State), 1);
-	queue_init(&d_errorQueue, sizeof(struct TimedError), 10);
 	multicore_launch_core1(printLoop);
 }
 
 void Display::update(absolute_time_t time) {
 	struct State discard;
-	while (queue_try_remove(&d_stateQueue, &discard)) {
+	while (d_queue.TryRemove(discard)) {
 	}
 	d_state.Time = time;
-	queue_try_add(&d_stateQueue, &d_state);
+	d_queue.TryAdd(d_state);
 }

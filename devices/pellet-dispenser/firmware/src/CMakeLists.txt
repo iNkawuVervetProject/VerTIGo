@@ -14,6 +14,7 @@ set(SRC_FILES
 	Controller.cpp
 	Log.cpp
 	Error.cpp
+	utils/Queue.cpp
 )
 
 if(USB_INTERFACE)
@@ -35,6 +36,7 @@ set(HDR_FILES
 	utils/Defer.hpp
 	Controller.hpp
 	Log.hpp
+	utils/Queue.hpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/usb)
@@ -52,6 +54,7 @@ target_link_libraries(
 	pico_multicore
 	pico_util
 	pico_unique_id
+	pico_sync_core
 	hardware_pio
 	hardware_pwm
 	hardware_flash

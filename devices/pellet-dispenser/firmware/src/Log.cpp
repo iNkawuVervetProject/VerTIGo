@@ -1,5 +1,4 @@
 #include "Log.hpp"
-#include "pico/util/queue.h"
 #include <cstdio>
 #include <optional>
 #include <stdio.h>

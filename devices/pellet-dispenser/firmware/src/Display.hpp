@@ -12,14 +12,10 @@
 #include <vector>
 
 #include "Button.hpp"
+#include "utils/Queue.hpp"
 
 class Display {
 public:
-	struct TimedError {
-		absolute_time_t Time;
-		::Error         Error;
-	};
-
 	struct PelletSensorState {
 		uint Count = 0, Last = 2000, Min = 2000, Max = 0;
 	};
@@ -61,7 +57,6 @@ private:
 	static void formatHeader();
 	static void printTime(absolute_time_t time);
 
-	Error formatError(Error last);
 	void  formatMessage();
 	void  formatState();
 
@@ -72,5 +67,5 @@ private:
 	struct State d_state;
 	Error        d_last = Error::NO_ERROR;
 
-	queue_t d_stateQueue, d_errorQueue;
+	Queue<struct State, 1, true> d_queue;
 };
