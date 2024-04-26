@@ -1,5 +1,5 @@
 
-#include "../Display.hpp"
+#include "../Log.hpp"
 #include "class/hid/hid_device.h"
 #include "tusb.h"
 #include <cstring>
@@ -12,12 +12,12 @@ extern "C" {
 
 // Invoked when device is mounted
 void tud_mount_cb(void) {
-	Display::Printf("USB: Mounted");
+	Infof("USB: Mounted");
 }
 
 // Invoked when device is unmounted
 void tud_umount_cb(void) {
-	Display::Printf("USB: Unmounted");
+	Infof("USB: Unmounted");
 }
 
 // Invoked when usb bus is suspended
@@ -25,12 +25,12 @@ void tud_umount_cb(void) {
 // Within 7ms, device must draw an average of current less than 2.5 mA from bus
 void tud_suspend_cb(bool remote_wakeup_en) {
 	(void)remote_wakeup_en;
-	Display::Printf("USB: suspended");
+	Infof("USB: suspended");
 }
 
 // Invoked when usb bus is resumed
 void tud_resume_cb(void) {
-	Display::Printf("USB: resumed");
+	Infof("USB: resumed");
 }
 
 // Invoked when sent REPORT successfully to host
@@ -39,10 +39,10 @@ void tud_resume_cb(void) {
 void tud_hid_report_complete_cb(
     uint8_t instance, uint8_t const *report, uint16_t len
 ) {
-	Display::Printf(
+	Debugf(
 	    "USB: report complete {instance: %d, report:%x, len:%d",
 	    instance,
-	    report,
+	    report[0],
 	    len
 	);
 }
@@ -55,7 +55,7 @@ uint16_t tud_hid_get_report_cb(
     uint16_t          reqlen
 ) {
 
-	Display::Printf(
+	Debugf(
 	    "get report {instance: %d, id: %d, type: %x, reqlen",
 	    instance,
 	    report_id,
@@ -87,7 +87,7 @@ void tud_hid_set_report_cb(
 		oss << std::hex << int(buffer[i]) << ":{" << buffer[i] << "}";
 	}
 
-	Display::Printf(
+	Debugf(
 	    "set report {instance: %d, id: %d, type: %x,data:%s ",
 	    instance,
 	    report_id,

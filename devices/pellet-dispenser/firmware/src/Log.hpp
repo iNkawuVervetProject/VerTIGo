@@ -3,7 +3,7 @@
 #include "Button.hpp"
 #include "pico/time.h"
 #include "pico/types.h"
-#include "pico/util/queue.h"
+#include "utils/Queue.hpp"
 
 #include <stdarg.h>
 
@@ -46,16 +46,10 @@ private:
 
 	static constexpr size_t BufferSize = 4096;
 
-	struct Header {
-		size_t          Start;
-		absolute_time_t Time;
-		enum Level      Level;
-	};
-
 	std::array<char, BufferSize + 1> d_buffer;
-	size_t                       d_start = 0;
-	queue_t                      d_queue;
-	Level                        d_level = Level::INFO;
+	size_t                           d_start = 0;
+	Queue<Message, 16, true>         d_queue;
+	Level                            d_level = Level::INFO;
 };
 
 inline static void Fatalf(const char *fmt, ...)

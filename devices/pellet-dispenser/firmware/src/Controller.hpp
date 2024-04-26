@@ -42,6 +42,4 @@ private:
 	PelletCounter         d_pelletCounter;
 	WheelController       d_wheelController;
 	std::unique_ptr<Mode> d_mode;
-
-	queue_t d_commands;
 };

@@ -23,26 +23,26 @@ void Logger::Logf(Level level, const char *fmt, va_list args) {
 	}
 	va_end(args);
 
-	Header h = {.Start = d_start, .Time = now, .Level = level};
-	if (queue_try_add(&d_queue, &h) == true) {
+	Message m = {
+	    .Value = d_buffer.data() + d_start,
+	    .Time  = now,
+	    .Level = level,
+	};
+
+	if (d_queue.TryAdd(std::move(m)) == true) {
 		d_start += written + 1;
 	}
 }
 
 std::optional<Logger::Message> Logger::Pop() {
-	struct Header h;
-	if (queue_try_remove(&d_queue, &h) == false) {
+	struct Message msg;
+	if (d_queue.TryRemove(msg) == false) {
 		return std::nullopt;
 	}
 
-	return Message{
-	    .Value = d_buffer.data() + h.Start,
-	    .Time  = h.Time,
-	    .Level = h.Level,
-	};
+	return msg;
 }
 
 Logger::Logger() {
 	d_buffer[BufferSize] = 0;
-	queue_init(&d_queue, sizeof(struct Header), 16);
 }
