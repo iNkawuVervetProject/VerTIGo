@@ -15,6 +15,8 @@ set(SRC_FILES
 	Log.cpp
 	Error.cpp
 	utils/Queue.cpp
+	utils/Publisher.cpp
+	utils/Processor.cpp
 )
 
 if(USB_INTERFACE)
@@ -37,6 +39,8 @@ set(HDR_FILES
 	Controller.hpp
 	Log.hpp
 	utils/Queue.hpp
+	utils/Publisher.hpp
+	utils/Processor.hpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/usb)
@@ -47,6 +51,8 @@ add_executable(
 )
 
 target_compile_definitions(pellet-dispenser PUBLIC BOARD=pico)
+
+target_include_directories(pellet-dispenser PUBLIC ${PROJECT_SOURCE_DIR}/src)
 
 target_link_libraries(
 	pellet-dispenser

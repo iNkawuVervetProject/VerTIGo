@@ -47,7 +47,8 @@ public:
 		}
 	}
 
-	int Process(absolute_time_t time) override {
+	void Process(absolute_time_t time) override {
+		this->Clear();
 		uint32_t res = 0xffffffff;
 		// drain all readings
 		while (pio_sm_is_rx_fifo_empty(d_pio, d_sm) == false) {
@@ -55,14 +56,15 @@ public:
 			Tracef("got new value: %x", res);
 		}
 		if (res == 0xffffffff) {
-			return 0;
+			return;
 		}
 		int value = d_period - d_pulse - res;
 
 		if (value < 0) {
-			return -int(Error::IR_SENSOR_READOUT_ERROR);
+			Publish(std::nullopt, Error::IR_SENSOR_READOUT_ERROR);
+		} else {
+			Publish(value, Error::NO_ERROR);
 		}
-		return value;
 	}
 
 	void SetEnabled(bool enabled) override {

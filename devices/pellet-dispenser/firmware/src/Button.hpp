@@ -1,18 +1,21 @@
 #pragma once
 
 #include "pico/types.h"
+#include "utils/Processor.hpp"
+#include "utils/Publisher.hpp"
 #include <optional>
 
-struct Button {
-	enum class State {
-		RELEASED,
-		PRESSED,
-		LONG_PRESS,
-	};
-	enum State State = State::RELEASED;
+enum class ButtonState {
+	RELEASED,
+	PRESSED,
+	LONG_PRESS,
+};
 
+class Button : public Processor, public Publisher<ButtonState> {
+public:
+	ButtonState State;
 	Button(uint pin);
-	std::optional<enum State> Process(absolute_time_t time);
+	void Process(absolute_time_t time) override;
 
 private:
 	static constexpr uint LongPress_us = 300 * 1000; // 300ms

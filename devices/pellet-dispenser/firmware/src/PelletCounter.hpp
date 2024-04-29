@@ -3,31 +3,24 @@
 #include "pico/types.h"
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <tuple>
 
 #include "hardware/PIOIRSensor.hpp"
+#include "utils/Processor.hpp"
+#include "utils/Publisher.hpp"
 
-class PelletCounter {
+class PelletCounter : public Processor, public Publisher<int> {
 public:
-	struct StaticConfig : public PIOIRSensor<2>::Config {
-		uint IRPin, SensorEnablePin;
-	};
-
 	struct Config {
-		uint SensorLowThreshold  = 100;
-		uint SensorHighThreshold = 200;
+		uint SensorLowThreshold  = 60;
+		uint SensorHighThreshold = 250;
 	};
 
-	struct Result {
-		std::optional<uint> Count;
-		std::optional<uint> SensorValue;
-		enum Error          Error = Error::NO_ERROR;
-	};
+	PelletCounter(IRSensor &sensor, const Config &config);
 
-	PelletCounter(const StaticConfig &staticConfig, const Config &config);
-
-	Result Process(absolute_time_t time);
+	void Process(absolute_time_t time) override;
 
 	void SetEnabled(bool enabled);
 
@@ -36,7 +29,7 @@ public:
 	uint PelletCount() const;
 
 private:
-	PIOIRSensor<2> d_sensors;
+	IRSensor &d_sensor;
 
 	const Config &d_config;
 	bool          d_state     = false;

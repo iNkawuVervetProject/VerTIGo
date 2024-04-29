@@ -20,14 +20,14 @@ public:
 		uint Count = 0, Last = 2000, Min = 2000, Max = 0;
 	};
 
-	struct ButtonState {
-		enum Button::State State      = Button::State::RELEASED;
-		uint               PressCount = 0;
+	struct TestButtonState {
+		ButtonState State      = ButtonState::RELEASED;
+		uint        PressCount = 0;
 	};
 
 	struct State {
 
-		ButtonState       TestButton;
+		TestButtonState   TestButton;
 		int               WheelIndex = 0;
 		PelletSensorState Pellet;
 		absolute_time_t   Time = nil_time;

@@ -12,12 +12,12 @@
 
 #include "../Error.hpp"
 #include "ir_sensor.pio.h"
+#include "utils/Processor.hpp"
+#include "utils/Publisher.hpp"
 
-class IRSensor {
+class IRSensor : public Processor, public Publisher<uint> {
 public:
 	virtual ~IRSensor() = default;
-
-	virtual int Process(const absolute_time_t) = 0;
 
 	virtual void SetEnabled(bool) = 0;
 };
@@ -26,7 +26,7 @@ class BitBangIRSensor : public IRSensor {
 public:
 	BitBangIRSensor(uint pin, uint enablePin);
 
-	int Process(absolute_time_t time) override;
+	void Process(absolute_time_t time) override;
 
 	void SetEnabled(bool) override;
 

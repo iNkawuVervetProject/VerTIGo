@@ -13,15 +13,16 @@ Button::Button(uint pin_)
 	gpio_set_pulls(d_pin, true, false);
 }
 
-std::optional<enum Button::State> Button::Process(absolute_time_t now) {
+void Button::Process(absolute_time_t now) {
+	Clear();
 	bool pressed = !gpio_get(d_pin);
 
 	Tracef("Button[%d]: pressed: %s", d_pin, pressed ? "true" : "false");
 
 	switch (State) {
-	case State::RELEASED: {
+	case ButtonState::RELEASED: {
 		if (is_nil_time(d_last) && pressed == false) {
-			return std::nullopt;
+			return;
 		}
 		if (is_nil_time(d_last)) {
 			Debugf("Button[%d]: first pressed", d_pin);
@@ -33,37 +34,40 @@ std::optional<enum Button::State> Button::Process(absolute_time_t now) {
 			d_last = nil_time;
 			if (diff < Debounce_us) {
 				Debugf("Button[%d]: debounced", d_pin);
-				return std::nullopt;
+				return;
 			}
 
 			Debugf("Button[%d]: short press", d_pin);
-			State = State::PRESSED;
-			return State;
+			State = ButtonState::PRESSED;
+			Publish(State, Error::NO_ERROR);
+			return;
 		}
 
 		if (diff >= LongPress_us) {
 			Debugf("Button[%d]: long press", d_pin);
-			State  = State::LONG_PRESS;
+			State  = ButtonState::LONG_PRESS;
 			d_last = nil_time;
-			return State;
+			Publish(State, Error::NO_ERROR);
+			return;
 		}
 		break;
 	}
-	case State::PRESSED:
+	case ButtonState::PRESSED:
 		if (pressed == false) {
-			State = State::RELEASED;
-			return State;
+			State = ButtonState::RELEASED;
+			Publish(State, Error::NO_ERROR);
+			return;
 		}
-		return std::nullopt;
-	case State::LONG_PRESS: {
+		break;
+	case ButtonState::LONG_PRESS: {
 		if (pressed == false) {
 			Debugf("Button[%d]: released", d_pin);
-			State  = State::RELEASED;
+			State  = ButtonState::RELEASED;
 			d_last = nil_time;
-			return State;
+			Publish(State, Error::NO_ERROR);
+			return;
 		}
 		break;
 	}
 	}
-	return std::nullopt;
 }

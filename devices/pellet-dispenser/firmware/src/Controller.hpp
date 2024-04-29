@@ -5,13 +5,20 @@
 #include "Error.hpp"
 #include "PelletCounter.hpp"
 #include "WheelController.hpp"
+#include "hardware/DRV8848.hpp"
 #include "pico/types.h"
 
-class Controller {
+class Mode;
+
+class Controller : public Processor {
 public:
-	struct StaticConfig : public PelletCounter::StaticConfig,
-	                      public WheelController::StaticConfig {
-		uint TestButtonPin;
+	~Controller();
+
+	struct StaticConfig {
+		Button          &TestButton;
+		IRSensor        &PelletSensor, &WheelSensor;
+		PelletCounter   &Counter;
+		WheelController &Wheel;
 	};
 
 	Controller(const StaticConfig &staticConfig, const Config &config);
@@ -27,19 +34,15 @@ public:
 	        [](const CalibrationResult &) {}
 	);
 
-	void Process(absolute_time_t time);
+	void Process(absolute_time_t time) override;
 
 private:
-	class Mode {
-	public:
-		virtual ~Mode() = default;
+	friend class Mode;
 
-		virtual std::unique_ptr<Mode> operator()(absolute_time_t) = 0;
-	};
+	Button          &d_button;
+	IRSensor        &d_wheelSensor, &d_pelletSensor;
+	WheelController &d_wheel;
+	PelletCounter   &d_counter;
 
-	Button d_testButton;
-
-	PelletCounter         d_pelletCounter;
-	WheelController       d_wheelController;
 	std::unique_ptr<Mode> d_mode;
 };

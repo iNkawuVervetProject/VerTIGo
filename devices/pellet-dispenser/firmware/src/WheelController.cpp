@@ -1,6 +1,8 @@
 #include "WheelController.hpp"
 
 #include "Log.hpp"
+#include "hardware/DRV8848.hpp"
+#include "hardware/IRSensor.hpp"
 #include "hardware/gpio.h"
 #include "pico/time.h"
 #include "pico/types.h"
@@ -12,16 +14,17 @@
 #include <optional>
 
 WheelController::WheelController(
-    const StaticConfig &staticConfig, const Config &config
+    DRV8848 &motor, IRSensor &sensor, const Config &config
 )
-    : d_driver{staticConfig}
-    , d_sensor{staticConfig, staticConfig.SensorEnablePin}
+    : d_driver{motor}
+    , d_sensor{sensor}
     , d_config{config} {
 	setIdle(get_absolute_time());
 }
 
-WheelController::Result WheelController::Process(absolute_time_t time) {
-	auto [newPosition, sensorValue, err] = processSensor(time);
+void WheelController::Process(absolute_time_t time) {
+	Clear();
+	auto [newPosition, err] = processSensor(time);
 	if (newPosition.has_value()) {
 		d_position = newPosition.value();
 		d_lastStep = time;
@@ -74,7 +77,7 @@ WheelController::Result WheelController::Process(absolute_time_t time) {
 	}
 	}
 
-	return {.Position = newPosition, .SensorValue = sensorValue, .Error = err};
+	Publish(std::move(newPosition), err);
 }
 
 int WheelController::Position() {
@@ -104,32 +107,25 @@ void WheelController::Stop() {
 	}
 }
 
-std::tuple<std::optional<int>, std::optional<uint>, Error>
+std::pair<std::optional<int>, Error>
 WheelController::processSensor(absolute_time_t time) {
-	auto newValue = d_sensor.Process(time);
-	if (newValue == 0) {
-		return {std::nullopt, std::nullopt, Error::NO_ERROR};
-	}
+	auto [newValue, err] = d_sensor.Value();
 
-	if (newValue < 0) {
-		return {
-		    std::nullopt,
-		    std::nullopt,
-		    Error::WHEEL_CONTROLLER_SENSOR_ISSUE,
-		};
+	if (err != Error::NO_ERROR || newValue.has_value() == false) {
+		return {std::nullopt, Error::NO_ERROR};
 	}
 
 	if (d_lastState == true) {
-		if (newValue < d_config.SensorLowerThreshold) {
+		if (newValue.value() < d_config.SensorLowerThreshold) {
 			d_lastState = false;
 		}
 	} else {
-		if (newValue > d_config.SensorUpperThreshold) {
+		if (newValue.value() > d_config.SensorUpperThreshold) {
 			d_lastState = true;
-			return {d_position + d_direction, newValue, Error::NO_ERROR};
+			return {d_position + d_direction, Error::NO_ERROR};
 		}
 	}
-	return {std::nullopt, newValue, Error::NO_ERROR};
+	return {std::nullopt, Error::NO_ERROR};
 }
 
 void WheelController::setIdle(absolute_time_t time) {

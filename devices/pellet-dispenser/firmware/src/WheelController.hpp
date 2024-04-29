@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hardware/IRSensor.hpp"
 #include "pico/time.h"
 #include "pico/types.h"
 
@@ -10,14 +11,11 @@
 #include "hardware/PIOIRSensor.hpp"
 
 #include "Error.hpp"
+#include "utils/Processor.hpp"
+#include "utils/Publisher.hpp"
 
-class WheelController {
+class WheelController : public Processor, public Publisher<int> {
 public:
-	struct StaticConfig : public DRV8848::Config,
-	                      public ::PIOIRSensor<1>::Config {
-		uint SensorEnablePin = -1;
-	};
-
 	struct Config {
 		DRV8848::OutputChannel Channel = DRV8848::OutputChannel::A;
 
@@ -32,7 +30,7 @@ public:
 		uint MaxStep_us  = 800 * 1000;
 	};
 
-	WheelController(const StaticConfig &staticConfig, const Config &config);
+	WheelController(DRV8848 &motor, IRSensor &sensor, const Config &config);
 
 	struct Result {
 		std::optional<int>  Position;
@@ -40,7 +38,7 @@ public:
 		enum Error          Error;
 	};
 
-	Result Process(absolute_time_t time);
+	void Process(absolute_time_t time) override;
 
 	int Position();
 
@@ -66,17 +64,16 @@ private:
 	void setRampingDown(absolute_time_t time);
 	void setMoving(absolute_time_t time);
 
-	std::tuple<std::optional<int>, std::optional<uint>, Error>
-	processSensor(absolute_time_t time);
+	std::pair<std::optional<int>, Error> processSensor(absolute_time_t time);
 
 	const Config  &d_config;
-	DRV8848        d_driver;
-	PIOIRSensor<1> d_sensor;
+	DRV8848       &d_driver;
+	IRSensor      &d_sensor;
 
 	State d_state = State::IDLE;
 
-	int  d_direction       = 1;
-	bool d_lastState       = false;
+	int  d_direction = 1;
+	bool d_lastState = false;
 
 	int             d_position   = -1;
 	absolute_time_t d_stateStart = nil_time;

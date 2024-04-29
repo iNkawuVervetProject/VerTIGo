@@ -1,4 +1,5 @@
 #include "hardware/DRV8848.hpp"
+#include "hardware/PIOIRSensor.hpp"
 #include "pico/multicore.h"
 #include "pico/platform.h"
 #include "pico/stdio.h"
@@ -6,6 +7,7 @@
 #include "pico/time.h"
 #include "pico/types.h"
 
+#include <memory>
 #include <stdio.h>
 
 #ifdef USB_INTERFACE
@@ -57,37 +59,48 @@ int main() {
 	Infof("Verbosity set to DEBUG");
 #endif
 
-	auto controller = Controller(
+	auto button = Button{17};
+
+	auto wheelSensor = PIOIRSensor<1>(
 	    {
-	        PelletCounter::StaticConfig{
-	            PIOIRSensor<2>::Config{
-	                .Pio       = pio0,
-	                .SensorPin = 26,
-	                .PeriodUS  = 500,
-	            },
-	            .IRPin           = 27,
-	            .SensorEnablePin = 22,
-	        },
-	        WheelController::StaticConfig{
-	            DRV8848::Config{
-	                .nSleep = 2,
-	                .nFault = 9,
-	                .AIn1   = 3,
-	                .AIn2   = 6,
-	                .BIn1   = 8,
-	                .BIn2   = 7,
-	            },
-	            PIOIRSensor<1>::Config{
-	                .Pio       = pio0,
-	                .SensorPin = 21,
-	                .PeriodUS  = 500,
-	            },
-	            .SensorEnablePin = 20,
-
-	        },
-	        .TestButtonPin = 17,
+	        .Pio       = pio0,
+	        .SensorPin = 21,
+	        .PeriodUS  = 500,
 	    },
+	    20U
+	);
 
+	auto pelletSensor = PIOIRSensor<2>(
+	    {
+	        .Pio       = pio0,
+	        .SensorPin = 26,
+	        .PeriodUS  = 500,
+	    },
+	    27U,
+	    22U
+	);
+
+	auto motorDriver = DRV8848({
+	    .nSleep = 2,
+	    .nFault = 9,
+	    .AIn1   = 3,
+	    .AIn2   = 6,
+	    .BIn1   = 8,
+	    .BIn2   = 7,
+	});
+
+	auto wheel = WheelController(motorDriver, wheelSensor, config.Wheel);
+
+	auto pellets = PelletCounter(pelletSensor, config.Pellet);
+
+	auto controller = Controller(
+	    Controller::StaticConfig{
+	        .TestButton   = button,
+	        .PelletSensor = pelletSensor,
+	        .WheelSensor  = wheelSensor,
+	        .Counter      = pellets,
+	        .Wheel        = wheel,
+	    },
 	    config
 	);
 
@@ -96,7 +109,7 @@ int main() {
 		auto now = get_absolute_time();
 		ErrorReporter::Get().Process(now);
 
-		controller.Process(now);
+		// controller.Process(now);
 
 		if (absolute_time_diff_us(now, displayTimeout) <= 0) {
 			Display::Update(now);
