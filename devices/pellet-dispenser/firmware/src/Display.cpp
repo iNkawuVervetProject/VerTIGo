@@ -5,6 +5,7 @@
 #include "pico/types.h"
 #include "pico/util/queue.h"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstdio>
@@ -18,13 +19,15 @@
 static const char *resetState   = "\033[5A";
 static const char *advanceState = "\n\n\n\n\n";
 
+constexpr static size_t LineWidth = 80;
+
 void Display::formatHeader() {
 	std::string title = "Pellet Dispenser Rev A version 0.0.0";
 	printf(
 	    "\n\033[30;46m%*s%*s\033[m\n%s",
-	    40 + title.size() / 2,
+	    LineWidth / 2 + title.size() / 2,
 	    title.c_str(),
-	    40 - title.size() / 2,
+	    LineWidth / 2 - title.size() / 2,
 	    "",
 	    advanceState
 	);
@@ -38,41 +41,49 @@ void Display::formatState() {
 	ms          = ms - seconds * 1000;
 
 	printf(
-	    "%s\033[30;46m %20s: \033[m %06d.%03ds %43s\033[36m┃\n",
+	    "%s\033[30;46m %20s: \033[m %06d.%03ds %*s\033[36m┃\n",
 	    resetState,
 	    "Up Time",
 	    seconds,
 	    ms,
+	    LineWidth - 38,
 	    ""
 	);
 
-	printf(
-	    "\033[30;46m %20s: \033[m pressed:%-4d count:%-36d\033[36m┃\n",
+	printf( // 36
+	    "\033[30;46m %20s: \033[m pressed:%-4d count:%-*d \033[36m┃\n",
 	    "Button",
 	    uint(s.TestButton.State),
+	    LineWidth - 26 - 19,
 	    s.TestButton.PressCount
 	);
 
 	printf(
-	    "\033[30;46m %20s: \033[m position:%-4d last:%-36d\033[36m┃\n",
+	    "\033[30;46m %20s: \033[m position:%-4d last:%-*d \033[36m┃\n",
 	    "Wheel",
 	    s.Wheel.Position,
+	    LineWidth - 26 - 19,
 	    s.Wheel.SensorValue
 	);
 
 	printf(
-	    "\033[30;46m %20s: \033[m count:%-4d last:%-4d min:%-4d max:%-20d "
+	    "\033[30;46m %20s: \033[m count:%-4d last:%-4d min:%-4d max:%-*d "
 	    "\033[36m┃\n",
 	    "Pellet",
 	    s.Pellet.Count,
 	    s.Pellet.Last,
 	    s.Pellet.Min,
+	    LineWidth - 26 - 10 - 10 - 9,
 	    s.Pellet.Max
 	);
 
 	printf(
-	    "███████████████████████━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	    "━━━━━━━━━┛\n"
+	    "███████████████████████━%.*s━┛\n",
+	    LineWidth - 26,
+	    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	);
 }
 
@@ -105,27 +116,30 @@ void Display::formatMessage() {
 			needReset = true;
 		}
 
-		const char *msgStr = msg.value().Value;
-		size_t      n      = strlen(msgStr);
-		auto        c      = colors[size_t(msg.value().Level)];
+		char  *msgStr = const_cast<char *>(msg.value().Value);
+		size_t n      = strlen(msgStr);
+		auto   c      = colors[size_t(msg.value().Level)];
 
-		for (size_t i = 0; i < n; i += 54) {
+		for (size_t i = 0; i < n;) {
 			printf("\033[30;4%dm", c);
 			if (i == 0) {
 				printTime(msg.value().Time);
 			} else {
 				printf("                       ");
 			}
-			printf("\033[m\033[3%dm %-.54s ", c, msgStr + i);
-			if (i + 54 < n) {
-				printf("┃\n");
-			} else {
-				printf(
-				    "%.*s┃\n",
-				    54 - n + i,
-				    "                                                      "
-				);
+			size_t written = LineWidth - 26;
+
+			char *ch = std::find(msgStr + i, msgStr + i + written, '\n');
+			written  = ch - msgStr - i;
+
+			if (written < LineWidth - 26) {
+				*ch = '\0';
 			}
+
+			written = std::min(written, n - i);
+
+			printf("\033[m\033[3%dm %-.*s ", c, written, msgStr + i);
+			printf("%*s┃\n", LineWidth - 26 - written, "");
 		}
 	}
 }
