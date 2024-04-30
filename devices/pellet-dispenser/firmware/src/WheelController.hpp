@@ -50,6 +50,10 @@ public:
 		return d_state == State::IDLE;
 	}
 
+	inline bool WheelAligned() const {
+		return d_aligned;
+	}
+
 private:
 	enum class State {
 		IDLE = 0,
@@ -78,7 +82,7 @@ private:
 	State d_state = State::IDLE;
 
 	int  d_direction = 1;
-	bool d_lastState = false;
+	bool d_aligned   = false;
 
 	int             d_position   = -1;
 	absolute_time_t d_stateStart = nil_time;

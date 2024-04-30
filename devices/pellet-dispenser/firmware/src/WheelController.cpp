@@ -121,13 +121,13 @@ WheelController::processSensor(absolute_time_t time) {
 	}
 
 	auto value = d_sensor.Value();
-	if (d_lastState == true) {
+	if (d_aligned == true) {
 		if (value < d_config.SensorLowerThreshold) {
-			d_lastState = false;
+			d_aligned = false;
 		}
 	} else {
 		if (value > d_config.SensorUpperThreshold) {
-			d_lastState = true;
+			d_aligned = true;
 			return {d_position + d_direction, Error::NO_ERROR};
 		}
 	}
