@@ -40,7 +40,17 @@ public:
 	    uint count, const DispenseCallback &callback = [](uint, Error) {}
 	);
 
-	struct CalibrationResult {};
+	struct CalibrationResult {
+		struct Point {
+			uint Rewind_us;
+			uint Position;
+		};
+
+		std::vector<Point>      CoarseSearch;
+		std::vector<Point>      FineSearch;
+		uint                    MinRewindPulse_us;
+		uint                    Position;
+	};
 
 	using CalibrateCallback =
 	    std::function<void(const CalibrationResult &, Error)>;

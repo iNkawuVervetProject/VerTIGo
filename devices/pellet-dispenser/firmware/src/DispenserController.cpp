@@ -2,6 +2,7 @@
 #include "Display.hpp"
 #include "Error.hpp"
 #include "Log.hpp"
+#include "PelletCounter.hpp"
 #include "WheelController.hpp"
 #include "hardware/gpio.h"
 #include "pico/time.h"
@@ -199,16 +200,12 @@ public:
 
 class CalibrateMode : public Mode {
 public:
-	struct Result {
-		uint Rewind_us;
-		uint Position;
-	};
-
-	constexpr static uint  CoarseStep = 5 * 1000;
-	constexpr static uint  FineStep   = 500;
+	constexpr static uint CoarseStep = 5 * 1000;
+	constexpr static uint FineStep   = 500;
 
 	struct State {
-		std::vector<Result> Results;
+		std::vector<DispenserController::CalibrationResult::Point> Results,
+		    Coarse;
 
 		uint Step = CoarseStep;
 
@@ -292,28 +289,40 @@ private:
 	}
 
 	std::unique_ptr<Mode> fineCalibration() {
-		auto [idx, pulse] = findMin();
+		const auto &minPoint = findMin();
 
 		Self().d_wheelConfig = d_saved;
 
-		return std::make_unique<CalibrateMode>(
-		    Self(),
-		    State{
-		        .Step  = FineStep,
-		        .Start = pulse - CoarseStep,
-		        .Max   = pulse,
-		    },
-		    d_callback
-		);
+		auto newState = State{
+		    .Coarse = d_state.Results,
+		    .Step   = FineStep,
+		    .Start  = minPoint.Rewind_us - CoarseStep,
+		    .Max    = minPoint.Rewind_us,
+		};
+
+		if (newState.Max == 0) {
+			newState.Max   = CoarseStep;
+			newState.Start = 0;
+		}
+
+		return std::make_unique<CalibrateMode>(Self(), newState, d_callback);
 	}
 
 	std::unique_ptr<Mode> end(absolute_time_t time) {
-		auto [idx, pulse] = findMin();
-		d_callback({}, Error::NO_ERROR);
+		const auto &minPoint = findMin();
+		d_callback(
+		    {
+		        .CoarseSearch      = d_state.Coarse,
+		        .FineSearch        = d_state.Results,
+		        .MinRewindPulse_us = minPoint.Rewind_us,
+		        .Position          = minPoint.Position,
+		    },
+		    Error::NO_ERROR
+		);
 		return std::make_unique<IdleMode>(Self(), time);
 	}
 
-	std::tuple<size_t, uint> findMin() {
+	const DispenserController::CalibrationResult::Point &findMin() {
 		uint   min = 0xffffffff;
 		size_t idx, i = 0;
 		for (const auto &r : d_state.Results) {
@@ -323,7 +332,7 @@ private:
 			}
 			++i;
 		}
-		return {idx, d_state.Results[idx].Rewind_us};
+		return d_state.Results[idx];
 	}
 
 	uint next() {
