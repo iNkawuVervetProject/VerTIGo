@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Controller.hpp"
 #include "PelletCounter.hpp"
 #include "WheelController.hpp"
 #include "pico/types.h"
@@ -14,6 +15,5 @@ struct Config {
 	WheelController::Config Wheel;
 	PelletCounter::Config   Pellet;
 
-	uint          BackslashRewindPulseUS = 15 * 1000;
-	OutputChannel Channel                = OutputChannel::B;
+	Controller::Config Main;
 };

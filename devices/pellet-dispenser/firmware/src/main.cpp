@@ -101,7 +101,7 @@ int main() {
 	        .Counter      = pellets,
 	        .Wheel        = wheel,
 	    },
-	    config
+	    config.Main
 	);
 
 	while (true) {

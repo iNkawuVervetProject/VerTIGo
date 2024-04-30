@@ -82,19 +82,19 @@ public:
 protected:
 	lock_core_t d_core;
 
-	inline uint32_t lock() {
+	inline uint32_t lock() const {
 		return spin_lock_blocking(d_core.spin_lock);
 	}
 
-	inline void unlock(uint32_t saved) {
+	inline void unlock(uint32_t saved) const {
 		spin_unlock(d_core.spin_lock, saved);
 	}
 
-	inline void unlock_wait(uint32_t saved) {
+	inline void unlock_wait(uint32_t saved) const {
 		lock_internal_spin_unlock_with_wait(&d_core, saved);
 	}
 
-	inline void unlock_notify(uint32_t saved) {
+	inline void unlock_notify(uint32_t saved) const {
 		lock_internal_spin_unlock_with_notify(&d_core, saved);
 	}
 

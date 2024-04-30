@@ -12,6 +12,10 @@ enum class Error {
 	WHEEL_CONTROLLER_SENSOR_ISSUE,
 	WHEEL_CONTROLLER_SENSOR_IRRESPONSIVE,
 	PELLET_COUNTER_SENSOR_ISSUE,
+	DISPENSER_EMPTY,
+	DISPENSER_JAMMED,
+	DISPENSER_QUEUE_FULL,
+	DISPENSER_SELF_CHECK_FAIL,
 	_NUM_ERRORS
 };
 
@@ -24,6 +28,10 @@ static const char *ErrorDescription[NumErrors] = {
     "WheelController: Sensor issue",
     "WheelController: Sensor seems irresponsive",
     "PelletSensor: Sensor issue",
+    "Dispenser: Empty",
+    "Dispenser: Jammed",
+    "Dispenser: too many commands",
+    "Dispenser: self-test failed",
 };
 
 inline static const char *GetErrorDescription(Error err) {
