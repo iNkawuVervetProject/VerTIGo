@@ -44,7 +44,7 @@ public:
 private:
 	Logger();
 
-	static constexpr size_t BufferSize = 4096;
+	static constexpr size_t BufferSize = 4096 * 8;
 
 	std::array<char, BufferSize + 1> d_buffer;
 	size_t                           d_start = 0;

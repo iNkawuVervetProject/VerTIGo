@@ -49,7 +49,7 @@ public:
 	}
 
 	void Process(absolute_time_t time) override {
-		this->Clear();
+		Clear();
 		uint32_t res = 0xffffffff;
 		// drain all readings
 		while (pio_sm_is_rx_fifo_empty(d_pio, d_sm) == false) {

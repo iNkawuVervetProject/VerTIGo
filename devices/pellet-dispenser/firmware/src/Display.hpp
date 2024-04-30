@@ -25,10 +25,15 @@ public:
 		uint        PressCount = 0;
 	};
 
+	struct WheelState {
+		int Position    = 0;
+		int SensorValue = 0;
+	};
+
 	struct State {
 
 		TestButtonState   TestButton;
-		int               WheelIndex = 0;
+		WheelState        Wheel;
 		PelletSensorState Pellet;
 		absolute_time_t   Time = nil_time;
 	};

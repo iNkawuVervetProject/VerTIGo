@@ -34,7 +34,7 @@ protected:
 	}
 
 	void PublishError(Error err) {
-		d_error = Error::NO_ERROR;
+		d_error = err;
 		d_value = std::nullopt;
 	}
 

@@ -25,6 +25,7 @@ WheelController::WheelController(
 void WheelController::Process(absolute_time_t time) {
 	Clear();
 	auto [newPosition, err] = processSensor(time);
+
 	if (newPosition.has_value()) {
 		d_position = newPosition.value();
 		d_lastStep = time;
@@ -118,6 +119,7 @@ WheelController::processSensor(absolute_time_t time) {
 	if (d_sensor.HasError() || d_sensor.HasValue() == false) {
 		return {std::nullopt, Error::NO_ERROR};
 	}
+
 	auto value = d_sensor.Value();
 	if (d_lastState == true) {
 		if (value < d_config.SensorLowerThreshold) {

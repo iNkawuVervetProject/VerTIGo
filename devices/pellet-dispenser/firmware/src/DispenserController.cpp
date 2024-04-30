@@ -8,6 +8,7 @@
 #include "pico/types.h"
 #include "utils/Publisher.hpp"
 #include <memory>
+#include <sstream>
 
 class Mode {
 public:
@@ -45,7 +46,9 @@ public:
 	    : Mode{controller}
 	    , d_start{start}
 	    , d_onCounterDisable{onCounterDisable}
-	    , d_config{controller.d_config} {}
+	    , d_config{controller.d_config} {
+		Infof("Dispenser: Idle");
+	}
 
 	~IdleMode() {
 		d_onCounterDisable(Self().d_counter.PelletCount());
@@ -64,6 +67,7 @@ private:
 public:
 	inline SelfCheckMode(DispenserController &controller)
 	    : Mode{controller} {
+		Infof("Dispenser: Self-Check started");
 		Self().d_pelletSensor.SetEnabled(true);
 		Self().d_wheelSensor.SetEnabled(true);
 	}
@@ -72,7 +76,8 @@ public:
 		if (Self().d_pelletSensor.HasError() ||
 		    Self().d_pelletSensor.HasValue()) {
 			d_pelletTested = true;
-			d_pelletGood   = !Self().d_pelletSensor.HasError();
+
+			d_pelletGood = !Self().d_pelletSensor.HasError();
 			Self().d_pelletSensor.SetEnabled(false);
 		}
 
@@ -84,19 +89,15 @@ public:
 			Self().d_wheelSensor.SetEnabled(false);
 		}
 
-		if (!d_pelletTested || !d_wheelTested) {
+		if (d_pelletTested == false || d_wheelTested == false) {
 			return nullptr;
 		}
 
-		if (!d_pelletGood) {
-			Warnf("Pellet IR Sensor issue, disabling pellet dispenser");
-		}
-
-		if (!d_wheelGood) {
-			Warnf("Wheel IR Sensor issue, disabling pellet dispenser");
-		}
-
 		Self().d_sane = d_wheelGood && d_pelletGood;
+
+		if (Self().d_sane == false) {
+			Warnf("Dispenser: disabled after failed self-check");
+		}
 
 		return std::make_unique<IdleMode>(Self(), now);
 	}
@@ -119,8 +120,8 @@ private:
 
 public:
 	inline DispenseMode(
-	    DispenserController	                     &controller,
-	    uint                                want,
+	    DispenserController                         &controller,
+	    uint                                         want,
 	    const DispenserController::DispenseCallback &callback
 	)
 	    : Mode{controller}
@@ -198,17 +199,16 @@ public:
 
 class CalibrateMode : public Mode {
 public:
-
 	struct State {
 		std::optional<uint> High;
-		std::optional<uint> Low =0;
-		uint Next = 100 * 1000;
+		std::optional<uint> Low  = 0;
+		uint                Next =  0* 1000;
 	};
 
 	CalibrateMode(
-	              DispenserController &controller,
-	              const State & state,
-	              const DispenserController::CalibrateCallback &callback
+	    DispenserController                          &controller,
+	    const State	                              &state,
+	    const DispenserController::CalibrateCallback &callback
 	)
 	    : Mode{controller}
 	    , d_callback{callback}
@@ -216,67 +216,74 @@ public:
 	    , d_state{state} {
 		controller.d_counter.SetEnabled(true);
 		controller.d_wheelConfig.RewindPulse_us = state.Next;
+		controller.d_wheelConfig.SensorCooldown_us = 1 * 1000 * 1000;
 		controller.d_wheel.Start(1);
 		d_start = get_absolute_time();
 	}
 
 	~CalibrateMode() {
-		Self().d_wheelConfig =  d_saved;
+		Self().d_wheelConfig = d_saved;
 	}
 
 	std::unique_ptr<Mode> operator()(absolute_time_t time) override {
-		if(Self().d_counter.HasValue()) {
+		if (Self().d_counter.HasValue()) {
 			Errorf("Dispenser calibration: dispenser not empty");
-			return std::make_unique<IdleMode>(Self(),time,
-			                                  [callback = d_callback](uint) {
-				                                  callback({},Error::DISPENSER_CALIBRATION_ERROR);
-			                                  });
+			return std::make_unique<IdleMode>(
+			    Self(),
+			    time,
+			    [callback = d_callback](uint) {
+				    callback({}, Error::DISPENSER_CALIBRATION_ERROR);
+			    }
+			);
 		}
 
-		if ( Self().d_wheelSensor.Err() == Error::IR_SENSOR_READOUT_ERROR
-		     || Self().d_wheel.Err() == Error::WHEEL_CONTROLLER_MOTOR_FAULT ) {
+		if (Self().d_wheelSensor.Err() == Error::IR_SENSOR_READOUT_ERROR ||
+		    Self().d_wheel.Err() == Error::WHEEL_CONTROLLER_MOTOR_FAULT) {
 			Errorf("Dispenser calibration: error with wheel sensor or motor");
-			d_callback({},Error::DISPENSER_CALIBRATION_ERROR);
-			return  std::make_unique<IdleMode>(Self(),time);
+			d_callback({}, Error::DISPENSER_CALIBRATION_ERROR);
+			return std::make_unique<IdleMode>(Self(), time);
 		}
 
-		if ( Self().d_wheel.HasValue() ) {
-			if ( ++d_position == 2 ) {
+		if (Self().d_wheel.HasValue()) {
+			++d_position;
+			if (d_position == 2) {
 				Self().d_wheel.Stop();
 			}
 		}
 
-		if (Self().d_wheelSensor.HasValue() ) {
+		if (Self().d_wheelSensor.HasValue()) {
 			d_points.push_back({
-					.Time =uint32_t(absolute_time_diff_us(d_start, time)),
-					.Value = uint16_t(Self().d_wheelSensor.Value()),
-				});
+			    .Time  = uint32_t(absolute_time_diff_us(d_start, time)),
+			    .Value = uint16_t(Self().d_wheelSensor.Value()),
+			});
 		}
 
-		if (Self().d_wheel.Ready() && Self().d_wheelSensor.Enabled() == false ) {
-			for ( const auto & p : d_points ) {
-				Infof("%d,%d",p.Time,p.Value);
+		if (Self().d_wheel.Ready() && Self().d_wheelSensor.Enabled() == false) {
+			std::ostringstream oss;
+			for (const auto & p : d_points) {
+				oss << p.Time<<","<< p.Value << "\n";
 			}
-			return std::make_unique<IdleMode>(Self(),time);
+			Infof("data would be %d",oss.str().size());
+			printf("data: %s",oss.str().c_str());
+			printf("\n\n\n\n\n\n\n\n\n\n\n\n\n");
+			return std::make_unique<IdleMode>(Self(), time);
 		}
-
 
 		return nullptr;
 	};
+
 private:
 	struct SensorPoint {
 		uint32_t Time;
 		uint16_t Value;
 	};
 
-
 	DispenserController::CalibrateCallback d_callback;
-	WheelController::Config d_saved;
-
+	WheelController::Config                d_saved;
 
 	std::vector<SensorPoint> d_points;
-	absolute_time_t d_start;
-	State d_state;
+	absolute_time_t          d_start;
+	State                    d_state;
 
 	uint d_position = 0;
 };
@@ -301,7 +308,11 @@ std::unique_ptr<Mode> IdleMode::operator()(absolute_time_t now) {
 	return cmd();
 }
 
-DispenserController::DispenserController(const StaticConfig &staticConfig, const Config &config, WheelController::Config & wheelConfig)
+DispenserController::DispenserController(
+    const StaticConfig      &staticConfig,
+    const Config            &config,
+    WheelController::Config &wheelConfig
+)
 
     : d_config{config}
     , d_wheelConfig{wheelConfig}
@@ -327,12 +338,12 @@ void DispenserController::Dispense(
     uint count, const std::function<void(uint, Error)> &callback
 ) {
 
-	if (d_sane == false) {
-		callback(0, Error::DISPENSER_SELF_CHECK_FAIL);
-		return;
-	}
-
 	Command dispense = [this, count, callback]() -> std::unique_ptr<Mode> {
+		if (d_sane == false) {
+			callback(0, Error::DISPENSER_SELF_CHECK_FAIL);
+			return nullptr;
+		}
+
 		return std::make_unique<DispenseMode>(*this, count, callback);
 	};
 
@@ -343,16 +354,21 @@ void DispenserController::Dispense(
 
 void DispenserController::Calibrate(const CalibrateCallback &callback) {
 
-	if (d_sane == false) {
-		callback({}, Error::DISPENSER_SELF_CHECK_FAIL);
-		return;
-	}
-
 	Command calibrate = [this, callback]() -> std::unique_ptr<Mode> {
-		return std::make_unique<CalibrateMode>(*this, CalibrateMode::State{},callback);
+		if (d_sane == false) {
+			callback({}, Error::DISPENSER_SELF_CHECK_FAIL);
+			return nullptr;
+		}
+
+		return std::make_unique<CalibrateMode>(
+		    *this,
+		    CalibrateMode::State{},
+		    callback
+		);
 	};
 
 	if (d_queue.TryAdd(std::move(calibrate)) == false) {
+
 		callback({}, Error::DISPENSER_QUEUE_FULL);
 	}
 }
@@ -364,6 +380,7 @@ void DispenserController::processErrors() {
 		    10 * 1000
 		);
 	}
+
 
 	if (d_pelletSensor.HasError()) {
 		ErrorReporter::Get().Report(
@@ -379,4 +396,23 @@ void DispenserController::processErrors() {
 	if (d_counter.HasError()) {
 		ErrorReporter::Get().Report(d_counter.Err(), 5 * 1000 * 1000);
 	}
+
+
+	if ( d_wheelSensor.HasValue() ) {
+		Display::State().Wheel.SensorValue = d_wheelSensor.Value();
+	}
+
+	if ( d_wheel.HasValue() ) {
+		Display::State().Wheel.Position = d_wheel.Value();
+	}
+
+	if ( d_pelletSensor.HasValue() ) {
+		auto & state = Display::State().Pellet;
+		state.Last = d_pelletSensor.Value();
+		state.Min = std::min(state.Min,state.Last);
+		state.Max = std::max(state.Max,state.Last);
+	}
+
+
+
 }

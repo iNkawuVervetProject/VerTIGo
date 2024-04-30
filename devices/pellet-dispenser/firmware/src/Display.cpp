@@ -47,13 +47,18 @@ void Display::formatState() {
 	);
 
 	printf(
-	    "\033[30;46m %20s: \033[m pressed:%d,count:%-39d\033[36m┃\n",
+	    "\033[30;46m %20s: \033[m pressed:%-4d count:%-36d\033[36m┃\n",
 	    "Button",
 	    uint(s.TestButton.State),
 	    s.TestButton.PressCount
 	);
 
-	printf("\033[30;46m %20s: \033[m %-55d\033[36m┃\n", "Wheel", s.WheelIndex);
+	printf(
+	    "\033[30;46m %20s: \033[m position:%-4d last:%-36d\033[36m┃\n",
+	    "Wheel",
+	    s.Wheel.Position,
+	    s.Wheel.SensorValue
+	);
 
 	printf(
 	    "\033[30;46m %20s: \033[m count:%-4d last:%-4d min:%-4d max:%-20d "
