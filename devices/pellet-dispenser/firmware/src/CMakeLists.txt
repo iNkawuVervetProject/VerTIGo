@@ -11,7 +11,7 @@ set(SRC_FILES
 	PelletCounter.cpp
 	hardware/IRQManager.cpp
 	hardware/FlashStorage.cpp
-	Controller.cpp
+	DispenserController.cpp
 	Log.cpp
 	Error.cpp
 	utils/Queue.cpp
@@ -36,7 +36,7 @@ set(HDR_FILES
 	hardware/IRQManager.hpp
 	hardware/FlashStorage.hpp
 	utils/Defer.hpp
-	Controller.hpp
+	DispenserController.hpp
 	Log.hpp
 	utils/Queue.hpp
 	utils/Publisher.hpp

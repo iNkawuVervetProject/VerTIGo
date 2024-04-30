@@ -9,9 +9,9 @@
 
 class Mode;
 
-class Controller : public Processor {
+class DispenserController : public Processor {
 public:
-	~Controller();
+	~DispenserController();
 
 	struct StaticConfig {
 		Button          &TestButton;
@@ -28,7 +28,11 @@ public:
 		uint SelfCheckPeriod_us       = 120 * 1000 * 1000;
 	};
 
-	Controller(const StaticConfig &staticConfig, const Config &config);
+	DispenserController(
+	    const StaticConfig      &staticConfig,
+	    const Config            &config,
+	    WheelController::Config &wheelConfig
+	);
 
 	using DispenseCallback = std::function<void(uint, Error)>;
 
@@ -56,7 +60,8 @@ private:
 	friend class CalibrateMode;
 	void processErrors();
 
-	const Config &d_config;
+	const Config            &d_config;
+	WheelController::Config &d_wheelConfig;
 
 	Button          &d_button;
 	IRSensor        &d_wheelSensor, &d_pelletSensor;

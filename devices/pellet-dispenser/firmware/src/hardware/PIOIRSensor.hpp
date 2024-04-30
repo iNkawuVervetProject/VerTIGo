@@ -5,6 +5,7 @@
 #include "hardware/pio.h"
 #include "hardware/pio_instructions.h"
 #include "ir_sensor.pio.h"
+#include "pico/stdio.h"
 #include "pico/types.h"
 #include <optional>
 
@@ -68,7 +69,7 @@ public:
 	}
 
 	void SetEnabled(bool enabled) override {
-		if (gpio_get(d_enablePins[0]) == enabled) {
+		if (Enabled() == enabled) {
 			return;
 		}
 		if (enabled) {
@@ -79,6 +80,10 @@ public:
 			gpio_put(p, enabled);
 		}
 		pio_sm_set_enabled(d_pio, d_sm, enabled);
+	}
+
+	bool Enabled() const override {
+		return gpio_get(d_enablePins[0]);
 	}
 
 private:

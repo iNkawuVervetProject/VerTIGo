@@ -19,7 +19,9 @@ class IRSensor : public Processor, public Publisher<uint> {
 public:
 	virtual ~IRSensor() = default;
 
-	virtual void SetEnabled(bool) = 0;
+	virtual void SetEnabled(bool enabled) = 0;
+
+	virtual bool Enabled() const = 0;
 };
 
 class BitBangIRSensor : public IRSensor {
@@ -29,6 +31,8 @@ public:
 	void Process(absolute_time_t time) override;
 
 	void SetEnabled(bool) override;
+
+	bool Enabled() const override;
 
 private:
 	uint            d_sensorPin, d_enablePin;

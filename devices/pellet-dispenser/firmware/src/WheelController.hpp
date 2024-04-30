@@ -20,8 +20,9 @@ public:
 		DRV8848::OutputChannel Channel = DRV8848::OutputChannel::A;
 
 		uint Speed             = 200;
-		uint RampUpDuration_us = 10000;
-		uint RewindPulse_us    = 20000;
+		uint RampUpDuration_us = 10 * 1000;
+		uint RewindPulse_us    = 20 * 1000;
+		uint SensorCooldown_us = 500 * 1000;
 
 		uint SensorLowerThreshold = 160;
 		uint SensorUpperThreshold = 220;
@@ -44,6 +45,10 @@ public:
 
 	void Start(int direction = 1);
 	void Stop();
+
+	inline bool Ready() const {
+		return d_state == State::IDLE;
+	}
 
 private:
 	enum class State {

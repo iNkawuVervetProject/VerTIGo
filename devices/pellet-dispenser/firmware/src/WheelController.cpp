@@ -32,7 +32,8 @@ void WheelController::Process(absolute_time_t time) {
 
 	switch (d_state) {
 	case State::IDLE:
-		if (absolute_time_diff_us(d_stateStart, time) >= 500000) {
+		if (absolute_time_diff_us(d_stateStart, time) >=
+		    d_config.SensorCooldown_us) {
 			d_sensor.SetEnabled(false);
 		}
 		break;

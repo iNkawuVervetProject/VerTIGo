@@ -25,7 +25,7 @@ inline void tud_task() {}
 
 #include "Button.hpp"
 #include "Config.hpp"
-#include "Controller.hpp"
+#include "DispenserController.hpp"
 #include "Display.hpp"
 #include "Error.hpp"
 #include "Log.hpp"
@@ -93,15 +93,16 @@ int main() {
 
 	auto pellets = PelletCounter(pelletSensor, config.Pellet);
 
-	auto controller = Controller(
-	    Controller::StaticConfig{
+	auto dispenser = DispenserController(
+	    DispenserController::StaticConfig{
 	        .TestButton   = button,
 	        .PelletSensor = pelletSensor,
 	        .WheelSensor  = wheelSensor,
 	        .Counter      = pellets,
 	        .Wheel        = wheel,
 	    },
-	    config.Main
+	    config.Dispenser,
+	    config.Wheel
 	);
 
 	while (true) {
@@ -109,7 +110,7 @@ int main() {
 		auto now = get_absolute_time();
 		ErrorReporter::Get().Process(now);
 
-		// controller.Process(now);
+		Processor::ProcessAll(now);
 
 		if (absolute_time_diff_us(now, displayTimeout) <= 0) {
 			Display::Update(now);

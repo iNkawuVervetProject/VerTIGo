@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Controller.hpp"
+#include "DispenserController.hpp"
 #include "PelletCounter.hpp"
 #include "WheelController.hpp"
 #include "pico/types.h"
@@ -15,5 +15,5 @@ struct Config {
 	WheelController::Config Wheel;
 	PelletCounter::Config   Pellet;
 
-	Controller::Config Main;
+	DispenserController::Config Dispenser;
 };

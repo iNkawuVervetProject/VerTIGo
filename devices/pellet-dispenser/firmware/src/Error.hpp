@@ -16,6 +16,7 @@ enum class Error {
 	DISPENSER_JAMMED,
 	DISPENSER_QUEUE_FULL,
 	DISPENSER_SELF_CHECK_FAIL,
+	DISPENSER_CALIBRATION_ERROR,
 	_NUM_ERRORS
 };
 
@@ -32,6 +33,7 @@ static const char *ErrorDescription[NumErrors] = {
     "Dispenser: Jammed",
     "Dispenser: too many commands",
     "Dispenser: self-test failed",
+    "Dispenser: calibration error",
 };
 
 inline static const char *GetErrorDescription(Error err) {
