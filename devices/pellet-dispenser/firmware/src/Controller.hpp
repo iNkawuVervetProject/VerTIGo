@@ -38,7 +38,12 @@ public:
 
 private:
 	friend class Mode;
+	friend class IdleMode;
+	friend class SelfCheckMode;
+	friend class DispenseMode;
+	friend class CalibrateMode;
 
+	void             processErrors();
 	Button          &d_button;
 	IRSensor        &d_wheelSensor, &d_pelletSensor;
 	WheelController &d_wheel;

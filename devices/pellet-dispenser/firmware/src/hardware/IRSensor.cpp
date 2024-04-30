@@ -69,9 +69,9 @@ void BitBangIRSensor::Process(const absolute_time_t time) {
 			d_start = isLow ? delayed_by_ms(d_start, 1) : time;
 			d_state = WAIT_FOR_START;
 			if (isLow) {
-				Publish(rel, Error::NO_ERROR);
+				PublishValue(rel);
 			} else {
-				Publish(std::nullopt, Error::IR_SENSOR_READOUT_ERROR);
+				PublishError(Error::IR_SENSOR_READOUT_ERROR);
 			}
 		}
 		break;

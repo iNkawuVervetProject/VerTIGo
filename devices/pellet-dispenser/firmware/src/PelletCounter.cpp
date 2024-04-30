@@ -8,23 +8,20 @@ PelletCounter::PelletCounter(IRSensor &sensor, const Config &config)
 
 void PelletCounter::Process(absolute_time_t time) {
 	Clear();
-	auto [newValue, err] = d_sensor.Value();
-	if (err != Error::NO_ERROR) {
+	if (d_sensor.HasError() || d_sensor.HasValue() == false) {
 		return;
 	}
 
-	if (newValue.has_value() == false) {
-		return;
-	}
+	auto value = d_sensor.Value();
 
 	if (d_state == false) {
-		if (newValue.value() >= d_config.SensorHighThreshold) {
+		if (value >= d_config.SensorHighThreshold) {
 			d_state = true;
 			++d_count;
-			Publish(d_count, Error::NO_ERROR);
+			PublishValue(d_count);
 		}
 	} else {
-		if (newValue <= d_config.SensorLowThreshold) {
+		if (value <= d_config.SensorLowThreshold) {
 			d_state = false;
 		}
 	}

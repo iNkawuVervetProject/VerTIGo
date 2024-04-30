@@ -77,7 +77,11 @@ void WheelController::Process(absolute_time_t time) {
 	}
 	}
 
-	Publish(std::move(newPosition), err);
+	if (err != Error::NO_ERROR) {
+		PublishError(err);
+	} else if (newPosition.has_value()) {
+		PublishValue(newPosition.value());
+	}
 }
 
 int WheelController::Position() {
@@ -109,18 +113,17 @@ void WheelController::Stop() {
 
 std::pair<std::optional<int>, Error>
 WheelController::processSensor(absolute_time_t time) {
-	auto [newValue, err] = d_sensor.Value();
 
-	if (err != Error::NO_ERROR || newValue.has_value() == false) {
+	if (d_sensor.HasError() || d_sensor.HasValue() == false) {
 		return {std::nullopt, Error::NO_ERROR};
 	}
-
+	auto value = d_sensor.Value();
 	if (d_lastState == true) {
-		if (newValue.value() < d_config.SensorLowerThreshold) {
+		if (value < d_config.SensorLowerThreshold) {
 			d_lastState = false;
 		}
 	} else {
-		if (newValue.value() > d_config.SensorUpperThreshold) {
+		if (value > d_config.SensorUpperThreshold) {
 			d_lastState = true;
 			return {d_position + d_direction, Error::NO_ERROR};
 		}

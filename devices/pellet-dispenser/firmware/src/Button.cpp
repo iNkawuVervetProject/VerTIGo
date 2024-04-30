@@ -39,7 +39,7 @@ void Button::Process(absolute_time_t now) {
 
 			Debugf("Button[%d]: short press", d_pin);
 			State = ButtonState::PRESSED;
-			Publish(State, Error::NO_ERROR);
+			PublishValue(State);
 			return;
 		}
 
@@ -47,7 +47,7 @@ void Button::Process(absolute_time_t now) {
 			Debugf("Button[%d]: long press", d_pin);
 			State  = ButtonState::LONG_PRESS;
 			d_last = nil_time;
-			Publish(State, Error::NO_ERROR);
+			PublishValue(State);
 			return;
 		}
 		break;
@@ -55,7 +55,7 @@ void Button::Process(absolute_time_t now) {
 	case ButtonState::PRESSED:
 		if (pressed == false) {
 			State = ButtonState::RELEASED;
-			Publish(State, Error::NO_ERROR);
+			PublishValue(State);
 			return;
 		}
 		break;
@@ -64,7 +64,7 @@ void Button::Process(absolute_time_t now) {
 			Debugf("Button[%d]: released", d_pin);
 			State  = ButtonState::RELEASED;
 			d_last = nil_time;
-			Publish(State, Error::NO_ERROR);
+			PublishValue(State);
 			return;
 		}
 		break;

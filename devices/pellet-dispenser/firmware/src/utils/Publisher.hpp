@@ -6,8 +6,8 @@
 
 template <typename T> class Publisher {
 public:
-	inline std::pair<std::optional<T>, Error> Value() const {
-		return {d_value, d_error};
+	inline const T &Value() const {
+		return d_value.value();
 	}
 
 	inline void Clear() {
@@ -28,9 +28,14 @@ public:
 	}
 
 protected:
-	void Publish(std::optional<T> &&value, Error error) {
-		d_value = std::move(value);
-		d_error = error;
+	void PublishValue(const T &value) {
+		d_value = value;
+		d_error = Error::NO_ERROR;
+	}
+
+	void PublishError(Error err) {
+		d_error = Error::NO_ERROR;
+		d_value = std::nullopt;
 	}
 
 private:

@@ -61,9 +61,9 @@ public:
 		int value = d_period - d_pulse - res;
 
 		if (value < 0) {
-			Publish(std::nullopt, Error::IR_SENSOR_READOUT_ERROR);
+			PublishError(Error::IR_SENSOR_READOUT_ERROR);
 		} else {
-			Publish(value, Error::NO_ERROR);
+			PublishValue(value);
 		}
 	}
 
