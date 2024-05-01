@@ -44,7 +44,7 @@ public:
 		for (auto p : d_enablePins) {
 			gpio_init(p);
 			gpio_set_dir(p, true);
-			gpio_put(p, 0);
+			gpio_put(p, false);
 		}
 	}
 
@@ -72,6 +72,7 @@ public:
 		if (Enabled() == enabled) {
 			return;
 		}
+
 		if (enabled) {
 			pio_sm_set_pindirs_with_mask(d_pio, d_sm, 0, (1u << d_pin));
 			pio_sm_exec_wait_blocking(d_pio, d_sm, pio_encode_jmp(d_offset));
@@ -80,6 +81,12 @@ public:
 			gpio_put(p, enabled);
 		}
 		pio_sm_set_enabled(d_pio, d_sm, enabled);
+
+		Debugf(
+		    "PIOIRSensor[%d]: enabled:%s",
+		    d_enablePins[0],
+		    Enabled() ? "true" : "false"
+		);
 	}
 
 	bool Enabled() const override {

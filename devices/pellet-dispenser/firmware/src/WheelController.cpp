@@ -32,12 +32,16 @@ void WheelController::Process(absolute_time_t time) {
 	}
 
 	switch (d_state) {
-	case State::IDLE:
-		if (absolute_time_diff_us(d_stateStart, time) >=
-		    d_config.SensorCooldown_us) {
+	case State::IDLE: {
+		if (d_sensor.Enabled() == false) {
+			break;
+		}
+		auto ellapsed = absolute_time_diff_us(d_stateStart, time);
+		if (ellapsed >= d_config.SensorCooldown_us) {
 			d_sensor.SetEnabled(false);
 		}
 		break;
+	}
 	case State::RAMPING_UP: {
 		if (stalled(time)) {
 			err = Error::WHEEL_CONTROLLER_MOTOR_FAULT;
@@ -135,35 +139,44 @@ WheelController::processSensor(absolute_time_t time) {
 }
 
 void WheelController::setIdle(absolute_time_t time) {
-	d_state = State::IDLE;
-	d_driver.SetEnabled(false);
+	Debugf("WheelController: going idle");
+	d_state      = State::IDLE;
 	d_stateStart = time;
-	d_lastStep   = nil_time;
+
+	d_driver.SetEnabled(false);
+	d_lastStep = nil_time;
 }
 
 void WheelController::setRampingUp(absolute_time_t time) {
+	Debugf("WheelController: ramping up");
 	d_state      = State::RAMPING_UP;
 	d_stateStart = time;
 	d_lastStep   = time;
+
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
 	Channel().Set(0);
 }
 
 void WheelController::setRampingDown(absolute_time_t time) {
+	Debugf("WheelController: rewind pulse");
 	d_state      = State::RAMPING_DOWN;
 	d_stateStart = time;
-	d_lastStep   = nil_time;
+
+	d_lastStep = nil_time;
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
 	Channel().Set(-512 * d_direction);
 }
 
 void WheelController::setMoving(absolute_time_t time) {
+	Debugf("WheelController: moving");
 	d_stateStart = time;
-	d_state      = State::MOVING_TO_TARGET;
+
+	d_state = State::MOVING_TO_TARGET;
 	d_driver.SetEnabled(true);
 	d_sensor.SetEnabled(true);
+
 	Channel().Set(d_config.Speed * d_direction);
 }
 

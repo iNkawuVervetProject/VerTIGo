@@ -32,6 +32,9 @@ inline void tud_task() {}
 #include "PelletCounter.hpp"
 #include "WheelController.hpp"
 
+#include <iomanip>
+#include <sstream>
+
 #define DISPLAY_PERIOD_MS 200
 
 static Config config;
@@ -104,14 +107,44 @@ int main() {
 	    config.Dispenser,
 	    config.Wheel
 	);
-	// dispenser.Calibrate(
-	//     1024,
-	//     [](const DispenserController::CalibrationResult &, Error err) {
-	// 	    if (err != Error::NO_ERROR) {
-	// 		    ErrorReporter::Report(err, 10);
-	// 	    }
-	//     }
-	// );
+
+	dispenser.Calibrate(
+	    1024,
+	    [](const DispenserController::CalibrationResult &res, Error err) {
+		    if (err != Error::NO_ERROR) {
+			    ErrorReporter::Report(err, 10);
+			    return;
+		    }
+
+		    std::ostringstream oss;
+		    std::string        prefix = "";
+		    for (const auto &p : res.CoarseSearch) {
+			    oss << prefix << std::setw(4) << p.Position;
+			    prefix = " ";
+		    }
+		    oss << std::endl;
+		    prefix = "";
+		    for (const auto &p : res.CoarseSearch) {
+			    oss << prefix << std::setw(4) << p.Rewind_us / 1000;
+			    prefix = " ";
+		    }
+		    oss << std::endl;
+
+		    for (const auto &p : res.FineSearch) {
+			    oss << prefix << std::setw(4) << p.Position;
+			    prefix = " ";
+		    }
+		    oss << std::endl;
+		    prefix = "";
+		    for (const auto &p : res.FineSearch) {
+			    oss << prefix << std::setw(4) << p.Rewind_us / 1000;
+			    prefix = " ";
+		    }
+		    oss << std::endl;
+
+		    Infof("%s", oss.str().c_str());
+	    }
+	);
 
 	while (true) {
 		tud_task();

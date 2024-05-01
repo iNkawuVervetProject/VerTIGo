@@ -200,10 +200,21 @@ public:
 	}
 };
 
+inline void debugWheelConfig(const WheelController::Config &config) {
+	Debugf(
+	    "speed:%d rampup:%d rewind:%d cooldown:%d",
+	    config.Speed,
+	    config.RampUpDuration_us,
+	    config.RewindPulse_us,
+	    config.SensorCooldown_us
+	);
+}
+
 class CalibrateMode : public Mode {
 public:
-	constexpr static uint CoarseStep = 5 * 1000;
-	constexpr static uint FineStep   = 500;
+	constexpr static uint CoarseStep    = 5 * 1000;
+	constexpr static uint FineStep      = 500;
+	constexpr static uint PositionCount = 3;
 
 	struct State {
 		std::vector<DispenserController::CalibrationResult::Point> Results,
@@ -226,23 +237,24 @@ public:
 	    , d_callback{callback}
 	    , d_saved{controller.d_wheelConfig}
 	    , d_state{state} {
+		debugWheelConfig(controller.d_wheelConfig);
 		controller.d_counter.SetEnabled(true);
 		controller.d_wheelConfig.Speed             = state.Speed;
 		auto rewind                                = next();
-		controller.d_wheelConfig.RewindPulse_us    = next();
-		controller.d_wheelConfig.SensorCooldown_us = 500 * 1000;
+		controller.d_wheelConfig.RewindPulse_us    = rewind;
+		controller.d_wheelConfig.SensorCooldown_us = 3000 * 1000;
+		debugWheelConfig(controller.d_wheelConfig);
 		controller.d_wheel.Start(1);
 		d_start = get_absolute_time();
+
 		Infof(
 		    "Dispenser: calibrating speed:%d, rewind:%dus",
 		    state.Speed,
-		    rewind
+		    controller.d_wheelConfig.RewindPulse_us
 		);
 	}
 
-	~CalibrateMode() {
-		Self().d_wheelConfig = d_saved;
-	}
+	~CalibrateMode() {}
 
 	std::unique_ptr<Mode> operator()(absolute_time_t time) override {
 		if (Self().d_counter.HasValue()) {
@@ -257,7 +269,7 @@ public:
 		}
 
 		if (Self().d_wheelSensor.Err() == Error::IR_SENSOR_READOUT_ERROR ||
-		    Self().d_wheel.Err() == Error::WHEEL_CONTROLLER_MOTOR_FAULT) {
+		    Self().d_wheel.Err() != Error::NO_ERROR) {
 			Errorf("Dispenser calibration: error with wheel sensor or motor");
 			d_callback({}, Error::DISPENSER_CALIBRATION_ERROR);
 			return std::make_unique<IdleMode>(Self(), time);
@@ -265,7 +277,7 @@ public:
 
 		if (Self().d_wheel.HasValue()) {
 			++d_position;
-			if (d_position == 2) {
+			if (d_position == PositionCount) {
 				Self().d_wheel.Stop();
 			}
 		}
@@ -279,19 +291,33 @@ public:
 
 private:
 	std::unique_ptr<Mode> nextStep(absolute_time_t now) {
-		d_state.Results.push_back({
-		    .Rewind_us = Self().d_wheelConfig.RewindPulse_us,
-		    .Position  = 2 * (d_position - 2),
+		auto &results = d_state.Results;
+		results.push_back({
+		    .Rewind_us = next(),
+		    .Position  = 2 * (d_position - PositionCount),
 		});
 
 		if (Self().d_wheel.WheelAligned() == false) {
-			d_state.Results.back().Position += 1;
+			results.back().Position += 1;
 		}
+
+		Infof(
+		    "rewind:%d position: %d",
+		    results.back().Rewind_us,
+		    results.back().Position
+		);
 
 		Self().d_wheelConfig = d_saved;
 
-		if (d_state.Results.back().Position == 0 ||
-		    d_state.Results.back().Rewind_us >= d_state.Max) {
+		bool cannotBeBetter = results.back().Position == 0;
+		bool atEndOfRange   = results.back().Rewind_us >= d_state.Max;
+		bool increasing     = false;
+		if (results.size() >= 2) {
+			increasing = results[results.size() - 2].Position == 1 &&
+			             results.back().Position > 1;
+		}
+
+		if (cannotBeBetter || atEndOfRange || increasing) {
 			if (d_state.Step == CoarseStep) {
 				return fineCalibration();
 			} else {
@@ -302,79 +328,85 @@ private:
 		return std::make_unique<CalibrateMode>(Self(), d_state, d_callback);
 	}
 
-	std::unique_ptr<Mode> fineCalibration() {
-		const auto &minPoint = findMin();
+	    std::unique_ptr<Mode> fineCalibration() {
+			const auto &minPoint = findMin();
 
-		auto newState = State{
-		    .Coarse = d_state.Results,
-		    .Speed  = d_state.Speed,
-		    .Step   = FineStep,
-		    .Start  = minPoint.Rewind_us - CoarseStep,
-		    .Max    = minPoint.Rewind_us,
-		};
+			auto newState = State{
+			    .Coarse = d_state.Results,
+			    .Speed  = d_state.Speed,
+			    .Step   = FineStep,
+			    .Start  = minPoint.Rewind_us - 2 * CoarseStep,
+			    .Max    = minPoint.Rewind_us,
+			};
 
-		if (newState.Max == 0) {
-			newState.Max   = CoarseStep;
-			newState.Start = 0;
+			if (newState.Max <= CoarseStep) {
+				newState.Max   = CoarseStep;
+				newState.Start = 0;
+			}
+
+			return std::make_unique<CalibrateMode>(
+			    Self(),
+			    newState,
+			    d_callback
+			);
 		}
 
-		return std::make_unique<CalibrateMode>(Self(), newState, d_callback);
-	}
-
-	std::unique_ptr<Mode> end(absolute_time_t time) {
-		const auto &minPoint = findMin();
-		d_callback(
-		    {
-		        .CoarseSearch      = d_state.Coarse,
-		        .FineSearch        = d_state.Results,
-		        .Speed             = d_state.Speed,
-		        .MinRewindPulse_us = minPoint.Rewind_us,
-		        .Position          = minPoint.Position,
-		    },
-		    Error::NO_ERROR
-		);
-		return std::make_unique<IdleMode>(Self(), time);
-	}
-
-	const DispenserController::CalibrationResult::Point &findMin() {
-		const auto &points = d_state.Results;
-		auto        it     = std::min_element(
-            points.begin(),
-            points.end(),
-            [](const auto &a, const auto &b) -> bool {
-                return a.Position < b.Position;
-            }
-        );
-		if (it->Position == 0) {
-			return *it;
+		std::unique_ptr<Mode> end(absolute_time_t time) {
+			const auto &minPoint = findMin();
+			d_callback(
+			    {
+			        .CoarseSearch      = d_state.Coarse,
+			        .FineSearch        = d_state.Results,
+			        .Speed             = d_state.Speed,
+			        .MinRewindPulse_us = minPoint.Rewind_us,
+			        .Position          = minPoint.Position,
+			    },
+			    Error::NO_ERROR
+			);
+			return std::make_unique<IdleMode>(Self(), time);
 		}
-		auto next = std::find_if(
-		    it,
-		    points.end(),
-		    [min = it->Position](const auto &el) { return el.Position > min; }
-		);
-		if (next == points.end()) {
-			return *it;
+
+		const DispenserController::CalibrationResult::Point &findMin() {
+			const auto &points = d_state.Results;
+			auto        it     = std::min_element(
+                points.begin(),
+                points.end(),
+                [](const auto &a, const auto &b) -> bool {
+                    return a.Position < b.Position;
+                }
+            );
+			if (it->Position == 0) {
+				return *it;
+			}
+			auto next = std::find_if(
+			    it,
+			    points.end(),
+			    [min = it->Position](const auto &el) {
+				    return el.Position > min;
+			    }
+			);
+			if (next == points.end()) {
+				return *it;
+			}
+			return *next;
 		}
-		return *next;
-	}
 
-	uint next() {
-		if (d_state.Results.empty()) {
-			return d_state.Start;
+		uint next() {
+			if (d_state.Results.empty()) {
+				return d_state.Start;
+			}
+			return d_state.Results.back().Rewind_us + d_state.Step;
 		}
-		return d_state.Results.back().Rewind_us + d_state.Step;
-	}
 
-	uint16_t d_min = 0xffff, d_max = 0;
+		uint16_t d_min = 0xffff, d_max = 0;
 
-	DispenserController::CalibrateCallback d_callback;
-	WheelController::Config                d_saved;
+		DispenserController::CalibrateCallback d_callback;
+		WheelController::Config                d_saved;
 
-	absolute_time_t d_start;
-	State           d_state;
+		absolute_time_t d_start;
+		State           d_state;
 
-	uint d_position = 0;
+		uint d_position = 0;
 };
 
 std::unique_ptr<Mode> IdleMode::operator()(absolute_time_t now) {
