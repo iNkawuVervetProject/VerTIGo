@@ -49,7 +49,7 @@ public:
 	    , d_start{start}
 	    , d_onCounterDisable{onCounterDisable}
 	    , d_config{controller.d_config} {
-		Infof("Dispenser: Idle");
+		Infof("Dispenser: ready");
 	}
 
 	~IdleMode() {
@@ -143,6 +143,7 @@ public:
 
 		Self().d_pelletSensor.SetEnabled(true);
 		Self().d_wheel.Start(d_direction);
+		Infof("Dispenser: dispensing %d pellet(s)", want);
 	}
 
 	~DispenseMode() {
@@ -227,10 +228,16 @@ public:
 	    , d_state{state} {
 		controller.d_counter.SetEnabled(true);
 		controller.d_wheelConfig.Speed             = state.Speed;
+		auto rewind                                = next();
 		controller.d_wheelConfig.RewindPulse_us    = next();
 		controller.d_wheelConfig.SensorCooldown_us = 500 * 1000;
 		controller.d_wheel.Start(1);
 		d_start = get_absolute_time();
+		Infof(
+		    "Dispenser: calibrating speed:%d, rewind:%dus",
+		    state.Speed,
+		    rewind
+		);
 	}
 
 	~CalibrateMode() {

@@ -48,8 +48,9 @@ public:
 
 		std::vector<Point>      CoarseSearch;
 		std::vector<Point>      FineSearch;
-		uint                    MinRewindPulse_us;
-		uint                    Position;
+
+		uint                    MinRewindPulse_us = -1;
+		uint                    Position          = -1;
 	};
 
 	using CalibrateCallback =
