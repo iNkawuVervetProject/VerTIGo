@@ -12,10 +12,14 @@ void Logger::Logf(Level level, const char *fmt, va_list args) {
 
 	auto written =
 	    vsnprintf(d_buffer.data() + d_start, BufferSize - d_start, fmt, args);
+
 	while (d_start + written >= BufferSize) {
 		if (d_start == 0) {
 			d_buffer[BufferSize - 1] = 0;
+
+			written = BufferSize - 1;
 		} else {
+
 			d_start = 0;
 			written = vsnprintf(d_buffer.data(), BufferSize, fmt, args);
 		}

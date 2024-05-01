@@ -46,7 +46,7 @@ void Display::formatState() {
 	    "Up Time",
 	    seconds,
 	    ms,
-	    LineWidth - 38,
+	    LineWidth - 37,
 	    ""
 	);
 
@@ -73,16 +73,19 @@ void Display::formatState() {
 	    s.Pellet.Count,
 	    s.Pellet.Last,
 	    s.Pellet.Min,
-	    LineWidth - 26 - 10 - 10 - 9,
+	    LineWidth - 26 - 10 - 10 - 14,
 	    s.Pellet.Max
 	);
 
 	printf(
 	    "███████████████████████━%.*s━┛\n",
-	    LineWidth - 26,
-	    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	    3 * (LineWidth - 26),
+	    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	    "━━━━"
+	    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	    "━━━━"
+	    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	    "━━━━"
 	    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	);
 }
@@ -121,25 +124,28 @@ void Display::formatMessage() {
 		auto   c      = colors[size_t(msg.value().Level)];
 
 		for (size_t i = 0; i < n;) {
+			size_t written = LineWidth - 26;
+			char  *ch      = std::find(msgStr + i, msgStr + i + written, '\n');
+			written        = ch - msgStr - i;
+
+			auto willWrite = written;
+			if (written < LineWidth - 26) {
+				willWrite += 1;
+			}
+
+			written = std::min(written, n - i);
+
 			printf("\033[30;4%dm", c);
 			if (i == 0) {
 				printTime(msg.value().Time);
 			} else {
 				printf("                       ");
 			}
-			size_t written = LineWidth - 26;
 
-			char *ch = std::find(msgStr + i, msgStr + i + written, '\n');
-			written  = ch - msgStr - i;
-
-			if (written < LineWidth - 26) {
-				*ch = '\0';
-			}
-
-			written = std::min(written, n - i);
-
+			auto space = LineWidth - 26 - written;
 			printf("\033[m\033[3%dm %-.*s ", c, written, msgStr + i);
-			printf("%*s┃\n", LineWidth - 26 - written, "");
+			printf("%*s┃\n", space, "");
+			i += willWrite;
 		}
 	}
 }
