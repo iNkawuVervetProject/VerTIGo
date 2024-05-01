@@ -8,6 +8,7 @@
 #include "pico/time.h"
 #include "pico/types.h"
 #include "utils/Publisher.hpp"
+#include <algorithm>
 #include <memory>
 #include <sstream>
 
@@ -269,9 +270,10 @@ public:
 
 private:
 	std::unique_ptr<Mode> nextStep(absolute_time_t now) {
-		d_state.Results.push_back(
-		    {Self().d_wheelConfig.RewindPulse_us, 2 * (d_position - 2)}
-		);
+		d_state.Results.push_back({
+		    .Rewind_us = Self().d_wheelConfig.RewindPulse_us,
+		    .Position  = 2 * (d_position - 2),
+		});
 		if (Self().d_wheel.WheelAligned() == false) {
 			d_state.Results.back().Position += 1;
 		}
@@ -323,16 +325,26 @@ private:
 	}
 
 	const DispenserController::CalibrationResult::Point &findMin() {
-		uint   min = 0xffffffff;
-		size_t idx, i = 0;
-		for (const auto &r : d_state.Results) {
-			if (r.Position < min) {
-				idx = i;
-				min = r.Position;
-			}
-			++i;
+		const auto &points = d_state.Results;
+		auto        it     = std::min_element(
+            points.begin(),
+            points.end(),
+            [](const auto &a, const auto &b) -> bool {
+                return a.Position < b.Position;
+            }
+        );
+		if (it->Position == 0) {
+			return *it;
 		}
-		return d_state.Results[idx];
+		auto next = std::find_if(
+		    it,
+		    points.end(),
+		    [min = it->Position](const auto &el) { return el.Position > min; }
+		);
+		if (next == points.end()) {
+			return *it;
+		}
+		return *next;
 	}
 
 	uint next() {
