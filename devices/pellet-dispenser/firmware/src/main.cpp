@@ -106,20 +106,11 @@ int main() {
 	    config.Wheel
 	);
 
-	int wantedSpeed = 1024;
 	Infof(
 	    "speed:%d rewind:%d",
 	    config.Wheel.Speed,
 	    config.Wheel.RewindPulse_us
 	);
-
-	if (config.Wheel.Speed != wantedSpeed) {
-		dispenser.SetSpeedAndCalibrate(wantedSpeed, [](Error err) {
-			if (err != Error::NO_ERROR) {
-				ErrorReporter::Report(err, 10);
-			}
-		});
-	}
 
 	while (true) {
 		tud_task();

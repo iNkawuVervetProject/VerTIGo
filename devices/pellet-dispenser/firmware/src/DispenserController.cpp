@@ -530,6 +530,7 @@ void DispenserController::SetSpeedAndCalibrate(
 			    saved.Wheel.Speed          = -1;
 			    saved.Wheel.RewindPulse_us = -1;
 			    FlashStorage<GlobalConfig>::Load(saved);
+			    d_wheelConfig = saved.Wheel;
 			    Infof(
 			        "Saved: speed:%d rewind:%d",
 			        saved.Wheel.Speed,
