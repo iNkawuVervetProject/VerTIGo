@@ -105,14 +105,14 @@ int main() {
 	    config.Wheel
 	);
 
-	bool once = true;
-
-	dispenser.Calibrate([](const DispenserController::CalibrationResult &,
-	                       Error err) {
-		if (err != Error::NO_ERROR) {
-			ErrorReporter::Report(err, 10);
-		}
-	});
+	dispenser.Calibrate(
+	    1024,
+	    [](const DispenserController::CalibrationResult &, Error err) {
+		    if (err != Error::NO_ERROR) {
+			    ErrorReporter::Report(err, 10);
+		    }
+	    }
+	);
 
 	while (true) {
 		tud_task();

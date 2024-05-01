@@ -56,6 +56,7 @@ public:
 	    std::function<void(const CalibrationResult &, Error)>;
 
 	void Calibrate(
+	    uint                     speed,
 	    const CalibrateCallback &callback = [](const CalibrationResult &,
 	                                           Error) {}
 	);

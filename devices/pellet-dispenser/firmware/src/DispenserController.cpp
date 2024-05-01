@@ -208,6 +208,8 @@ public:
 		std::vector<DispenserController::CalibrationResult::Point> Results,
 		    Coarse;
 
+		uint Speed = 1024;
+
 		uint Step = CoarseStep;
 
 		uint Start = 0;
@@ -224,7 +226,7 @@ public:
 	    , d_saved{controller.d_wheelConfig}
 	    , d_state{state} {
 		controller.d_counter.SetEnabled(true);
-		controller.d_wheelConfig.Speed             = 1024;
+		controller.d_wheelConfig.Speed             = state.Speed;
 		controller.d_wheelConfig.RewindPulse_us    = next();
 		controller.d_wheelConfig.SensorCooldown_us = 500 * 1000;
 		controller.d_wheel.Start(1);
@@ -274,9 +276,12 @@ private:
 		    .Rewind_us = Self().d_wheelConfig.RewindPulse_us,
 		    .Position  = 2 * (d_position - 2),
 		});
+
 		if (Self().d_wheel.WheelAligned() == false) {
 			d_state.Results.back().Position += 1;
 		}
+
+		Self().d_wheelConfig = d_saved;
 
 		if (d_state.Results.back().Position == 0 ||
 		    d_state.Results.back().Rewind_us >= d_state.Max) {
@@ -293,10 +298,9 @@ private:
 	std::unique_ptr<Mode> fineCalibration() {
 		const auto &minPoint = findMin();
 
-		Self().d_wheelConfig = d_saved;
-
 		auto newState = State{
 		    .Coarse = d_state.Results,
+		    .Speed  = d_state.Speed,
 		    .Step   = FineStep,
 		    .Start  = minPoint.Rewind_us - CoarseStep,
 		    .Max    = minPoint.Rewind_us,
@@ -429,9 +433,11 @@ void DispenserController::Dispense(
 	}
 }
 
-void DispenserController::Calibrate(const CalibrateCallback &callback) {
+void DispenserController::Calibrate(
+    uint speed, const CalibrateCallback &callback
+) {
 
-	Command calibrate = [this, callback]() -> std::unique_ptr<Mode> {
+	Command calibrate = [this, callback, speed]() -> std::unique_ptr<Mode> {
 		if (d_sane == false) {
 			callback({}, Error::DISPENSER_SELF_CHECK_FAIL);
 			return nullptr;
@@ -439,13 +445,12 @@ void DispenserController::Calibrate(const CalibrateCallback &callback) {
 
 		return std::make_unique<CalibrateMode>(
 		    *this,
-		    CalibrateMode::State{},
+		    CalibrateMode::State{.Speed = speed},
 		    callback
 		);
 	};
 
 	if (d_queue.TryAdd(std::move(calibrate)) == false) {
-
 		callback({}, Error::DISPENSER_QUEUE_FULL);
 	}
 }
