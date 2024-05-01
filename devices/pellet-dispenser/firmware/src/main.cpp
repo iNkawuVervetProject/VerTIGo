@@ -41,6 +41,9 @@ int main() {
 	stdio_init_all();
 	auto endInit = make_timeout_time_us(10 * 1000);
 
+	Config config;
+	FlashStorage<Config>::Load(config);
+
 	board_init();
 	tusb_init();
 
@@ -56,11 +59,6 @@ int main() {
 	Logger::Get().SetLevel(Logger::Level::DEBUG);
 	Infof("Verbosity set to DEBUG");
 #endif
-
-	// apparently we need to do this here.
-	Config config;
-	Infof("loading config");
-	FlashStorage<Config>::Load(config);
 
 	auto button = Button{17};
 

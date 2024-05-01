@@ -182,6 +182,6 @@ void WheelController::setMoving(absolute_time_t time) {
 
 bool WheelController::stalled(absolute_time_t time) const {
 	return d_driver.HasFault() ||
-	       (d_lastStep != nil_time &&
+	       (is_nil_time(d_lastStep) == false &&
 	        absolute_time_diff_us(d_lastStep, time) >= d_config.MaxStep_us);
 }

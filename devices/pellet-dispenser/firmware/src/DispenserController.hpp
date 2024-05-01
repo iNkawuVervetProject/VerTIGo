@@ -21,10 +21,10 @@ public:
 	};
 
 	struct Config {
-		uint MaxSlotRatio             = 3;
-		uint ToggleDirectionThreshold = 20;
+		uint MaxSlotRatio             = 8;
+		int  ToggleDirectionThreshold = 5;
 		uint MaxDirectionChange       = 4;
-		uint PelletCounterCooldown_us = 5 * 1000 * 1000;
+		uint PelletCounterCooldown_us = 1200 * 1000;
 		uint SelfCheckPeriod_us       = 120 * 1000 * 1000;
 	} __attribute__((packed));
 

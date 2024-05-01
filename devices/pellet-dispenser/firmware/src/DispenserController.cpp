@@ -1,4 +1,5 @@
 #include "DispenserController.hpp"
+#include "Button.hpp"
 #include "Config.hpp"
 #include "Display.hpp"
 #include "Error.hpp"
@@ -120,7 +121,7 @@ private:
 
 	DispenserController::DispenseCallback d_callback;
 
-	inline static int direction = 1;
+	static int s_direction;
 
 public:
 	inline DispenseMode(
@@ -135,13 +136,12 @@ public:
 	    , d_config{controller.d_config}
 	    , d_callback{callback} {
 
-		if (direction == 1 &&
-		    d_startPosition >= d_config.ToggleDirectionThreshold) {
-			direction = -1;
-		} else if (direction == -1 && -d_startPosition >= d_config.ToggleDirectionThreshold) {
-			direction = 1;
+		if (d_startPosition >= d_config.ToggleDirectionThreshold) {
+			s_direction = -1;
+		} else if (d_startPosition <= -d_config.ToggleDirectionThreshold) {
+			s_direction = 1;
 		}
-		d_direction = direction;
+		d_direction = s_direction;
 
 		Self().d_pelletSensor.SetEnabled(true);
 		Self().d_wheel.Start(d_direction);
@@ -150,7 +150,6 @@ public:
 
 	~DispenseMode() {
 		Self().d_wheel.Stop();
-		direction = d_direction;
 	}
 
 	std::unique_ptr<Mode> operator()(absolute_time_t now) override {
@@ -172,28 +171,26 @@ public:
 		}
 
 		if (d_positionTravelled >= d_config.MaxSlotRatio * d_want) {
-			return std::make_unique<IdleMode>(
-			    Self(),
-			    now,
-			    [callback = d_callback, startCount = d_startCount](uint count) {
-				    callback(count - startCount, Error::DISPENSER_EMPTY);
-			    }
+			d_callback(
+			    Self().d_counter.PelletCount() - d_startCount,
+			    Error::DISPENSER_EMPTY
 			);
+
+			return std::make_unique<IdleMode>(Self(), now);
 		}
 
 		auto wheelError = Self().d_wheel.Err();
 		if (wheelError == Error::WHEEL_CONTROLLER_MOTOR_FAULT) {
 			if (d_directionChange >= d_config.MaxDirectionChange) {
-				return std::make_unique<IdleMode>(
-				    Self(),
-				    now,
-				    [callback   = d_callback,
-				     startCount = d_startCount](uint count) {
-					    callback(count - startCount, Error::DISPENSER_JAMMED);
-				    }
+				d_callback(
+				    Self().d_counter.PelletCount() - d_startCount,
+				    Error::DISPENSER_JAMMED
 				);
+
+				return std::make_unique<IdleMode>(Self(), now);
 			}
 			d_direction = d_direction * -1;
+			s_direction = d_direction;
 			++d_directionChange;
 			Self().d_wheel.Start(d_direction);
 		}
@@ -201,6 +198,8 @@ public:
 		return nullptr;
 	}
 };
+
+int DispenseMode::s_direction = 1;
 
 inline void debugWheelConfig(const WheelController::Config &config) {
 	Debugf(
@@ -562,11 +561,11 @@ void DispenserController::processErrors() {
 	}
 
 	if (d_wheel.HasError()) {
-		ErrorReporter::Get().Report(d_wheel.Err(), 5 * 1000 * 1000);
+		ErrorReporter::Get().Report(d_wheel.Err(), 500 * 1000);
 	}
 
 	if (d_counter.HasError()) {
-		ErrorReporter::Get().Report(d_counter.Err(), 5 * 1000 * 1000);
+		ErrorReporter::Get().Report(d_counter.Err(), 1000 * 1000);
 	}
 
 	if (d_wheelSensor.HasValue()) {
@@ -582,5 +581,21 @@ void DispenserController::processErrors() {
 		state.Last  = d_pelletSensor.Value();
 		state.Min   = std::min(state.Min, state.Last);
 		state.Max   = std::max(state.Max, state.Last);
+	}
+
+	if (d_button.HasValue()) {
+		switch (d_button.Value()) {
+		case ButtonState::PRESSED:
+			this->Dispense(1, [](uint count, Error err) {
+				if (err != Error::NO_ERROR) {
+					ErrorReporter::Report(err, 10);
+					return;
+				}
+				Infof("Dispensed %d pellets", count);
+			});
+			break;
+		default:
+			break;
+		}
 	}
 }

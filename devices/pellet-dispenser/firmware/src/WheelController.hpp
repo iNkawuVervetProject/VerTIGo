@@ -19,10 +19,10 @@ public:
 	struct Config {
 		DRV8848::OutputChannel Channel = DRV8848::OutputChannel::A;
 
-		uint Speed             = 0;
+		uint Speed             = 1024;
 		uint RampUpDuration_us = 10 * 1000;
-		uint RewindPulse_us    = 20 * 1000;
-		uint SensorCooldown_us = 500 * 1000;
+		uint RewindPulse_us    = 50 * 1000;
+		uint SensorCooldown_us = 1200 * 1000;
 
 		uint SensorLowerThreshold = 160;
 		uint SensorUpperThreshold = 220;
@@ -84,7 +84,7 @@ private:
 	int  d_direction = 1;
 	bool d_aligned   = false;
 
-	int             d_position   = -1;
+	int             d_position   = 0;
 	absolute_time_t d_stateStart = nil_time;
 	absolute_time_t d_lastStep   = nil_time;
 };

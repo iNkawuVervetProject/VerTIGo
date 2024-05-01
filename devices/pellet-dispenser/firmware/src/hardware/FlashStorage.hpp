@@ -149,7 +149,7 @@ public:
 			restore_interrupts(interrupts);
 		};
 
-		Infof("FlashStorage: UUID:%x", UUID);
+		Debugf("FlashStorage: UUID:%x", UUID);
 		const Type *valid = nullptr;
 		for (size_t i = 0; i < PagesPerSector * SectorSize;
 		     i += PagesPerObject) {

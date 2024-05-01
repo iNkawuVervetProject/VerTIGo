@@ -47,7 +47,7 @@ void DRV8848::SetEnabled(bool on) {
 }
 
 bool DRV8848::HasFault() const {
-	return (d_faultStart != nil_time) &&
+	return (is_nil_time(d_faultStart) == false) &&
 	       (absolute_time_diff_us(d_faultStart, get_absolute_time()) >=
 	        FAULT_ON_THRESHOLD_US);
 }
