@@ -41,17 +41,9 @@ public:
 	);
 
 	struct CalibrationResult {
-		struct Point {
-			uint Rewind_us;
-			uint Position;
-		};
-
-		std::vector<Point>      CoarseSearch;
-		std::vector<Point>      FineSearch;
-
-		uint                    Speed             = -1;
-		uint                    MinRewindPulse_us = -1;
-		uint                    Position          = -1;
+		uint Speed             = -1;
+		uint MinRewindPulse_us = -1;
+		uint Position          = -1;
 	};
 
 	using CalibrateCallback =
@@ -61,6 +53,10 @@ public:
 	    uint                     speed,
 	    const CalibrateCallback &callback = [](const CalibrationResult &,
 	                                           Error) {}
+	);
+
+	void SetSpeedAndCalibrate(
+	    uint speed, const std::function<void(Error)> &callback
 	);
 
 	void Process(absolute_time_t time) override;

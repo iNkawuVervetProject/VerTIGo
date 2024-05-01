@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Log.hpp"
 #include "boards/pico.h"
 #include "hardware/flash.h"
 #include "hardware/regs/addressmap.h"
@@ -148,6 +149,7 @@ public:
 			restore_interrupts(interrupts);
 		};
 
+		Debugf("FlashStorage: UUID:%x", UUID);
 		const Type *valid = nullptr;
 		for (size_t i = 0; i < PagesPerSector * SectorSize;
 		     i += PagesPerObject) {
@@ -155,6 +157,7 @@ public:
 			    XIP_BASE + Offset + i * FLASH_PAGE_SIZE
 			);
 			if (h->UniqueCode == UUID) {
+				Infof("FlashStorage:page[%d] valid", i);
 				valid = reinterpret_cast<const Type *>(
 				    reinterpret_cast<const uint8_t *>(h) +
 				    sizeof(FlashObjectHeader)
@@ -175,6 +178,7 @@ public:
 		};
 
 		if (isSameThanSaved(obj)) {
+			Debugf("FlashStorage: not saving as it is the same");
 			return;
 		}
 
@@ -218,6 +222,7 @@ public:
 		    buffer,
 		    PagesPerObject * FLASH_PAGE_SIZE
 		);
+		Infof("FlashStorage: saved at page %d", i * PagesPerObject);
 	}
 
 	static void Debug() {

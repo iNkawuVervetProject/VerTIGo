@@ -1,9 +1,11 @@
 #include "DispenserController.hpp"
+#include "Config.hpp"
 #include "Display.hpp"
 #include "Error.hpp"
 #include "Log.hpp"
 #include "PelletCounter.hpp"
 #include "WheelController.hpp"
+#include "hardware/FlashStorage.hpp"
 #include "hardware/gpio.h"
 #include "pico/time.h"
 #include "pico/types.h"
@@ -213,17 +215,21 @@ inline void debugWheelConfig(const WheelController::Config &config) {
 class CalibrateMode : public Mode {
 public:
 	constexpr static uint CoarseStep    = 5 * 1000;
-	constexpr static uint FineStep      = 500;
+	constexpr static uint FineStep      = 1000;
 	constexpr static uint PositionCount = 3;
 
+	struct Point {
+		uint Rewind_us;
+		uint Position;
+	};
+
 	struct State {
-		std::vector<DispenserController::CalibrationResult::Point> Results,
-		    Coarse;
+		std::vector<Point> Results, Coarse;
 
-		uint Speed = 1024;
+		uint Speed     = 1024;
+		int  Direction = 1;
 
-		uint Step = CoarseStep;
-
+		uint Step  = CoarseStep;
 		uint Start = 0;
 		uint Max   = 60 * 1000;
 	};
@@ -244,14 +250,8 @@ public:
 		controller.d_wheelConfig.RewindPulse_us    = rewind;
 		controller.d_wheelConfig.SensorCooldown_us = 3000 * 1000;
 		debugWheelConfig(controller.d_wheelConfig);
-		controller.d_wheel.Start(1);
+		controller.d_wheel.Start(d_state.Direction);
 		d_start = get_absolute_time();
-
-		Infof(
-		    "Dispenser: calibrating speed:%d, rewind:%dus",
-		    state.Speed,
-		    controller.d_wheelConfig.RewindPulse_us
-		);
 	}
 
 	~CalibrateMode() {}
@@ -269,7 +269,7 @@ public:
 		}
 
 		if (Self().d_wheelSensor.Err() == Error::IR_SENSOR_READOUT_ERROR ||
-		    Self().d_wheel.Err() != Error::NO_ERROR) {
+		    Self().d_wheel.Err() == Error::WHEEL_CONTROLLER_MOTOR_FAULT) {
 			Errorf("Dispenser calibration: error with wheel sensor or motor");
 			d_callback({}, Error::DISPENSER_CALIBRATION_ERROR);
 			return std::make_unique<IdleMode>(Self(), time);
@@ -301,10 +301,16 @@ private:
 			results.back().Position += 1;
 		}
 
+		uint ms = results.back().Rewind_us / 1000;
+		uint us = (results.back().Rewind_us - ms * 1000) / 100;
+
 		Infof(
-		    "rewind:%d position: %d",
-		    results.back().Rewind_us,
-		    results.back().Position
+		    "Dispenser:calibration[%d]: rewind:%d.%dms position:%d.%d",
+		    d_state.Speed,
+		    ms,
+		    us,
+		    d_position - PositionCount,
+		    Self().d_wheel.WheelAligned() ? 0 : 5
 		);
 
 		Self().d_wheelConfig = d_saved;
@@ -325,73 +331,69 @@ private:
 			}
 		}
 
+		d_state.Direction *= -1;
 		return std::make_unique<CalibrateMode>(Self(), d_state, d_callback);
 	}
 
-	    std::unique_ptr<Mode> fineCalibration() {
-			const auto &minPoint = findMin();
+	std::unique_ptr<Mode> fineCalibration() {
+		const auto &minPoint = findMin();
 
-			auto newState = State{
-			    .Coarse = d_state.Results,
-			    .Speed  = d_state.Speed,
-			    .Step   = FineStep,
-			    .Start  = minPoint.Rewind_us - 2 * CoarseStep,
-			    .Max    = minPoint.Rewind_us,
-			};
+		auto newState = State{
+		    .Coarse = d_state.Results,
+		    .Speed  = d_state.Speed,
+		    .Step   = FineStep,
+		    .Start  = minPoint.Rewind_us - CoarseStep,
+		    .Max    = minPoint.Rewind_us + CoarseStep,
 
-			if (newState.Max <= CoarseStep) {
-				newState.Max   = CoarseStep;
-				newState.Start = 0;
-			}
+		};
 
-			return std::make_unique<CalibrateMode>(
-			    Self(),
-			    newState,
-			    d_callback
-			);
+		if (newState.Max <= CoarseStep) {
+			newState.Max   = 2 * CoarseStep;
+			newState.Start = 0;
 		}
 
-		std::unique_ptr<Mode> end(absolute_time_t time) {
-			const auto &minPoint = findMin();
-			d_callback(
-			    {
-			        .CoarseSearch      = d_state.Coarse,
-			        .FineSearch        = d_state.Results,
-			        .Speed             = d_state.Speed,
-			        .MinRewindPulse_us = minPoint.Rewind_us,
-			        .Position          = minPoint.Position,
-			    },
-			    Error::NO_ERROR
-			);
-			return std::make_unique<IdleMode>(Self(), time);
-		}
+		return std::make_unique<CalibrateMode>(Self(), newState, d_callback);
+	}
 
-		const DispenserController::CalibrationResult::Point &findMin() {
-			const auto &points = d_state.Results;
-			auto        it     = std::min_element(
+	    std::unique_ptr<Mode> end(absolute_time_t time) {
+		    const auto &minPoint = findMin();
+		    d_callback(
+		        {
+		            .Speed             = d_state.Speed,
+		            .MinRewindPulse_us = minPoint.Rewind_us,
+		            .Position          = minPoint.Position,
+		        },
+		        Error::NO_ERROR
+		    );
+		    return std::make_unique<IdleMode>(Self(), time);
+	    }
+
+	    const Point &findMin() {
+		    const auto &points = d_state.Results;
+		    auto        it     = std::min_element(
                 points.begin(),
                 points.end(),
                 [](const auto &a, const auto &b) -> bool {
                     return a.Position < b.Position;
                 }
             );
-			if (it->Position == 0) {
-				return *it;
-			}
-			auto next = std::find_if(
-			    it,
-			    points.end(),
-			    [min = it->Position](const auto &el) {
-				    return el.Position > min;
-			    }
-			);
-			if (next == points.end()) {
-				return *it;
-			}
-			return *next;
-		}
+		    if (it->Position == 0) {
+			    return *it;
+		    }
+		    auto next = std::find_if(
+		        it,
+		        points.end(),
+		        [min = it->Position](const auto &el) {
+			        return el.Position > min;
+		        }
+		    );
+		    if (next == points.end()) {
+			    return *it;
+		    }
+		    return *next;
+	    }
 
-		uint next() {
+	    uint next() {
 			if (d_state.Results.empty()) {
 				return d_state.Start;
 			}
@@ -492,6 +494,55 @@ void DispenserController::Calibrate(
 
 	if (d_queue.TryAdd(std::move(calibrate)) == false) {
 		callback({}, Error::DISPENSER_QUEUE_FULL);
+	}
+}
+
+using GlobalConfig = Config;
+
+void DispenserController::SetSpeedAndCalibrate(
+    uint speed, const std::function<void(Error)> &callback
+) {
+
+	Command calibrate = [this, callback, speed]() -> std::unique_ptr<Mode> {
+		if (d_sane == false) {
+			callback(Error::DISPENSER_SELF_CHECK_FAIL);
+			return nullptr;
+		}
+
+		return std::make_unique<CalibrateMode>(
+		    *this,
+		    CalibrateMode::State{.Speed = speed},
+		    [callback, this](const CalibrationResult &res, Error err) {
+			    if (err != Error::NO_ERROR) {
+				    callback(err);
+				    return;
+			    }
+			    uint ms = res.MinRewindPulse_us / 1000;
+			    uint us = res.MinRewindPulse_us - 1000 * ms;
+			    Infof("minimum pulse is %d.%d, saving to flash", ms, us);
+
+			    GlobalConfig saved;
+
+			    FlashStorage<GlobalConfig>::Load(saved);
+			    saved.Wheel.Speed          = res.Speed;
+			    saved.Wheel.RewindPulse_us = res.MinRewindPulse_us;
+
+			    FlashStorage<GlobalConfig>::Save(saved);
+			    saved.Wheel.Speed          = -1;
+			    saved.Wheel.RewindPulse_us = -1;
+			    FlashStorage<GlobalConfig>::Load(saved);
+			    Infof(
+			        "Saved: speed:%d rewind:%d",
+			        saved.Wheel.Speed,
+			        saved.Wheel.RewindPulse_us
+			    );
+			    callback(Error::NO_ERROR);
+		    }
+		);
+	};
+
+	if (d_queue.TryAdd(std::move(calibrate)) == false) {
+		callback(Error::DISPENSER_QUEUE_FULL);
 	}
 }
 

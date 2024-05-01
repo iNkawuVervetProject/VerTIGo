@@ -44,11 +44,11 @@ public:
 private:
 	Logger();
 
-	static constexpr size_t BufferSize = 4096 * 8;
+	static constexpr size_t BufferSize = 4096 * 4;
 
 	std::array<char, BufferSize + 1> d_buffer;
 	size_t                           d_start = 0;
-	Queue<Message, 16, true>         d_queue;
+	Queue<Message, 64, true>         d_queue;
 	Level                            d_level = Level::INFO;
 };
 

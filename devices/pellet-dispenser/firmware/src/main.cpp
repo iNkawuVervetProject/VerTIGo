@@ -37,14 +37,9 @@ inline void tud_task() {}
 
 #define DISPLAY_PERIOD_MS 200
 
-static Config config;
-
 int main() {
 	stdio_init_all();
 	auto endInit = make_timeout_time_us(10 * 1000);
-	FlashStorage<Config>::Load(config);
-	config.Wheel.Channel = DRV8848::OutputChannel::A;
-	config.Wheel.Speed   = 1024;
 
 	board_init();
 	tusb_init();
@@ -61,6 +56,10 @@ int main() {
 	Logger::Get().SetLevel(Logger::Level::DEBUG);
 	Infof("Verbosity set to DEBUG");
 #endif
+
+	// apparently we need to do this here.
+	Config config;
+	FlashStorage<Config>::Load(config);
 
 	auto button = Button{17};
 
@@ -108,43 +107,20 @@ int main() {
 	    config.Wheel
 	);
 
-	dispenser.Calibrate(
-	    1024,
-	    [](const DispenserController::CalibrationResult &res, Error err) {
-		    if (err != Error::NO_ERROR) {
-			    ErrorReporter::Report(err, 10);
-			    return;
-		    }
-
-		    std::ostringstream oss;
-		    std::string        prefix = "";
-		    for (const auto &p : res.CoarseSearch) {
-			    oss << prefix << std::setw(4) << p.Position;
-			    prefix = " ";
-		    }
-		    oss << std::endl;
-		    prefix = "";
-		    for (const auto &p : res.CoarseSearch) {
-			    oss << prefix << std::setw(4) << p.Rewind_us / 1000;
-			    prefix = " ";
-		    }
-		    oss << std::endl;
-
-		    for (const auto &p : res.FineSearch) {
-			    oss << prefix << std::setw(4) << p.Position;
-			    prefix = " ";
-		    }
-		    oss << std::endl;
-		    prefix = "";
-		    for (const auto &p : res.FineSearch) {
-			    oss << prefix << std::setw(4) << p.Rewind_us / 1000;
-			    prefix = " ";
-		    }
-		    oss << std::endl;
-
-		    Infof("%s", oss.str().c_str());
-	    }
+	int wantedSpeed = 512;
+	Infof(
+	    "speed:%d rewind:%d",
+	    config.Wheel.Speed,
+	    config.Wheel.RewindPulse_us
 	);
+
+	if (config.Wheel.Speed != wantedSpeed) {
+		dispenser.SetSpeedAndCalibrate(wantedSpeed, [](Error err) {
+			if (err != Error::NO_ERROR) {
+				ErrorReporter::Report(err, 10);
+			}
+		});
+	}
 
 	while (true) {
 		tud_task();

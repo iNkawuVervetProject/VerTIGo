@@ -19,7 +19,7 @@ public:
 	struct Config {
 		DRV8848::OutputChannel Channel = DRV8848::OutputChannel::A;
 
-		uint Speed             = 200;
+		uint Speed             = 0;
 		uint RampUpDuration_us = 10 * 1000;
 		uint RewindPulse_us    = 20 * 1000;
 		uint SensorCooldown_us = 500 * 1000;
@@ -27,8 +27,8 @@ public:
 		uint SensorLowerThreshold = 160;
 		uint SensorUpperThreshold = 220;
 
-		uint HighStep_us = 200 * 1000;
-		uint MaxStep_us  = 800 * 1000;
+		uint HighStep_us = 400 * 1000;
+		uint MaxStep_us  = 1200 * 1000;
 	} __attribute__((packed));
 
 	WheelController(DRV8848 &motor, IRSensor &sensor, const Config &config);
