@@ -108,7 +108,7 @@ int main() {
 	    config.Wheel
 	);
 
-	int wantedSpeed = 512;
+	int wantedSpeed = 1024;
 	Infof(
 	    "speed:%d rewind:%d",
 	    config.Wheel.Speed,

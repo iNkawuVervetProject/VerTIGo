@@ -2,6 +2,7 @@
 
 #include "Log.hpp"
 #include "boards/pico.h"
+#include "build_timestamp.h"
 #include "hardware/flash.h"
 #include "hardware/regs/addressmap.h"
 #include "hardware/sync.h"
@@ -106,16 +107,11 @@ struct FlashObjectHeader {
 	uint32_t UniqueCode;
 };
 
-namespace details {
-inline static constexpr uint32_t CompilationUUID =
-    uint32_t(details::epochFromDateAndTime(__DATE__, __TIME__ ""));
-}
-
 template <
     class T,
     size_t   PagesPerObject = 1,
     size_t   SectorSize     = 1,
-    uint32_t UUID           = details::CompilationUUID>
+    uint32_t UUID           = BUILD_EPOCH>
 class FlashStorage : public details::InstanceCounter {
 public:
 	const static uint32_t MagicWord = UUID;
@@ -153,7 +149,7 @@ public:
 			restore_interrupts(interrupts);
 		};
 
-		Debugf("FlashStorage: UUID:%x", UUID);
+		Infof("FlashStorage: UUID:%x", UUID);
 		const Type *valid = nullptr;
 		for (size_t i = 0; i < PagesPerSector * SectorSize;
 		     i += PagesPerObject) {

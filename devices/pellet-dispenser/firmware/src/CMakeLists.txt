@@ -1,3 +1,9 @@
+add_custom_target(
+	timestamp
+	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/timestamp.cmake
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 option(USB_INTERFACE "Adds USB interface to the firmware" On)
 
 set(SRC_FILES
@@ -43,12 +49,14 @@ set(HDR_FILES
 	utils/Processor.hpp
 )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/usb)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/usb ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(
 	pellet-dispenser ${SRC_FILES} ${HDR_FILES} ${USB_SRC_FILES}
 					 ${USB_HDR_FILES}
 )
+
+add_dependencies(pellet-dispenser timestamp)
 
 target_compile_definitions(pellet-dispenser PUBLIC BOARD=pico)
 
