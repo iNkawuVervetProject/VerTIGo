@@ -106,12 +106,16 @@ struct FlashObjectHeader {
 	uint32_t UniqueCode;
 };
 
+namespace details {
+inline static constexpr uint32_t CompilationUUID =
+    uint32_t(details::epochFromDateAndTime(__DATE__, __TIME__ ""));
+}
+
 template <
     class T,
     size_t   PagesPerObject = 1,
     size_t   SectorSize     = 1,
-    uint32_t UUID =
-        uint32_t(details::epochFromDateAndTime(__DATE__, __TIME__ ""))>
+    uint32_t UUID           = details::CompilationUUID>
 class FlashStorage : public details::InstanceCounter {
 public:
 	const static uint32_t MagicWord = UUID;
@@ -157,7 +161,6 @@ public:
 			    XIP_BASE + Offset + i * FLASH_PAGE_SIZE
 			);
 			if (h->UniqueCode == UUID) {
-				Infof("FlashStorage:page[%d] valid", i);
 				valid = reinterpret_cast<const Type *>(
 				    reinterpret_cast<const uint8_t *>(h) +
 				    sizeof(FlashObjectHeader)

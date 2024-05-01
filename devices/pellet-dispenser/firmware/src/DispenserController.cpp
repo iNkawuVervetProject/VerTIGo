@@ -248,7 +248,7 @@ public:
 		controller.d_wheelConfig.Speed             = state.Speed;
 		auto rewind                                = next();
 		controller.d_wheelConfig.RewindPulse_us    = rewind;
-		controller.d_wheelConfig.SensorCooldown_us = 3000 * 1000;
+		controller.d_wheelConfig.SensorCooldown_us = 1200 * 1000;
 		debugWheelConfig(controller.d_wheelConfig);
 		controller.d_wheel.Start(d_state.Direction);
 		d_start = get_absolute_time();

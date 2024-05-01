@@ -59,6 +59,7 @@ int main() {
 
 	// apparently we need to do this here.
 	Config config;
+	Infof("loading config");
 	FlashStorage<Config>::Load(config);
 
 	auto button = Button{17};
