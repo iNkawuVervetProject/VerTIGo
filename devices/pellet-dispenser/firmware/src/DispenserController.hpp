@@ -26,7 +26,7 @@ public:
 		uint MaxDirectionChange       = 4;
 		uint PelletCounterCooldown_us = 5 * 1000 * 1000;
 		uint SelfCheckPeriod_us       = 120 * 1000 * 1000;
-	};
+	} __attribute__((packed));
 
 	DispenserController(
 	    const StaticConfig      &staticConfig,
@@ -49,6 +49,7 @@ public:
 		std::vector<Point>      CoarseSearch;
 		std::vector<Point>      FineSearch;
 
+		uint                    Speed             = -1;
 		uint                    MinRewindPulse_us = -1;
 		uint                    Position          = -1;
 	};

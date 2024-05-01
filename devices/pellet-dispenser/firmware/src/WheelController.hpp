@@ -29,7 +29,7 @@ public:
 
 		uint HighStep_us = 200 * 1000;
 		uint MaxStep_us  = 800 * 1000;
-	};
+	} __attribute__((packed));
 
 	WheelController(DRV8848 &motor, IRSensor &sensor, const Config &config);
 

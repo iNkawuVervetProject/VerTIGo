@@ -327,6 +327,7 @@ private:
 		    {
 		        .CoarseSearch      = d_state.Coarse,
 		        .FineSearch        = d_state.Results,
+		        .Speed             = d_state.Speed,
 		        .MinRewindPulse_us = minPoint.Rewind_us,
 		        .Position          = minPoint.Position,
 		    },
@@ -470,7 +471,6 @@ void DispenserController::processErrors() {
 		);
 	}
 
-
 	if (d_pelletSensor.HasError()) {
 		ErrorReporter::Get().Report(
 		    Error::PELLET_COUNTER_SENSOR_ISSUE,
@@ -486,22 +486,18 @@ void DispenserController::processErrors() {
 		ErrorReporter::Get().Report(d_counter.Err(), 5 * 1000 * 1000);
 	}
 
-
-	if ( d_wheelSensor.HasValue() ) {
+	if (d_wheelSensor.HasValue()) {
 		Display::State().Wheel.SensorValue = d_wheelSensor.Value();
 	}
 
-	if ( d_wheel.HasValue() ) {
+	if (d_wheel.HasValue()) {
 		Display::State().Wheel.Position = d_wheel.Value();
 	}
 
-	if ( d_pelletSensor.HasValue() ) {
-		auto & state = Display::State().Pellet;
-		state.Last = d_pelletSensor.Value();
-		state.Min = std::min(state.Min,state.Last);
-		state.Max = std::max(state.Max,state.Last);
+	if (d_pelletSensor.HasValue()) {
+		auto &state = Display::State().Pellet;
+		state.Last  = d_pelletSensor.Value();
+		state.Min   = std::min(state.Min, state.Last);
+		state.Max   = std::max(state.Max, state.Last);
 	}
-
-
-
 }

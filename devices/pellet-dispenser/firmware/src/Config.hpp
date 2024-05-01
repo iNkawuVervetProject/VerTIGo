@@ -16,4 +16,4 @@ struct Config {
 	PelletCounter::Config   Pellet;
 
 	DispenserController::Config Dispenser;
-};
+} __attribute__((packed));

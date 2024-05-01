@@ -16,7 +16,7 @@ public:
 	struct Config {
 		uint SensorLowThreshold  = 60;
 		uint SensorHighThreshold = 250;
-	};
+	} __attribute__((packed));
 
 	PelletCounter(IRSensor &sensor, const Config &config);
 
