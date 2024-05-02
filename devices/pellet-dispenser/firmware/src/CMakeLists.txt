@@ -23,6 +23,7 @@ set(SRC_FILES
 	utils/Queue.cpp
 	utils/Publisher.cpp
 	utils/Processor.cpp
+	LEDMorse.cpp
 )
 
 set(HDR_FILES
@@ -42,6 +43,7 @@ set(HDR_FILES
 	utils/Publisher.hpp
 	utils/Processor.hpp
 	usb/callbacks.h
+	LEDMorse.hpp
 )
 
 if(USB_INTERFACE)
