@@ -2,7 +2,7 @@
 #include "Button.hpp"
 #include "Config.hpp"
 #include "Display.hpp"
-#include "Error.hpp"
+#include "ErrorReporter.hpp"
 #include "Log.hpp"
 #include "PelletCounter.hpp"
 #include "WheelController.hpp"
@@ -548,10 +548,7 @@ void DispenserController::SetSpeedAndCalibrate(
 
 void DispenserController::processErrors() {
 	if (d_wheelSensor.HasError()) {
-		ErrorReporter::Get().Report(
-		    Error::WHEEL_CONTROLLER_SENSOR_ISSUE,
-		    10 * 1000
-		);
+		ErrorReporter::Report(Error::WHEEL_CONTROLLER_SENSOR_ISSUE, 10 * 1000);
 	}
 
 	if (d_pelletSensor.HasError()) {

@@ -117,7 +117,6 @@ int main() {
 	while (true) {
 		tud_task();
 		auto now = get_absolute_time();
-		ErrorReporter::Get().Process(now);
 
 		Processor::ProcessAll(now);
 

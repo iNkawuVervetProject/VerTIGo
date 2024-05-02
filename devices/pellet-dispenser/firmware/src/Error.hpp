@@ -1,10 +1,6 @@
 #pragma once
 
-#include "pico/time.h"
-#include "pico/types.h"
-#include <array>
 #include <cstddef>
-
 enum class Error {
 	NO_ERROR = 0,
 	IR_SENSOR_READOUT_ERROR,
@@ -43,24 +39,3 @@ inline static const char *GetErrorDescription(Error err) {
 	}
 	return ErrorDescription[index];
 }
-
-class ErrorReporter {
-public:
-	inline static ErrorReporter &Get() {
-		static ErrorReporter reporter;
-		return reporter;
-	}
-
-	static inline void Report(Error err, uint timeout_us) {
-		Get().report(err, timeout_us);
-	};
-
-	void Process(absolute_time_t time);
-
-private:
-	void report(Error e, uint timeout_us);
-
-	std::array<absolute_time_t, NumErrors> d_firedErrors;
-
-	absolute_time_t d_next = nil_time;
-};

@@ -48,7 +48,7 @@ void LEDMorse::setSignal(absolute_time_t now) {
 	auto next  = durations[size_t(*d_current)] * BaseDuration_us;
 	auto value = values[size_t(*d_current)];
 	d_next     = delayed_by_us(now, next);
-	gpio_put(BaseDuration_us, value);
+	gpio_put(LEDPin, value);
 
 	uint ms = next / 1000;
 	next -= 1000 * ms;
@@ -105,7 +105,7 @@ void debugSequence(const std::vector<Signal> &sequence) {
 			break;
 		}
 	}
-	Infof("LED: displaying '%s'", display.c_str());
+	Debugf("LED: displaying '%s'", display.c_str());
 }
 
 void LEDMorse::display(const std::string &text) {
