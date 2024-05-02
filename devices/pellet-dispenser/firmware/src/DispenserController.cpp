@@ -128,6 +128,8 @@ private:
 
 	static int s_direction;
 
+	absolute_time_t d_start = nil_time;
+
 public:
 	inline DispenseMode(
 	    DispenserController                         &controller,
@@ -163,6 +165,18 @@ public:
 	}
 
 	std::unique_ptr<Mode> operator()(absolute_time_t now) override {
+		if (is_nil_time(d_start)) {
+			d_start = now;
+		}
+
+		if (absolute_time_diff_us(d_start, now) >= 20 * 1000 * 1000) {
+			d_callback(
+			    Self().d_counter.PelletCount() - d_startCount,
+			    Error::DISPENSER_DISPENSE_WATCHDOG
+			);
+			return std::make_unique<IdleMode>(Self(), now);
+		}
+
 		if (Self().d_wheel.HasValue()) {
 			d_positionTravelled++;
 		}
