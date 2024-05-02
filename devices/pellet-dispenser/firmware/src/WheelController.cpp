@@ -1,5 +1,6 @@
 #include "WheelController.hpp"
 
+#include "Button.hpp"
 #include "Log.hpp"
 #include "hardware/DRV8848.hpp"
 #include "hardware/IRSensor.hpp"
@@ -95,11 +96,18 @@ int WheelController::Position() {
 }
 
 void WheelController::Start(int direction) {
-	if (d_state != State::IDLE) {
-		return;
-	}
 	d_direction = direction > 0 ? 1 : -1;
-	setRampingUp(get_absolute_time());
+
+	switch (d_state) {
+	case State::RAMPING_DOWN:
+	case State::IDLE:
+		setRampingUp(get_absolute_time());
+		break;
+	case State::RAMPING_UP:
+	case State::MOVING_TO_TARGET:
+	default:
+		break;
+	}
 }
 
 void WheelController::Stop() {

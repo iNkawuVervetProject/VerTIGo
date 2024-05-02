@@ -61,6 +61,7 @@ public:
 
 	~IdleMode() {
 		d_onCounterDisable(Self().d_counter.PelletCount());
+		Debugf("Dispenser: idle done");
 	}
 
 	std::unique_ptr<Mode> operator()(absolute_time_t now) override;
@@ -79,6 +80,10 @@ public:
 		Infof("Dispenser: Self-Check started");
 		Self().d_pelletSensor.SetEnabled(true);
 		Self().d_wheelSensor.SetEnabled(true);
+	}
+
+	~SelfCheckMode() {
+		Debugf("Dispenser: self-check done");
 	}
 
 	std::unique_ptr<Mode> operator()(absolute_time_t now) override {
@@ -144,12 +149,17 @@ public:
 		d_direction = s_direction;
 
 		Self().d_pelletSensor.SetEnabled(true);
+		Infof(
+		    "Dispenser: dispensing %d pellet(s) %s",
+		    want,
+		    d_direction == 1 ? "forward" : "backward"
+		);
 		Self().d_wheel.Start(d_direction);
-		Infof("Dispenser: dispensing %d pellet(s)", want);
 	}
 
 	~DispenseMode() {
 		Self().d_wheel.Stop();
+		Debugf("Dispenser: dispense done");
 	}
 
 	std::unique_ptr<Mode> operator()(absolute_time_t now) override {
@@ -253,9 +263,15 @@ public:
 		d_start = get_absolute_time();
 	}
 
-	~CalibrateMode() {}
+	~CalibrateMode() {
+		Debugf("Dispenser: Calibration mode done");
+	}
 
 	std::unique_ptr<Mode> operator()(absolute_time_t time) override {
+		// if (Self().d_wheel.Ready()) {
+		// 	Self().d_wheel.Start(d_state.Direction);
+		// }
+
 		if (Self().d_counter.HasValue()) {
 			Errorf("Dispenser calibration: dispenser not empty");
 			return std::make_unique<IdleMode>(
@@ -450,6 +466,10 @@ DispenserController::~DispenserController() = default;
 
 void DispenserController::Process(absolute_time_t now) {
 	processErrors();
+	if (d_mode == nullptr) {
+		Errorf("Dispenser: no mode set!!!!");
+		return;
+	}
 	auto newMode = (*d_mode)(now);
 	if (newMode) {
 		d_mode = std::move(newMode);
@@ -582,6 +602,7 @@ void DispenserController::processErrors() {
 	}
 
 	if (d_button.HasValue()) {
+		Display::State().TestButton.State = d_button.Value();
 		switch (d_button.Value()) {
 		case ButtonState::PRESSED:
 			this->Dispense(1, [](uint count, Error err) {
@@ -591,8 +612,11 @@ void DispenserController::processErrors() {
 				}
 				Infof("Dispensed %d pellets", count);
 			});
+			Display::State().TestButton.PressCount++;
 			break;
-		default:
+		case ButtonState::LONG_PRESS:
+			Display::State().TestButton.PressCount++;
+		case ButtonState::RELEASED:
 			break;
 		}
 	}

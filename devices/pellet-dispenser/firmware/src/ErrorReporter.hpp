@@ -25,7 +25,7 @@ public:
 		enum Error      Error;
 	} __attribute__((packed));
 
-	using ErrorQueue = Queue<LoggedError, 64>;
+	using ErrorQueue = Queue<LoggedError, 64, true>;
 
 	inline static ErrorQueue &ErrorLog() {
 		return Get().d_errorLog;
