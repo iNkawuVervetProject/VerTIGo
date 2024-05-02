@@ -1,5 +1,6 @@
 #pragma once
 
+#include "boards/pico.h"
 #include "pico/time.h"
 #include "pico/types.h"
 
@@ -18,18 +19,28 @@ enum class Signal {
 
 class LEDMorse : public Processor {
 public:
-	LEDMorse(uint pin, uint baseDuration_us = 500 * 1000);
+	constexpr static uint BaseDuration_us = 100 * 1000;
+	constexpr static uint LEDPin          = PICO_DEFAULT_LED_PIN;
 
-	void Display(const std::string &text);
+	inline static LEDMorse &Get() {
+		static LEDMorse instance;
+		return instance;
+	}
+
+	inline static void Display(const std::string &text) {
+		Get().display(text);
+	}
 
 	void Process(absolute_time_t time) override;
 
 private:
 	using Sequence = std::vector<Signal>;
 
-	uint                     d_pin;
+	LEDMorse();
+	void setSignal(absolute_time_t now);
+	void display(const std::string &text);
+
 	Sequence                 d_sequence;
 	Sequence::const_iterator d_current;
-	uint                     d_baseDuration_us;
 	absolute_time_t          d_next = nil_time;
 };

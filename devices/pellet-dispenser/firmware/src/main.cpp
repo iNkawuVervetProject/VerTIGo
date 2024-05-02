@@ -1,3 +1,4 @@
+#include "LEDMorse.hpp"
 #include "hardware/DRV8848.hpp"
 #include "hardware/PIOIRSensor.hpp"
 #include "pico/multicore.h"
