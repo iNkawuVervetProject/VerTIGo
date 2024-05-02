@@ -13,7 +13,7 @@ enum class Error {
 	DISPENSER_QUEUE_FULL,
 	DISPENSER_SELF_CHECK_FAIL,
 	DISPENSER_CALIBRATION_ERROR,
-	DISPENSER_DISPENSE_WATCHDOG,
+	DISPENSER_OPERATION_WATCHDOG,
 	_NUM_ERRORS
 };
 
@@ -31,7 +31,7 @@ static const char *ErrorDescription[NumErrors] = {
     "Dispenser: too many commands",
     "Dispenser: self-test failed",
     "Dispenser: calibration error",
-    "Dispenser: dispense watchdog reached",
+    "Dispenser: operation watchdog reached",
 };
 
 inline static const char *GetErrorDescription(Error err) {

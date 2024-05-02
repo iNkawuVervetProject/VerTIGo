@@ -87,4 +87,5 @@ private:
 	int             d_position   = 0;
 	absolute_time_t d_stateStart = nil_time;
 	absolute_time_t d_lastStep   = nil_time;
+	absolute_time_t d_sensorStop = nil_time;
 };

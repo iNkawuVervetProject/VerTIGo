@@ -34,11 +34,9 @@ void WheelController::Process(absolute_time_t time) {
 
 	switch (d_state) {
 	case State::IDLE: {
-		if (d_sensor.Enabled() == false) {
-			break;
-		}
-		auto ellapsed = absolute_time_diff_us(d_stateStart, time);
-		if (ellapsed >= d_config.SensorCooldown_us) {
+		if (is_nil_time(d_sensorStop) == false &&
+		    absolute_time_diff_us(d_sensorStop, time) >= 0) {
+			d_sensorStop = nil_time;
 			d_sensor.SetEnabled(false);
 		}
 		break;
@@ -150,6 +148,7 @@ void WheelController::setIdle(absolute_time_t time) {
 	Debugf("WheelController: going idle");
 	d_state      = State::IDLE;
 	d_stateStart = time;
+	d_sensorStop = delayed_by_us(time, d_config.SensorCooldown_us);
 
 	d_driver.SetEnabled(false);
 	d_lastStep = nil_time;

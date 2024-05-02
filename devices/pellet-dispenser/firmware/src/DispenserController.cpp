@@ -7,6 +7,7 @@
 #include "PelletCounter.hpp"
 #include "WheelController.hpp"
 #include "hardware/FlashStorage.hpp"
+#include "hardware/IRSensor.hpp"
 #include "hardware/gpio.h"
 #include "pico/time.h"
 #include "pico/types.h"
@@ -69,17 +70,22 @@ public:
 
 class SelfCheckMode : public Mode {
 private:
-	bool d_pelletTested = false;
-	bool d_wheelTested  = false;
-	bool d_pelletGood   = false;
-	bool d_wheelGood    = false;
+	struct SensorData {
+		IRSensor &Sensor;
+		bool      Tested = false;
+		bool      Good   = false;
+	};
+
+	SensorData d_sensors[2];
+
+	absolute_time_t d_start = nil_time;
 
 public:
-	inline SelfCheckMode(DispenserController &controller)
-	    : Mode{controller} {
+	inline SelfCheckMode(DispenserController &controller, absolute_time_t start)
+	    : Mode{controller}
+	    , d_sensors{{.Sensor = controller.d_wheelSensor}, {.Sensor = controller.d_pelletSensor}}
+	    , d_start{start} {
 		Infof("Dispenser: Self-Check started");
-		Self().d_pelletSensor.SetEnabled(true);
-		Self().d_wheelSensor.SetEnabled(true);
 	}
 
 	~SelfCheckMode() {
@@ -87,27 +93,42 @@ public:
 	}
 
 	std::unique_ptr<Mode> operator()(absolute_time_t now) override {
-		if (Self().d_pelletSensor.HasError() ||
-		    Self().d_pelletSensor.HasValue()) {
-			d_pelletTested = true;
-
-			d_pelletGood = !Self().d_pelletSensor.HasError();
+		if (absolute_time_diff_us(d_start, now) >= 2000) {
 			Self().d_pelletSensor.SetEnabled(false);
-		}
-
-		if (Self().d_wheelSensor.HasError() ||
-		    Self().d_wheelSensor.HasValue()) {
-
-			d_wheelTested = true;
-			d_wheelGood   = !Self().d_wheelSensor.HasError();
 			Self().d_wheelSensor.SetEnabled(false);
+			Self().d_sane = false;
+			ErrorReporter::Report(Error::DISPENSER_OPERATION_WATCHDOG, 10);
+			return std::make_unique<IdleMode>(Self(), now);
 		}
 
-		if (d_pelletTested == false || d_wheelTested == false) {
+		bool allTested = true;
+		for (auto &sensor : d_sensors) {
+			if (sensor.Tested == false) {
+				if (sensor.Sensor.Enabled() == false) {
+					sensor.Sensor.SetEnabled(true);
+				}
+				allTested = false;
+			}
+
+			if (sensor.Sensor.HasError() || sensor.Sensor.HasValue()) {
+				sensor.Tested = true;
+				sensor.Good   = !sensor.Sensor.HasError();
+				sensor.Sensor.SetEnabled(false);
+			}
+		}
+
+		if (allTested == false) {
 			return nullptr;
 		}
 
-		Self().d_sane = d_wheelGood && d_pelletGood;
+		Self().d_sane = true;
+
+		for (const auto &d : d_sensors) {
+			if (d.Good == false) {
+				Self().d_sane = false;
+				break;
+			}
+		}
 
 		return std::make_unique<IdleMode>(Self(), now);
 	}
@@ -172,7 +193,7 @@ public:
 		if (absolute_time_diff_us(d_start, now) >= 20 * 1000 * 1000) {
 			d_callback(
 			    Self().d_counter.PelletCount() - d_startCount,
-			    Error::DISPENSER_DISPENSE_WATCHDOG
+			    Error::DISPENSER_OPERATION_WATCHDOG
 			);
 			return std::make_unique<IdleMode>(Self(), now);
 		}
@@ -282,9 +303,6 @@ public:
 	}
 
 	std::unique_ptr<Mode> operator()(absolute_time_t time) override {
-		// if (Self().d_wheel.Ready()) {
-		// 	Self().d_wheel.Start(d_state.Direction);
-		// }
 
 		if (Self().d_counter.HasValue()) {
 			Errorf("Dispenser calibration: dispenser not empty");
@@ -449,7 +467,7 @@ std::unique_ptr<Mode> IdleMode::operator()(absolute_time_t now) {
 	}
 
 	if (ellapsed >= d_config.SelfCheckPeriod_us) {
-		return std::make_unique<SelfCheckMode>(Self());
+		return std::make_unique<SelfCheckMode>(Self(), now);
 	}
 
 	DispenserController::Command cmd;
@@ -473,7 +491,7 @@ DispenserController::DispenserController(
     , d_pelletSensor{staticConfig.PelletSensor}
     , d_wheel{staticConfig.Wheel}
     , d_counter{staticConfig.Counter} {
-	d_mode = std::make_unique<SelfCheckMode>(*this);
+	d_mode = std::make_unique<SelfCheckMode>(*this, get_absolute_time());
 }
 
 DispenserController::~DispenserController() = default;
