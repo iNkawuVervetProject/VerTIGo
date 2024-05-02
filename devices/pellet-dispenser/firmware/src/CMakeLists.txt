@@ -25,12 +25,6 @@ set(SRC_FILES
 	utils/Processor.cpp
 )
 
-if(USB_INTERFACE)
-	set(USB_SRC_FILES usb/usb_descriptors.c usb/callbacks.cpp)
-	set(USB_HDR_FILES usb/tusb_config.h usb/usb_descriptors.h)
-	set(USB_LIBRARIES tinyusb_device tinyusb_board)
-endif()
-
 set(HDR_FILES
 	Display.hpp #
 	Button.hpp #
@@ -47,7 +41,14 @@ set(HDR_FILES
 	utils/Queue.hpp
 	utils/Publisher.hpp
 	utils/Processor.hpp
+	usb/callbacks.h
 )
+
+if(USB_INTERFACE)
+	set(USB_SRC_FILES usb/usb_descriptors.c usb/callbacks.cpp)
+	set(USB_HDR_FILES usb/tusb_config.h usb/usb_descriptors.h)
+	set(USB_LIBRARIES tinyusb_device tinyusb_board)
+endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/usb ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -55,6 +56,10 @@ add_executable(
 	pellet-dispenser ${SRC_FILES} ${HDR_FILES} ${USB_SRC_FILES}
 					 ${USB_HDR_FILES}
 )
+
+if(USB_INTERFACE)
+	target_compile_definitions(pellet-dispenser PUBLIC "-DUSB_INTERFACE=1")
+endif()
 
 add_dependencies(pellet-dispenser timestamp)
 

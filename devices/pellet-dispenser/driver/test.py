@@ -1,4 +1,6 @@
 import hid
+import ctypes
+
 
 # default is TinyUSB (0xcafe), Adafruit (0x239a), RaspberryPi (0x2e8a), Espressif (0x303a) VID
 USB_VID = (0xCAFE, 0x239A, 0x2E8A, 0x303A)
@@ -9,14 +11,14 @@ dev = None
 
 for vid in USB_VID:
     for dict in hid.enumerate(vid):
-        print(dict)
         dev = hid.Device(dict["vendor_id"], dict["product_id"])
-if dev:
-    # Get input from console and encode to UTF8 for array of chars.
-    # hid generic in/out is single report therefore by HIDAPI requirement
-    # it must be preceded, with 0x00 as dummy reportID
-    str_out = b"\x00"
-    str_out += "hello".encode("utf-8")
-    dev.write(str_out)
-    str_in = dev.read(64)
-    print("Received from HID Device:", str_in, "\n")
+if dev is None:
+    raise RuntimeError("No device found")
+
+
+print(dev.get_feature_report(0, 16))
+print(dev.get_feature_report(1, 16))
+print(dev.get_feature_report(2, 16))
+print(dev.get_input_report(2, 16))
+
+dev.write(b"\x00\x01\x03")

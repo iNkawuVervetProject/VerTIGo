@@ -52,7 +52,11 @@ public:
 	    , d_start{start}
 	    , d_onCounterDisable{onCounterDisable}
 	    , d_config{controller.d_config} {
-		Infof("Dispenser: ready");
+		if (controller.d_sane) {
+			Infof("Dispenser: ready");
+		} else {
+			Warnf("Dispenser: disabled after failed self-check");
+		}
 	}
 
 	~IdleMode() {
@@ -99,10 +103,6 @@ public:
 		}
 
 		Self().d_sane = d_wheelGood && d_pelletGood;
-
-		if (Self().d_sane == false) {
-			Warnf("Dispenser: disabled after failed self-check");
-		}
 
 		return std::make_unique<IdleMode>(Self(), now);
 	}

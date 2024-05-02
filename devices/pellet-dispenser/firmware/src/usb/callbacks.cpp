@@ -1,9 +1,17 @@
 
+#include "callbacks.h"
 #include "../Log.hpp"
+#include "class/hid/hid.h"
 #include "class/hid/hid_device.h"
 #include "tusb.h"
 #include <cstring>
 #include <sstream>
+
+static DispenserController *dispenser = nullptr;
+
+void tusb_register_dispenser(DispenserController *d) {
+	dispenser = d;
+}
 
 extern "C" {
 
@@ -21,8 +29,8 @@ void tud_umount_cb(void) {
 // remote_wakeup_en : if host allow us  to perform remote wakeup
 // Within 7ms, device must draw an average of current less than 2.5 mA from bus
 void tud_suspend_cb(bool remote_wakeup_en) {
-	(void)remote_wakeup_en;
-	Infof("USB: suspended");
+
+	Infof("USB: suspended: can wake:%s", remote_wakeup_en ? "true" : "false");
 }
 
 // Invoked when usb bus is resumed
@@ -55,13 +63,19 @@ uint16_t tud_hid_get_report_cb(
     uint16_t          reqlen
 ) {
 
-	Debugf(
-	    "get report {instance: %d, id: %d, type: %x, reqlen",
-	    instance,
-	    report_id,
-	    report_type
-	);
-	return reqlen;
+	if (report_type != HID_REPORT_TYPE_FEATURE) {
+		Warnf("USB: received GET_REPORT with invalid type %d", report_type);
+		return 0;
+	}
+
+	switch (report_id) {
+	case 0:
+		Infof("USB: next error request");
+		return 0;
+	default:
+		Warnf("USB: GET FEATURE REPORT with invalid ID %d", report_id);
+		return 0;
+	}
 }
 
 // Invoked when received SET_REPORT control request or
@@ -73,28 +87,14 @@ void tud_hid_set_report_cb(
     uint8_t const    *buffer,
     uint16_t          bufsize
 ) {
-	(void)instance;
 
-	std::ostringstream oss;
-	for (size_t i = 0; i < bufsize; ++i) {
-		if (i > 0) {
-			if (i % 4 == 0) {
-				oss << "  ";
-			} else {
-				oss << " ";
-			}
-		}
-		oss << std::hex << int(buffer[i]) << ":{" << buffer[i] << "}";
+	if (report_type != 0) {
+		Warnf("USB: invalid command %d", report_type);
+		return;
 	}
-
-	Debugf(
-	    "set report {instance: %d, id: %d, type: %x,data:%s ",
-	    instance,
-	    report_id,
-	    report_type,
-	    oss.str().c_str()
-	);
-
-	tud_hid_report(0xaa, "World", 5);
+	if (bufsize < 3) {
+		Errorf("USB: invalid command size %d", bufsize);
+		return;
+	}
 }
-}
+} // extern "C"

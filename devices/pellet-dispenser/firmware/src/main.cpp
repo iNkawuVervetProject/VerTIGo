@@ -14,6 +14,7 @@
 #include "bsp/board.h"
 #include "tusb.h"
 #else
+
 inline void board_init() {}
 
 inline void tusb_init() {}
