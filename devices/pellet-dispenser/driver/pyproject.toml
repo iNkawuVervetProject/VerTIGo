@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unil_pellet_dispenser"
+version = "0.0.1"
+authors = [
+  { name="Alexandre Tuleu", email="alexandre.tuleu.2005@polytechnique.org" },
+]
+description = "A Python package to contol a pellet dispenser via USB"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/atuleu/zaci"
+Issues = "https://github.com/atuleu/zaci/issues"
