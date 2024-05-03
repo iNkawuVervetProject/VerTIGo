@@ -130,6 +130,13 @@ public:
 			}
 		}
 
+		if (Self().d_sane == false) {
+			ErrorReporter::Report(
+			    Error::DISPENSER_SELF_CHECK_FAIL,
+			    2 * Self().d_config.SelfCheckPeriod_us
+			);
+		}
+
 		return std::make_unique<IdleMode>(Self(), now);
 	}
 };

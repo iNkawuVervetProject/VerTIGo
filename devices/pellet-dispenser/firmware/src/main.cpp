@@ -1,4 +1,5 @@
 #include "LEDMorse.hpp"
+#include "callbacks.h"
 #include "hardware/DRV8848.hpp"
 #include "hardware/PIOIRSensor.hpp"
 #include "pico/multicore.h"
@@ -108,11 +109,7 @@ int main() {
 	    config.Wheel
 	);
 
-	Infof(
-	    "speed:%d rewind:%d",
-	    config.Wheel.Speed,
-	    config.Wheel.RewindPulse_us
-	);
+	tud_register_dispenser(&dispenser);
 
 	while (true) {
 		tud_task();

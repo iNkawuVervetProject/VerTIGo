@@ -12,28 +12,29 @@
 
 static DispenserController *dispenser = nullptr;
 
-void tusb_register_dispenser(DispenserController *d) {
+void tud_register_dispenser(DispenserController *d) {
 	dispenser = d;
 }
 
-Queue<usb::CommandReport, 32, true> reportQueue;
-
-void popReport() {
-	usb::CommandReport report;
-	if ( reportQueue.TryRemove(report) == false ) {
-		return;
-	}
-	tud_hid_report(0,reinterpret_cast<void*>(report),
-
-}
-
-void pushReport(const usb::CommandReport &r) {
-	bool sendRightAway = reportQueue.Empty();
-	reportQueue.AddBlocking(r);
-	popReport();
-}
+bool                                 sending = false;
+Queue<usb::CommandReport, 32, false> reportQueue;
 
 extern "C" {
+
+void tud_hid_command_report(const usb::CommandReport &report) {
+	if (sending == true) {
+		if (reportQueue.TryAdd(report) == false) {
+			Errorf("USB: cannot send command report: queue is full");
+		}
+		return;
+	}
+	sending = true;
+	tud_hid_report(
+	    0,
+	    reinterpret_cast<void const *>(&report),
+	    sizeof(usb::CommandReport)
+	);
+}
 
 // Invoked when device is mounted
 void tud_mount_cb(void) {
@@ -70,6 +71,17 @@ void tud_hid_report_complete_cb(
 	    report[0],
 	    len
 	);
+	usb::CommandReport queued;
+	if (reportQueue.TryRemove(queued) == false) {
+		sending = false;
+		return;
+	}
+
+	tud_hid_report(
+	    0,
+	    reinterpret_cast<void const *>(&queued),
+	    sizeof(usb::CommandReport)
+	);
 }
 
 uint16_t pop_and_fill_error_log(uint8_t *buffer, uint16_t reqlen) {
@@ -86,37 +98,42 @@ uint16_t pop_and_fill_error_log(uint8_t *buffer, uint16_t reqlen) {
 		return 0;
 	}
 
-	auto report = reinterpret_cast<usb::ErrorReport *>(buffer);
-
-	report->Count = ErrorReporter::ErrorLog().Size();
+	buffer[0] = ErrorReporter::ErrorLog().Size();
 
 	const size_t maxReport{(reqlen - 1) / sizeof(ErrorReporter::LoggedError)};
 	size_t       i{0};
 
+	ErrorReporter::LoggedError err;
+
 	for (; i < maxReport; ++i) {
-		if (ErrorReporter::ErrorLog().TryRemove(report->Errors[i]) == false) {
+		if (ErrorReporter::ErrorLog().TryRemove(err) == false) {
 			break;
 		}
+		memcpy(
+		    &(buffer[sizeof(ErrorReporter::LoggedError) * i + 1]),
+		    &err,
+		    sizeof(ErrorReporter::LoggedError)
+		);
 	}
 
-	return maxReport * sizeof(ErrorReporter::LoggedError) + 1;
+	return i * sizeof(ErrorReporter::LoggedError) + 1;
 }
 
 uint16_t fill_current_time(uint8_t *buffer, uint16_t reqlen) {
 	if (reqlen < sizeof(usb::TimeReport)) {
 		Errorf(
-		    "USB: invalid GET_FEATURE TimeReport: min buffer size is %d, got "
-		    "%d",
+		    "USB: invalid GET_FEATURE TimeReport: buffer size should be %d, "
+		    "got %d",
 		    sizeof(usb::TimeReport),
 		    reqlen
 		);
 		return 0;
 	}
 
-	auto report         = reinterpret_cast<usb::TimeReport *>(buffer);
-	report->CurrentTime = get_absolute_time();
+	auto now = get_absolute_time();
+	memcpy(buffer, &now, sizeof(usb::TimeReport));
 
-	return sizeof(reqlen);
+	return sizeof(usb::TimeReport);
 }
 
 // Invoked when received GET_REPORT control request
@@ -129,6 +146,14 @@ uint16_t tud_hid_get_report_cb(
     uint8_t          *buffer,
     uint16_t          reqlen
 ) {
+
+	Debugf(
+	    "USB: instance: %d, report ID:%d type:%d reqlen: %d",
+	    instance,
+	    report_id,
+	    report_type,
+	    reqlen
+	);
 
 	if (report_type != HID_REPORT_TYPE_FEATURE) {
 		Warnf("USB: received GET_REPORT with invalid type %d", report_type);
@@ -156,7 +181,12 @@ void dispense(int16_t count) {
 		if (err != Error::NO_ERROR) {
 			ErrorReporter::Report(err, 10);
 		}
-		// TODO set hid report
+
+		tud_hid_command_report(usb::CommandReport{
+		    .Code  = usb::Command::DISPENSE,
+		    .Value = uint16_t(count),
+		    .Error = uint8_t(err),
+		});
 	});
 }
 
@@ -167,7 +197,13 @@ void calibrate(int16_t speed) {
 	}
 
 	dispenser->SetSpeedAndCalibrate(speed, [](Error err) {
-
+		if (err != Error::NO_ERROR) {
+			ErrorReporter::Report(err, 10);
+		}
+		tud_hid_command_report(usb::CommandReport{
+		    .Code  = usb::Command::CALIBRATE,
+		    .Value = 0,
+		    .Error = uint8_t(err)});
 	});
 }
 

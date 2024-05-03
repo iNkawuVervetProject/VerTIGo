@@ -18,8 +18,8 @@ struct Command {
 
 struct CommandReport {
 	uint8_t  Code;
-	uint8_t  Error;
 	uint16_t Value;
+	uint8_t  Error;
 } __attribute__((packed));
 
 enum class FeatureReportType {
@@ -36,7 +36,7 @@ struct ErrorReport {
 } __attribute__((packed));
 
 struct TimeReport {
-	int64_t CurrentTime;
+	uint64_t CurrentTime;
 };
 
 }; // namespace usb
