@@ -21,8 +21,8 @@ public:
 	void Process(absolute_time_t time) override;
 
 	struct LoggedError {
-		absolute_time_t Time;
-		enum Error      Error;
+		int64_t Time;
+		uint8_t Error;
 	} __attribute__((packed));
 
 	using ErrorQueue = Queue<LoggedError, 64, true>;

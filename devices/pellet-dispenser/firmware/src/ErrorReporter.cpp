@@ -72,7 +72,7 @@ void ErrorReporter::dispatchNewError(Error err, absolute_time_t now) {
 		d_errorLog.TryRemove(l);
 	}
 
-	l.Error = err;
+	l.Error = uint8_t(err);
 	l.Time  = now;
 
 	d_errorLog.TryAdd(l);

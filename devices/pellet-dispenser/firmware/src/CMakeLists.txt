@@ -46,6 +46,7 @@ set(HDR_FILES
 	usb/callbacks.h
 	LEDMorse.hpp
 	ErrorReporter.hpp
+	usb/protocol.hpp
 )
 
 if(USB_INTERFACE)
