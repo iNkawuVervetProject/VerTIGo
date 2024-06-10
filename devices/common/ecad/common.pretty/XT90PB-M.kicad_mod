@@ -1,0 +1,229 @@
+(footprint "XT90PB-M"
+	(version 20240108)
+	(generator "pcbnew")
+	(generator_version "8.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at -3 11.5 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "945db4b7-33bd-44c6-a51f-f3976f5d481e")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "XT90PB-M"
+		(at 0 1 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "33d3add3-a814-42bb-b368-0b8a973da483")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "871cdc0a-f5dd-4b61-bc94-5969b988bb31")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "7008e5b7-3f74-4f47-935c-ab8c07aa36c3")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "45a3a3d5-43b8-4ae3-8491-4bf90dc4d496")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(fp_line
+		(start -5.2 -7.2)
+		(end -5.2 10.7)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "f795183e-089d-4a7c-b8b8-0abdd2d622c9")
+	)
+	(fp_line
+		(start -5.2 10.7)
+		(end 5.2 10.7)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "8f7745dd-c475-4c62-91e9-32c67dbc42bc")
+	)
+	(fp_line
+		(start -2.5 -10.7)
+		(end -5.2 -7.2)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "a7b11731-f351-44eb-ac03-fcadde895b74")
+	)
+	(fp_line
+		(start 2.7 -10.7)
+		(end -2.5 -10.7)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "4ad602b7-a28f-445c-a5b9-35bb98d04284")
+	)
+	(fp_line
+		(start 5.2 -7.2)
+		(end 2.7 -10.7)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "f78a67f5-4573-4560-8f25-0dac14da3457")
+	)
+	(fp_line
+		(start 5.2 10.7)
+		(end 5.2 -7.2)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "86d53e4b-06ff-4413-b788-53e02f33a430")
+	)
+	(fp_line
+		(start -6 -7)
+		(end -3 -11.5)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "97414118-a752-4793-86a6-a8c5ccc20abd")
+	)
+	(fp_line
+		(start -6 11.5)
+		(end -6 -7)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "70aa00e2-986a-4956-8bcc-7c81435a1d49")
+	)
+	(fp_line
+		(start -3 -11.5)
+		(end 3 -11.5)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "64a7ac6d-efb6-48a2-b7c6-d39665dcc5bf")
+	)
+	(fp_line
+		(start 3 -11.5)
+		(end 6 -7)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "a50568af-1d15-4b65-98e4-f471f35f2000")
+	)
+	(fp_line
+		(start 6 -7)
+		(end 6 11.5)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "f6ff5dee-001e-4aea-8005-5a7cab0d3356")
+	)
+	(fp_line
+		(start 6 11.5)
+		(end -6 11.5)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "0a36dbb6-2020-4382-8cef-79733e41deb0")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 2.5 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "cad80efa-559a-446b-9ae5-2c21792872e7")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" thru_hole circle
+		(at 0 -5.5)
+		(size 9.1 9.1)
+		(drill 6.1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "aaf6a7c6-7056-44a1-a1d5-8b9db7ee6b55")
+	)
+	(pad "2" thru_hole circle
+		(at 0 5.5)
+		(size 9.1 9.1)
+		(drill 6.1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "0a3341df-2606-47e7-b523-3869510adda5")
+	)
+	(model "${KIPRJMOD}/../common/ecad/common.pretty/common.3dshapes/XT90PB-M.step"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)

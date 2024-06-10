@@ -1,0 +1,230 @@
+(footprint "KLDX-0202-x"
+	(version 20240108)
+	(generator "pcbnew")
+	(generator_version "8.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at 23 8 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "c8f807fb-1782-4f7e-8f78-b2b88a103667")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "KLDX-0202-x"
+		(at 6.5 7 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "f34be83a-9d60-4244-bcdc-355668d88a1c")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "70ff9c20-d701-4612-ad76-53265b5be0a1")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "8c1a108a-4370-407c-8380-d2b250e5d198")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "b1485d2d-7cd4-48f6-b55d-c7f7e61308a8")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(fp_line
+		(start 0.5 -5.5)
+		(end 0.5 5.5)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "7bb56f47-3038-4a6a-9940-7badb0b543e3")
+	)
+	(fp_line
+		(start 0.5 -5.5)
+		(end 16 -5.5)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "f6eb6f51-d4bb-493e-a891-7cc5e9f66608")
+	)
+	(fp_line
+		(start 8.5 5.5)
+		(end 0.5 5.5)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "c413871a-1eae-4368-bbb8-4b11b9b2d66f")
+	)
+	(fp_line
+		(start 16 -5.5)
+		(end 16 5.5)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "3dac746b-84c4-4a18-9ae2-93c09d3e4f27")
+	)
+	(fp_line
+		(start 16 5.5)
+		(end 14 5.5)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "b246cc69-c404-4454-aa93-0041e14a7b54")
+	)
+	(fp_line
+		(start 0 -6)
+		(end 0 7)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "Cmts.User")
+		(uuid "b42b3f3c-793c-433c-9a99-f86ec925e50a")
+	)
+	(fp_line
+		(start 0 -6)
+		(end 16.5 -6)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "75b17953-9668-4871-a6f6-cb95dd8b7f5b")
+	)
+	(fp_line
+		(start 0 6)
+		(end 0 -6)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "5acf6332-12ea-406a-8b55-eda51ed4c675")
+	)
+	(fp_line
+		(start 16.5 -6)
+		(end 16.5 6)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "938b537a-2b27-4772-af88-643a348bf2eb")
+	)
+	(fp_line
+		(start 16.5 6)
+		(end 0 6)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "8625d6d0-19c4-437f-952d-2c279e6d4d2a")
+	)
+	(fp_text user "PCB EDGE"
+		(at -1 0 90)
+		(unlocked yes)
+		(layer "Cmts.User")
+		(uuid "898b1e1f-e11b-4b39-9e85-8b9b66e76856")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify bottom)
+		)
+	)
+	(fp_text user "${REFERENCE}"
+		(at 6.5 8.5 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "70a1dc41-eccf-4015-bebb-fc87cf5bc9d6")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" thru_hole oval
+		(at 14.25 0)
+		(size 2 4.2)
+		(drill oval 0.8 3)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "d5ba5acd-8303-45ce-ba8e-bb11eab4a48e")
+	)
+	(pad "2" thru_hole oval
+		(at 8.05 0)
+		(size 2 4.2)
+		(drill oval 0.8 3)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "664d57b2-5ec5-433e-9df2-d94c17358e41")
+	)
+	(pad "3" thru_hole oval
+		(at 11.25 4.8)
+		(size 4.2 2)
+		(drill oval 3 0.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "888c823b-e205-44d4-b64c-5897f5dc72fb")
+	)
+	(model "${KIPRJMOD}/../common/ecad/common.pretty/common.3dshapes/KLDLX-0202-B.step"
+		(offset
+			(xyz 0 0 6.5)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 -90)
+		)
+	)
+)
