@@ -1,9 +1,9 @@
 from ctypes import ArgumentError
+from glob import glob
 from pathlib import Path
 from typing import Dict, List
 
-from psychopy import session
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 from watchdog import observers
 
 from psychopy_session_webserver.dependency_checker import DependencyChecker
@@ -13,23 +13,29 @@ from psychopy_session_webserver.file_event_handler import FileEventHandler
 class Experiment(BaseModel):
     key: str
     resources: Dict[str, bool]
-    parameter: List[str]
+    parameters: List[str]
 
 
 class Session:
-    def __init__(self, root, _session: session.Session | None = None):
+    def __init__(self, root, session=None):
+
         root = Path(root).resolve()
         self._resourceChecker = DependencyChecker(root)
         self._experiments = {}
-        if _session is None:
+        if session is None:
+            from psychopy import session
+
             self._session = session.Session(root)
         else:
-            self._session = _session
+            self._session = session
 
         self._observer = observers.Observer()
         self._event_handler = FileEventHandler(session=self, root=root)
         self._observer.schedule(self._event_handler, root, recursive=True)
         self._observer.start()
+
+        for p in glob("**/*.psyexp", root_dir=root, recursive=True):
+            self.addExperiment(file=p)
 
     @property
     def experiments(self) -> dict[str, Experiment]:
@@ -75,6 +81,9 @@ class Session:
         self._session.start()
 
     def addExperiment(self, file, key=None):
+        if Path(file).is_absolute() is False:
+            file = Path(self._session.root).joinpath(file)
+
         if key is None:
             key = str(Path(file).relative_to(self._session.root))
 
@@ -89,7 +98,7 @@ class Session:
         return Experiment(
             key=key,
             resources=self._resourceChecker.collections[key].resources,
-            parameter=[p for p in expInfo if str(p).endswith("|hid") is False],
+            parameters=[p for p in expInfo if str(p).endswith("|hid") is False],
         )
 
     def removeExperiment(self, key):
@@ -101,19 +110,20 @@ class Session:
         del self._session.experiments[key]
 
     def runExperiment(self, key, **kwargs):
+        if self._session.win is None:
+            raise RuntimeError("window is not opened. Call Session.openWindow() first")
+
         missingParameters = [
             k for k in self._experiments[key].parameters if k not in kwargs
         ]
         if len(missingParameters) > 0:
-            raise ArgumentError(f"missing required parameter(s) '{missingParameters}'")
+            raise ArgumentError(f"missing required parameter(s) {missingParameters}")
 
         invalidParameters = [
             k for k in kwargs if k not in self._experiments[key].parameters
         ]
         if len(invalidParameters) > 0:
-            raise ArgumentError(
-                f"invalid experiment parameter(s) '{invalidParameters}'"
-            )
+            raise ArgumentError(f"invalid experiment parameter(s) {invalidParameters}")
 
         if self._resourceChecker.collections[key].valid is False:
             raise RuntimeError(
@@ -126,6 +136,9 @@ class Session:
 
     def stopExperiment(self):
         self._session.stopExperiment()
+
+    def validateResources(self, paths):
+        self._resourceChecker.validate(paths)
 
     def close(self):
         try:
