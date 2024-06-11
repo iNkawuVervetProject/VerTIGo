@@ -41,7 +41,7 @@ class Session:
     def experiments(self) -> dict[str, Experiment]:
         return self._experiments
 
-    def openWindow(self, framerate: int | float | None, **kwargs):
+    def openWindow(self, framerate: int | float | None = None, **kwargs):
         """Opens the window for the session
 
         Parameters
@@ -127,7 +127,7 @@ class Session:
 
         if self._resourceChecker.collections[key].valid is False:
             raise RuntimeError(
-                "Experiment '{key}' is missing the resources "
+                f"experiment '{key}' is missing the resource(s) "
                 f"{self._resourceChecker.collections[key].missing}"
             )
 
@@ -135,6 +135,9 @@ class Session:
         self._session.runExperiment(key, kwargs, blocking=False)
 
     def stopExperiment(self):
+        if self._session.currentExperiment is None:
+            raise RuntimeError("no experiment is running")
+
         self._session.stopExperiment()
 
     def validateResources(self, paths):

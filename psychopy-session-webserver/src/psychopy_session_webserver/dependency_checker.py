@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 
 from pydantic import BaseModel, computed_field
 
@@ -27,6 +27,11 @@ class DependencyChecker:
         @property
         def valid(self) -> bool:
             return all(exists for exists in self.resources.values())
+
+        @computed_field
+        @property
+        def missing(self) -> List[str]:
+            return [str(r) for r, ok in self.resources.items() if ok is False]
 
     def __init__(self, root):
         """Intializer

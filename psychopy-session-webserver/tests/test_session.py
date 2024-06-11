@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import os
 import tempfile
 import time
@@ -14,6 +15,7 @@ class SessionTest(unittest.TestCase):
         self.tempdir = tempfile.TemporaryDirectory()
         self.psy_session = Mock()
         self.psy_session.root = self.tempdir.name
+        self.psy_session.win = None
 
         foo = Mock()
         bar = Mock()
@@ -44,6 +46,12 @@ class SessionTest(unittest.TestCase):
             return expInfos[key]
 
         self.psy_session.getExpInfoFromExperiment.side_effect = getExpInfos
+
+        def openWindow(*args, **kwargs):
+            self.psy_session.win = Mock()
+            self.psy_session.win.getActualFrameRate.return_value = 30.0
+
+        self.psy_session.setupWindowFromParams.side_effect = openWindow
 
         self.local_filepath("foo.psyexp").touch()
 
@@ -90,13 +98,39 @@ class SessionTest(unittest.TestCase):
         time.sleep(0.02)
         self.assertFalse(self.session._resourceChecker.collections["foo.psyexp"].valid)
 
-    def test_can_run_experiment(self):
-        with self.assertRaises(ArgumentError) as e:
+    @contextmanager
+    def with_window(self):
+        try:
+            self.session.openWindow()
+            yield
+        finally:
+            self.session.closeWindow()
+
+    @contextmanager
+    def with_file(self, path):
+        path = self.local_filepath(path)
+        path.touch()
+        time.sleep(0.02)
+        yield
+        os.remove(path)
+        time.sleep(0.02)
+
+    def test_run_experiment_asserts_an_opened_window(self):
+        with self.assertRaises(RuntimeError) as e:
+            self.session.runExperiment("foo.psyexp")
+
+        self.assertEqual(
+            str(e.exception), "window is not opened. Call Session.openWindow() first"
+        )
+
+    def test_run_experiment_asserts_required_parameters(self):
+        with self.with_window(), self.assertRaises(ArgumentError) as e:
             self.session.runExperiment("foo.psyexp")
 
         self.assertRegex(str(e.exception), "missing required parameter\\(s\\) \\[.*\\]")
 
-        with self.assertRaises(ArgumentError) as e:
+    def test_run_experiment_asserts_missing_parameters(self):
+        with self.with_window(), self.assertRaises(ArgumentError) as e:
             self.session.runExperiment(
                 "foo.psyexp",
                 participant="Lolo",
@@ -108,8 +142,28 @@ class SessionTest(unittest.TestCase):
             str(e.exception), "invalid experiment parameter\\(s\\) \\['rewards'\\]"
         )
 
-        self.session.runExperiment(
+    def test_run_experiment_assert_resources(self):
+        with self.with_window(), self.assertRaises(RuntimeError) as e:
+            self.session.runExperiment(
+                "foo.psyexp",
+                participant="Lolo",
+                session=2,
+            )
+
+        self.assertEqual(
+            str(e.exception),
+            "experiment 'foo.psyexp' is missing the resource(s) ['foo']",
+        )
+
+    def test_run_experiment(self):
+        with self.with_window(), self.with_file("foo"):
+            self.session.runExperiment(
+                "foo.psyexp",
+                participant="Lolo",
+                session=2,
+            )
+        self.psy_session.runExperiment.assert_called_once_with(
             "foo.psyexp",
-            participant="Lolo",
-            session=2,
+            {"participant": "Lolo", "session": 2, "frameRate": 30.0},
+            blocking=False,
         )
