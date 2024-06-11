@@ -1,8 +1,8 @@
 from ctypes import ArgumentError
 from pathlib import Path
 from typing import Dict, List
-from pydantic import BaseModel, computed_field
 
+from pydantic import BaseModel, computed_field
 from watchdog import events, observers
 
 
@@ -14,33 +14,6 @@ class Experiment(BaseModel):
 
 class Session:
     from psychopy import session
-
-    class EventHandler(events.FileSystemEventHandler):
-        def __init__(self, session):
-            self.session = session
-
-        def on_any_event(self, event: events.FileSystemEvent) -> None:
-            deletedPaths = []
-            modifiedPaths = []
-            if isinstance(event, events.FileMovedEvent):
-                deletedPaths.append(event.src_path)
-                modifiedPaths.append(event.dest_path)
-            elif isinstance(event, events.FileDeletedEvent):
-                deletedPaths.append(event.src_path)
-            else:
-                modifiedPaths.append(event.src_path)
-
-            for p in deletedPaths:
-                if Path(p).suffix == ".psyexp":
-                    self.session.removeExperiment(p)
-                else:
-                    self.session._resourceChecker.validate(p)
-
-            for p in modifiedPaths:
-                if Path(p).suffix == ".psyexp":
-                    self.session.addExperiment(p)
-                else:
-                    self.session._resourceChecker.validate(p)
 
     def __init__(self, root, _session: session.Session | None = None):
         root = Path(root).resolve()
