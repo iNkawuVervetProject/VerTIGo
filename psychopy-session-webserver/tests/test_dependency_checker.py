@@ -53,3 +53,9 @@ class DependencyCheckerTest(unittest.TestCase):
         self.assertFalse(self.checker.collections["a"].valid)
         self.assertTrue(self.checker.collections["b"].valid)
         self.assertFalse(self.checker.collections["c"].valid)
+
+    def test_works_with_absolute_path(self):
+        self.checker.addDependencies(
+            "d", [Path(self.tmpdir.name).joinpath(p) for p in ["a", "b", "c"]]
+        )
+        self.assertTrue(self.checker.collections["d"].valid)
