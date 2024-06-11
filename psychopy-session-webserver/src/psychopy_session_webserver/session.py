@@ -2,8 +2,12 @@ from ctypes import ArgumentError
 from pathlib import Path
 from typing import Dict, List
 
-from pydantic import BaseModel, computed_field
-from watchdog import events, observers
+from psychopy import session
+from pydantic import BaseModel
+from watchdog import observers
+
+from psychopy_session_webserver.dependency_checker import DependencyChecker
+from psychopy_session_webserver.file_event_handler import FileEventHandler
 
 
 class Experiment(BaseModel):
@@ -13,8 +17,6 @@ class Experiment(BaseModel):
 
 
 class Session:
-    from psychopy import session
-
     def __init__(self, root, _session: session.Session | None = None):
         root = Path(root).resolve()
         self._resourceChecker = DependencyChecker(root)
@@ -25,7 +27,8 @@ class Session:
             self._session = _session
 
         self._observer = observers.Observer()
-        self._observer.schedule(self, root, recursive=True)
+        self._event_handler = FileEventHandler(session=self, root=root)
+        self._observer.schedule(self._event_handler, root, recursive=True)
         self._observer.start()
 
     @property
@@ -86,13 +89,13 @@ class Session:
         return Experiment(
             key=key,
             resources=self._resourceChecker.collections[key].resources,
-            parameter=[p for p in expInfo if str(p).endswith("|hid") == False],
+            parameter=[p for p in expInfo if str(p).endswith("|hid") is False],
         )
 
     def removeExperiment(self, key):
         if key not in self._experiments:
             raise KeyError(key)
-        self._resourceChecker.removeResources(key)
+        self._resourceChecker.removeDependencies(key)
         del self._experiments[key]
         del self._session.experimentObjects[key]
         del self._session.experiments[key]
@@ -110,6 +113,12 @@ class Session:
         if len(invalidParameters) > 0:
             raise ArgumentError(
                 f"invalid experiment parameter(s) '{invalidParameters}'"
+            )
+
+        if self._resourceChecker.collections[key].valid is False:
+            raise RuntimeError(
+                "Experiment '{key}' is missing the resources "
+                f"{self._resourceChecker.collections[key].missing}"
             )
 
         kwargs["frameRate"] = self._framerate

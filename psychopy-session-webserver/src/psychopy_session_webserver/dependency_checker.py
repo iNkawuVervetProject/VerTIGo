@@ -5,6 +5,8 @@ from pydantic import BaseModel, computed_field
 
 
 class DependencyChecker:
+    """DependencyChecker keep record of presence of Dependencies for a collection of keys"""
+
     class CollectionInfo(BaseModel):
         key: str
         root: str
@@ -27,25 +29,42 @@ class DependencyChecker:
             return all(exists for exists in self.resources.values())
 
     def __init__(self, root):
+        """Intializer
+
+        Parameters
+        ----------
+        root : str | pathlib.Path
+            the root for all dependencies to track
+        """
         self._root = Path(root).resolve()
         self._resources = {}
         self.collections = {}
 
-    def ensure_relative(self, p):
+    def _ensure_relative(self, p):
         if Path(p).is_absolute() is False:
             return p
         return Path(p).resolve().relative_to(self._root)
 
     def addDependencies(self, key, resources):
+        """Adds or updates dependencies for a key.
+
+        Parameter
+        ---------
+        key: str
+            the key to add / update dependencies
+        resources: List[str]
+            list of relative path to check for presence to consider the key valid.
+        """
         self.collections[key] = DependencyChecker.CollectionInfo(
             key=key,
             root=self._root,
-            resources=[self.ensure_relative(r) for r in resources],
+            resources=[self._ensure_relative(r) for r in resources],
         )
 
         self._rebuildReverseMap()
 
     def removeDependencies(self, key):
+        """Removes tracking of dependencies for a key"""
         if key not in self.collections:
             return
         del self.collections[key]
@@ -60,11 +79,18 @@ class DependencyChecker:
                 self._resources[r].append(key)
 
     def validate(self, paths):
+        """Validate all keys that depends on a list of paths
+
+        Parameters
+        ----------
+        paths: str | List[str]
+            a str or list of relative path to recompute validity of dependant keys
+        """
         if not isinstance(paths, list):
             paths = [paths]
         exps = {}
         for p in paths:
-            for exp in self._resources.get(self.ensure_relative(p), []):
+            for exp in self._resources.get(self._ensure_relative(p), []):
                 exps[exp] = True
 
         for key in exps:

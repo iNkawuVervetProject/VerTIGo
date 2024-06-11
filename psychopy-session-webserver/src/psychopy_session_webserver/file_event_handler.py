@@ -6,6 +6,22 @@ from watchdog import events
 
 
 class FileEventHandler(events.FileSystemEventHandler):
+    """A watchdog.events.FileEventHandler for a psychopy_session_webserver.Session
+
+    FileEventHandler monitors an experiment directory and add/remove experiment from the
+    session as it triggers resource file validation by monitoring the underlying
+    FileSystem change.
+
+    Attributes
+    ----------
+    session: Session
+        the Session that will be notified of any change to the Filesystem
+    root: str | pathlib.Path
+        the folder to watch for change. any experiment or resource notification will be
+    relative path to root
+
+    """
+
     def __init__(self, session, root):
         configure(logger_factory=LoggerFactory())
         self.session = session
