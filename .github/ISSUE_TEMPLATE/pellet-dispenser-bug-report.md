@@ -1,5 +1,5 @@
 ---
-name: Bug report - Pellet Dispenser
+name: Pellet Dispenser Bug Report
 about: Create a report to help us improve the Pellet Dispenser or its driver
 title: ''
 labels: pellet dispenser

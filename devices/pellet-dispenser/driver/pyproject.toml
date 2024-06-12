@@ -8,7 +8,7 @@ version = "0.0.1"
 authors = [
   { name="Alexandre Tuleu", email="alexandre.tuleu.2005@polytechnique.org" },
 ]
-description = "A Python package to contol a pellet dispenser via USB"
+description = "A Python package to contol University of Lausanne's pellet dispenser through hid"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
@@ -18,5 +18,5 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/atuleu/zaci"
+Homepage = "https://github.com/atuleu/zaci/devices/pellet-dispenser/driver"
 Issues = "https://github.com/atuleu/zaci/issues"
