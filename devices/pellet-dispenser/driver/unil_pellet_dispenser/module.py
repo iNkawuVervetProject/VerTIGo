@@ -1,6 +1,8 @@
-from enum import IntEnum
 import ctypes
+from enum import IntEnum
+
 import hid
+
 
 class Error:
     NO_ERROR = 0
@@ -91,6 +93,13 @@ class CommandCode(IntEnum):
     DISPENSE = 0x71
     CALIBRATE = 0x72
 
+class DispenserError(RuntimeError):
+
+    def __init__(self,description,dispensed):
+        super(DispenserError, self).__init__(description)
+        self.dispensed = dispensed
+
+
 class Device:
     def __init__(self, device=None):
         self._dev = device or hid.Device(0xCAFE, 0x4004)
@@ -118,7 +127,7 @@ class Device:
         report = CommandReport.from_buffer_copy(self._dev.read(4))
         if report.code != cmd.code:
             raise RuntimeError(
-                f"Unexpected command report code 0x{report.code:x} (expected:0x{cmd.code:x})"
+                f"unexpected command report code 0x{report.code:x} (expected:0x{cmd.code:x})"
             )
         return report
 
@@ -126,8 +135,9 @@ class Device:
         cmd = Command(code=CommandCode.DISPENSE, parameter=count)
         report = self._execute_cmd(cmd)
         if report.error != 0:
-            raise RuntimeError(
-                f"could not dispense {count}: {report.error_description}, dispensed:{report.value}"
+            raise DispenserError(
+                f"could not dispense {count}: {report.error_description}, dispensed:{report.value}",
+                report.value,
             )
         return report.value
 
@@ -135,6 +145,7 @@ class Device:
         cmd = Command(code=CommandCode.CALIBRATE, parameter=speed)
         report = self._execute_cmd(cmd)
         if report.error != 0:
-            raise RuntimeError(
-                f"could not calibrate: got error: {report.error_description}"
+            raise DispenserError(
+                f"could not calibrate: got error: {report.error_description}",
+                0
             )

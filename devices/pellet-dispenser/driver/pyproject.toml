@@ -3,20 +3,33 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "unil_pellet_dispenser"
-version = "0.0.1"
+name = "unil-pellet-dispenser"
+version = "0.0.1a1"
 authors = [
-  { name="Alexandre Tuleu", email="alexandre.tuleu.2005@polytechnique.org" },
+    { name="Alexandre Tuleu", email="alexandre.tuleu.2005@polytechnique.org" },
 ]
-description = "A Python package to contol a pellet dispenser via USB"
+description = "A Python package to contol University of Lausanne's pellet dispenser via USB"
 readme = "README.md"
+license = { text = "GNU General Public License v3 (GPLv3)"}
 requires-python = ">=3.8"
+keywords = [ "pellet", "dispenser", "hardware", "hid", "Open Source Hardware" ]
 classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only,"
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "hid",
+]
 
 [project.urls]
-Homepage = "https://github.com/atuleu/zaci"
+Homepage = "https://github.com/atuleu/zaci/devices/pellet-dispenser/driver"
 Issues = "https://github.com/atuleu/zaci/issues?template=pellet-dispenser-bug-report.md"
+Repository = "https://github.com/atuleu/zaci"
