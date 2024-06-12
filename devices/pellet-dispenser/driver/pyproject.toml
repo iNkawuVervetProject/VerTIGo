@@ -6,17 +6,17 @@ build-backend = "setuptools.build_meta"
 name = "unil-pellet-dispenser"
 version = "0.0.1a1"
 authors = [
-    { name="Alexandre Tuleu", email="alexandre.tuleu.2005@polytechnique.org" },
+    { name = "Alexandre Tuleu", email = "alexandre.tuleu.2005@polytechnique.org"},
 ]
 description = "A Python package to contol University of Lausanne's pellet dispenser via USB"
 readme = "README.md"
-license = { text = "GNU General Public License v3 (GPLv3)"}
+license = { text = "GNU General Public License v3 (GPLv3)" }
 requires-python = ">=3.8"
 keywords = [ "pellet", "dispenser", "hardware", "hid", "Open Source Hardware" ]
 classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only,"
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
