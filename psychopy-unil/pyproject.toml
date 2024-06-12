@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=40.8.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "psychopy-unil"
+version = "0.0.1"
+description = "Extension to add support for University of Lausanne's devices such as a pellet dispenser for Vervet Monkey's."
+readme = "README.md"
+requires-python = ">= 3.7"
+license = {text = "GNU General Public License v3 (GPLv3)"}
+authors = [
+  { name = "Alexandre Tuleu", email = "alexandre.tuleu.2005@polytechnique.org" },
+]
+classifiers = [
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: Implementation :: CPython",
+]
+urls.homepage = "https://github.com/atuleu/zaci/psychopy-unil"
+urls.changelog = "https://github.com/atuleu/zaci/blob/main/psychopy-unil/CHANGELOG.txt"
+urls.documentation = "https://pages.github.com/atuleu/zaci/psychopy-unil"
+urls.repository = "https://github.com/atuleu/zaci/psychopy-unil"
+dependencies = [
+  "psychopy",
+  "hid",
+]
+
+[tool.setuptools.packages.find]
+where = ["",]
+
+[tool.setuptools.package-data]
+"*" = ["*.png",]
+
+[project.entry-points."psychopy.experiment.components"]
+PelletDispenserComponent = "psychopy_unil:PelletDispenserComponent"
