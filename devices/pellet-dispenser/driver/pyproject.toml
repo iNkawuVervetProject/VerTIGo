@@ -19,4 +19,4 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/atuleu/zaci"
-Issues = "https://github.com/atuleu/zaci/issues"
+Issues = "https://github.com/atuleu/zaci/issues?template=pellet-dispenser-bug-report.md"
