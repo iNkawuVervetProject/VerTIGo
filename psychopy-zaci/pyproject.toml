@@ -43,3 +43,9 @@ where = ["",]
 
 [project.entry-points."psychopy.experiment.components"]
 PelletDispenserComponent = "psychopy_zaci:PelletDispenserComponent"
+
+[tool.black]
+line-length = 80
+target-version = ['py38', 'py310', 'py311']
+preview = true
+unstable = true
