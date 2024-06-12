@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "psychopy-unil"
-version = "0.0.1"
+version = "0.0.1a1"
 description = "Extension to add support for University of Lausanne's devices such as a pellet dispenser for Vervet Monkey's."
 readme = "README.md"
 requires-python = ">= 3.7"
@@ -23,14 +23,16 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
-urls.homepage = "https://github.com/atuleu/zaci/psychopy-unil"
-urls.changelog = "https://github.com/atuleu/zaci/blob/main/psychopy-unil/CHANGELOG.txt"
-urls.documentation = "https://pages.github.com/atuleu/zaci/psychopy-unil"
-urls.repository = "https://github.com/atuleu/zaci/psychopy-unil"
+
 dependencies = [
-  "psychopy",
-  "hid",
+  "unil-pellet-dispenser",
 ]
+
+[project.urls]
+
+Homepage = "https://github.com/atuleu/zaci/tree/main/psychopy-unil"
+Repository = "https://github.com/atuleu/zaci"
+
 
 [tool.setuptools.packages.find]
 where = ["",]

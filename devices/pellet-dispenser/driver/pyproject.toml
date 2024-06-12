@@ -30,6 +30,6 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/atuleu/zaci/devices/pellet-dispenser/driver"
+Homepage = "https://github.com/atuleu/zaci/tree/main/devices/pellet-dispenser/driver"
 Issues = "https://github.com/atuleu/zaci/issues?template=pellet-dispenser-bug-report.md"
 Repository = "https://github.com/atuleu/zaci"
