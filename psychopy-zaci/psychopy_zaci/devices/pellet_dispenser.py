@@ -1,5 +1,5 @@
 from functools import partial
-from queue import Empty, Queue
+from queue import Empty, SimpleQueue
 
 from psychopy import core
 from psychopy.core import threading
@@ -39,15 +39,21 @@ class _NoDevice:
 
 
 class _AsyncDevice:
-    def __init__(self):
+    def __init__(self,logger):
+        self.logger = logger
         self.device = Device()
+
+        self.inqueue = SimpleQueue()
+        self.outqueue = SimpleQueue()
+
+        self.logger.info("[PelletDispenser] starting thread")
         self.thread = threading.Thread(target=partial(self.loop))
         self.thread.start()
-        self.inqueue = Queue()
-        self.outqueue = Queue()
 
     def close(self):
+        self.logger.info("[PelletDispenser] closing device")
         self.inqueue.put(None)
+        self.logger.info("[PelletDispenser] joining threads")
         self.thread.join()
         del self.inqueue
         del self.outqueue
@@ -56,6 +62,7 @@ class _AsyncDevice:
     def dispense(self, count: int):
         if self.outqueue.empty() is False:
             raise RuntimeError("cannot dispense twice, query result first")
+        self.logger.info(f"[PelletDispenser] dispensing {count}")
         self._dispensed = None
         self.inqueue.put(count)
 
@@ -72,8 +79,10 @@ class _AsyncDevice:
         return self._dispensed
 
     def loop(self):
+        self.logger.debug("[PelletDispenser] enter main loop")
         while True:
             try:
+                self.logger.debug("[PelletDispenser] waiting for dispense count")
                 count = self.inqueue.get(timeout=1)
             except Empty:
                 continue
@@ -82,19 +91,23 @@ class _AsyncDevice:
                 return
 
             try:
+                self.logger.debug("[PelletDispenser] dispensing")
                 dispensed = self.device.dispense(count)
+                self.logger.debug("[PelletDispenser] reporting")
                 self.outqueue.put(dispensed)
+
             except PelletDispenserError as e:
+                self.logger.error(f"[PelletDispenser] error: {e}")
                 self.outqueue.put(e)
 
 
 class PelletDispenserDevice:
     def __init__(self, win: Window, logger):
         try:
-            self.device = _AsyncDevice()
+            self.device = _AsyncDevice(logger)
         except Exception as e:
-            logger.error(f"could not find a pellet dispenser device: {e}")
-            logger.warn("no pellet will be dispensed in this experiment")
+            logger.error(f"[PelletDispenser] could not find a pellet dispenser device: {e}")
+            logger.warn("[PelletDispenser] no pellet will be dispensed in this experiment")
             self.device = _NoDevice(win)
 
         # The Builder BaseComponent needs such a field for start/stop
