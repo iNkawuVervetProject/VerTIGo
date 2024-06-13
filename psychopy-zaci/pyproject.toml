@@ -42,7 +42,7 @@ where = ["",]
 "*" = ["*.png",]
 
 [project.entry-points."psychopy.experiment.components"]
-PelletDispenserComponent = "psychopy_zaci:PelletDispenserComponent"
+PelletDispenserComponent = "psychopy_zaci.components.pellet_dispenser:PelletDispenserComponent"
 
 [tool.black]
 line-length = 80

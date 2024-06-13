@@ -98,7 +98,7 @@ class PelletDispenserComponent(BaseComponent):
             inputType="bool",
             updates="constant",
             hint=_translate(
-                "Should the dispensing action force the end of the Routine"
+                "Should the dispensing completion force the end of the routine"
             ),
             label=_translate("End Routine after dispense"),
         )
@@ -116,72 +116,104 @@ class PelletDispenserComponent(BaseComponent):
         )
 
     def writeInitCode(self, buff):
-        code = """from psychopy_zaci import PelletDispenserDevice, PelletDispenserError
+        tmplVars = {"name": self.params["name"]}
+        # fmt: off
+        code = (
+            "from psychopy_zaci import PelletDispenserDevice, PelletDispenserError\n"
+            "\n"
+            "{name} = PelletDispenserDevice(win)\n"
+            "\n"
+        )
+        # fmt: on
+        buff.writeIndentedLines(code.format(**tmplVars))
 
-        %(name)s = PelletDispenserDevice(win)
+    def writeFrameCode(self, _buff):
+        buff = _BufferContext(_buff)
 
-        """
-        buff.writeIndentedLines(code % self.params)
+        tmplVars = {
+            "name": self.params["name"],
+            "count": self.params["count"].val,
+        }
 
-    def writeFrameCode(self, buff):
-        buff = _BufferContext(buff)
         endRoutine = self.params["endRoutineOnDispense"].val
 
-        buff.write("# *%s* updates\n" % self.params["name"].val)
-
-        indented = self.writeStartTestCode(buff)
+        buff.write("# *{name}* updates\n".format(**tmplVars))
+        indented = self.writeStartTestCode(_buff)
         if indented:
-            code = """%(name)s.dispense(%(count)d)
-            """
-            buff.write(code % self.params)
+            buff.write("{name}.dispense({count})\n".format(**tmplVars))
             buff.remove_indent(indented)
 
-        indented = self.writeStopTestCode(buff)
-        buff.remove_indent(indented)
-
         if endRoutine is False:
+            indented = self.writeStopTestCode(_buff)
+            buff.remove_indent(indented)
             return
 
-        buff.write("""# test if %(name)s has finished dispensing
-        if %(name).dispensed is not None:
-        """ % self.params)
+        buff.write(
+            (
+                "# test if {name} has finished dispensing\n"
+                "if {name}.dispensed is not None:\n"
+            ).format(**tmplVars)
+        )
         with buff.indent():
-            buff.write("""continueRoutine = False # endRoutine
-            """)
+            buff.write("continueRoutine = False # endRoutine\n")
 
-    def writeRoutineEndCode(self, buff):
+    def writeRoutineEndCode(self, _buff):
+
         saveStats = self.params["saveStats"].val
         if saveStats is False:
             return
-        name = self.params["name"]
 
-        buff = _BufferContext(buff)
         if len(self.exp.flow._loopList):
             currLoop = self.exp.flow._loopList[-1]  # last (outer-most) loop
         else:
             currLoop = self.exp._expHandler
 
-        buff.write("""# store data for {name}
-        if isinstance({name}.dispensed,int):
-        """.format(name=name))
+        tmplVars = {
+            "name": self.params["name"],
+            "loopName": currLoop.params["name"],
+        }
+        buff = _BufferContext(_buff)
+
+        buff.write(
+            (
+                "# *{name}*: storing data\n"
+                "if isinstance({name}.dispensed,int):\n"
+            ).format(**tmplVars)
+        )
         with buff.indent():
             buff.write(
-                """{loopName}.addData('{name}.dispensed', {name}.dispensed)
-            """.format(loopName=currLoop.params["name"], name=name)
+                "{loopName}.addData('{name}.dispensed', {name}.dispensed)\n"
+                .format(**tmplVars)
             )
-        buff.write("""elif isinstance({name}.dispensed,PelletDispenserError):
-        """.format(name=name))
+        buff.write(
+            "elif isinstance({name}.dispensed,PelletDispenserError):\n".format(
+                **tmplVars
+            )
+        )
+        with buff.indent():
+            # fmt: off
+            buff.write(
+                (
+                    "{loopName}.addData({name}.dispensed',{name}.dispensed.dispensed)\n"
+                    "logging.warn(f\"PelletDispenser '{name}' error: {{ {name}.dispensed }}\")\n"
+                ).format(**tmplVars)
+            )
+            # fmt: on
+
+        buff.write("else:\n")
         with buff.indent():
             buff.write(
-                """{loopName}.addData('{name}.dispensed',{name}.dispensed.dispensed)
-            #TODO: log error for dispensing the correct amount
-            """.format(
-                    loopName=currLoop.params["name"], name=name
-                )
+                'logging.error("logic error in PelletDispenserComponent")\n'
             )
-        buff.write("""else:
-        # TODO: log logic error in component
-        """)
-        with buff.indent():
-            buff.write("""pass
-            """)
+
+    def writeExperimentEndCode(self, _buff):
+        buff = _BufferContext(_buff)
+        tmplVars = {
+            "name": self.params["name"],
+        }
+        # fmt: off
+        buff.write((
+            "# closing *{name}*\n"
+            "{name}.close()\n"
+        ).format(**tmplVars))
+        # fmt: on
