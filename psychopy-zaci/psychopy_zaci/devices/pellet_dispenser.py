@@ -1,28 +1,41 @@
-import threading
-import time
 from functools import partial
 from queue import Empty, Queue
 
+from psychopy import core
+from psychopy.core import threading
 from psychopy.visual import Window
 from unil_pellet_dispenser import Device
 from unil_pellet_dispenser import DispenserError as PelletDispenserError
 
 
 class _NoDevice:
+
+    _Delay = 1.0
+
     def __init__(self, win: Window):
         self.win = win
+        self.clock = core.Clock()
+        self.start = self.clock.getTime() - _NoDevice._Delay
+        self.count = None
 
     def close(self):
         pass
 
     def dispense(self, count: int):
         self.win.showMessage("NOT dispensing %d pellet(s)" % (count,))
-        self.start = time.process_time_ns()
+        self.start = self.clock.getTime()
+        self.count = 0
 
     def dispensed(self) -> None | int | PelletDispenserError:
-        if time.process_time_ns() - self.start < 1_000_000_000:
+        t = self.clock.getTime()
+        if (t - self.start) < _NoDevice._Delay:
             return None
-        return PelletDispenserError("No dispenser connected", 0)
+        self.win.showMessage(None)
+        count = self.count
+        self.count = None
+        return PelletDispenserError(
+            f"could not dispense {count} pellet(s): no dispenser connected", 0
+        )
 
 
 class _AsyncDevice:
@@ -41,14 +54,16 @@ class _AsyncDevice:
         del self.thread
 
     def dispense(self, count: int):
-        if self.outqueue.empty is False:
+        if self.outqueue.empty() is False:
             raise RuntimeError("cannot dispense twice, query result first")
         self._dispensed = None
         self.inqueue.put(count)
 
     def dispensed(self) -> None | int | PelletDispenserError:
+        # return last result if any
         if self._dispensed is not None:
             return self._dispensed
+
         try:
             self._dispensed = self.outqueue.get_nowait()
         except Empty:
@@ -62,6 +77,7 @@ class _AsyncDevice:
                 count = self.inqueue.get(timeout=1)
             except Empty:
                 continue
+
             if count is None:
                 return
 
@@ -73,11 +89,17 @@ class _AsyncDevice:
 
 
 class PelletDispenserDevice:
-    def __init__(self, win: Window):
+    def __init__(self, win: Window, logger):
         try:
             self.device = _AsyncDevice()
-        except any:
+        except Exception as e:
+            logger.error(f"could not find a pellet dispenser device: {e}")
+            logger.warn("no pellet will be dispensed in this experiment")
             self.device = _NoDevice(win)
+
+        # The Builder BaseComponent needs such a field for start/stop
+        # conditions
+        self.status = None
 
     def close(self):
         self.device.close()

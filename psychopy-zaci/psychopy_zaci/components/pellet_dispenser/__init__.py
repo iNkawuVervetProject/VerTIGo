@@ -119,9 +119,9 @@ class PelletDispenserComponent(BaseComponent):
         tmplVars = {"name": self.params["name"]}
         # fmt: off
         code = (
-            "from psychopy_zaci import PelletDispenserDevice, PelletDispenserError\n"
+            "from psychopy_zaci.devices.pellet_dispenser import PelletDispenserDevice, PelletDispenserError\n"
             "\n"
-            "{name} = PelletDispenserDevice(win)\n"
+            "{name} = PelletDispenserDevice(win,logging)\n"
             "\n"
         )
         # fmt: on
@@ -194,7 +194,7 @@ class PelletDispenserComponent(BaseComponent):
             # fmt: off
             buff.write(
                 (
-                    "{loopName}.addData({name}.dispensed',{name}.dispensed.dispensed)\n"
+                    "{loopName}.addData('{name}.dispensed',{name}.dispensed.dispensed)\n"
                     "logging.warn(f\"PelletDispenser '{name}' error: {{ {name}.dispensed }}\")\n"
                 ).format(**tmplVars)
             )
