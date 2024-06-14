@@ -81,8 +81,10 @@ class PelletDispenserComponent(BaseComponent):
             count,
             categ="Basic",
             valType="num",
+            allowedTypes=[],
             inputType="single",
             updates="constant",
+            allowedUpdates=["constant", "set every repeat"],
             hint=_translate(
                 "The number of pellet to dispense. This may not the number of"
                 " pellet actually dispensed, but threshold after wich the"
@@ -140,7 +142,11 @@ class PelletDispenserComponent(BaseComponent):
         buff.write("# *{name}* updates\n".format(**tmplVars))
         indented = self.writeStartTestCode(_buff)
         if indented:
-            buff.write("{name}.dispense({count})\n".format(**tmplVars))
+            if self.params["count"].updates == "constant":
+                buff.write("{name}.dispense({count})\n".format(**tmplVars))
+            else:
+                buff.write("{name}.dispense()\n".format(**tmplVars))
+
             buff.remove_indent(indented)
 
         if endRoutine is False:

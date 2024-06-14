@@ -39,7 +39,7 @@ class _NoDevice:
 
 
 class _AsyncDevice:
-    def __init__(self,logger):
+    def __init__(self, logger):
         self.logger = logger
         self.device = Device()
 
@@ -82,7 +82,9 @@ class _AsyncDevice:
         self.logger.debug("[PelletDispenser] enter main loop")
         while True:
             try:
-                self.logger.debug("[PelletDispenser] waiting for dispense count")
+                self.logger.debug(
+                    "[PelletDispenser] waiting for dispense count"
+                )
                 count = self.inqueue.get(timeout=1)
             except Empty:
                 continue
@@ -106,19 +108,37 @@ class PelletDispenserDevice:
         try:
             self.device = _AsyncDevice(logger)
         except Exception as e:
-            logger.error(f"[PelletDispenser] could not find a pellet dispenser device: {e}")
-            logger.warn("[PelletDispenser] no pellet will be dispensed in this experiment")
+            logger.error(
+                "[PelletDispenser] could not find a pellet dispenser"
+                f" device: {e}"
+            )
+            logger.warn(
+                "[PelletDispenser] no pellet will be dispensed in this"
+                " experiment"
+            )
             self.device = _NoDevice(win)
 
         # The Builder BaseComponent needs such a field for start/stop
         # conditions
         self.status = None
+        self._count = None
 
     def close(self):
         self.device.close()
 
-    def dispense(self, count: int):
-        self.device.dispense(count)
+    def dispense(self, count: int | None = None):
+        if count is None:
+            if self._count is not None:
+                self.device.dispense(self._count)
+            else:
+                raise RuntimeError(
+                    "count is not define through parameter or .setCount()"
+                )
+        else:
+            self.device.dispense(count)
+
+    def setCount(self, count: int | None):
+        self._count = count
 
     @property
     def dispensed(self) -> None | int | PelletDispenserError:
