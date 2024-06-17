@@ -129,6 +129,16 @@ class PelletDispenserComponent(BaseComponent):
         # fmt: on
         buff.writeIndentedLines(code.format(**tmplVars))
 
+    def writeRoutineStartCode(self, _buff):
+        super().writeRoutineStartCode(_buff)
+        if self.params["count"].updates != "constant":
+            return
+
+        buff = _BufferContext(_buff)
+        buff.write(
+            "# *%(name)s* routine start\n%(name)s.count = None\n" % self.params
+        )
+
     def writeFrameCode(self, _buff):
         buff = _BufferContext(_buff)
 
@@ -183,13 +193,18 @@ class PelletDispenserComponent(BaseComponent):
         buff.write(
             (
                 "# *{name}*: storing data\n"
+                "{loopName}.addData('{name}.wanted',{name}.count)\n"
+                "\n"
                 "if isinstance({name}.dispensed,int):\n"
             ).format(**tmplVars)
         )
         with buff.indent():
             buff.write(
-                "{loopName}.addData('{name}.dispensed', {name}.dispensed)\n"
-                .format(**tmplVars)
+                # fmt: off
+                (
+                    "{loopName}.addData('{name}.dispensed',{name}.dispensed)\n"
+                ).format(**tmplVars)
+                # fmt: on
             )
         buff.write(
             "elif isinstance({name}.dispensed,PelletDispenserError):\n".format(

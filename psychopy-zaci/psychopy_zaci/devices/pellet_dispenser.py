@@ -121,24 +121,26 @@ class PelletDispenserDevice:
         # The Builder BaseComponent needs such a field for start/stop
         # conditions
         self.status = None
-        self._count = None
+        self.count = None
 
     def close(self):
         self.device.close()
 
     def dispense(self, count: int | None = None):
         if count is None:
-            if self._count is not None:
-                self.device.dispense(self._count)
+            if self.count is not None:
+                self.device.dispense(self.count)
             else:
                 raise RuntimeError(
                     "count is not define through parameter or .setCount()"
                 )
         else:
+            self.count = count
             self.device.dispense(count)
 
-    def setCount(self, count: int | None):
-        self._count = count
+    # this is needed by PsychoPy
+    def setCount(self, count):
+        self.count = count
 
     @property
     def dispensed(self) -> None | int | PelletDispenserError:
