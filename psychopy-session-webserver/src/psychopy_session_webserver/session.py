@@ -89,7 +89,7 @@ class Session:
 
         self._session.addExperiment(file, key)
         resources = self._session.experimentObjects[key].getResourceFiles()
-        self._resourceChecker.addDependencies(key, resources)
+        self._resourceChecker.addDependencies(key, [r['rel'] for r in resources])
         self._experiments[key] = self._buildExperimentInfo(key)
 
     def _buildExperimentInfo(self, key):

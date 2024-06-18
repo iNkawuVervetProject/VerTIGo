@@ -25,6 +25,13 @@ dependencies = [
    "structlog",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "black>=22.10"
+]
+
+
+
 [project.urls]
 Homepage = "https://github.com/atuleu/zaci/psychopy-session-webserver"
 Issues = "https://github.com/atuleu/zaci/issues"

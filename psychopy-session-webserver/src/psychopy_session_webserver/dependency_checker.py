@@ -29,12 +29,15 @@ class DependencyChecker:
 
         def __init__(self, key, root, resources):
             super(DependencyChecker.CollectionInfo, self).__init__(
-                key=key, root=Path(root).resolve(), resources={}
+                key=key,
+                root=Path(root).resolve(),
+                resources={str(r): False for r in resources},
             )
-            self.resources = self._resourceExists(resources)
+            self.validate()
 
         def validate(self):
             """(re)Validate presence of dependencies on the filesystem."""
+            print(f"validating {self.key}")
             oldValid = self.valid
             self.resources = self._resourceExists(self.resources)
             return oldValid != self.valid
@@ -56,6 +59,8 @@ class DependencyChecker:
             return Path(self.root).joinpath(path)
 
         def _resourceExists(self, resources):
+            for r in resources:
+                print(f"path: {r} exists:{self.filepath(r).exists()}")
             return {str(r): self.filepath(r).exists() for r in resources}
 
         @computed_field
@@ -134,5 +139,4 @@ class DependencyChecker:
             for exp in self._resources.get(self._ensure_relative(p), []):
                 exps[exp] = True
 
-        for key in exps:
-            self.collections[key].validate()
+        return any(self.collections[key].validate() for key in exps)

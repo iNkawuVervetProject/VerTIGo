@@ -34,7 +34,7 @@ class SessionTest(unittest.TestCase):
             self.session.experiments["foo.psyexp"],
             Experiment(
                 key="foo.psyexp",
-                resources={"foo": False},
+                resources={"foo.png": False},
                 parameters=["participant", "session"],
             ),
         )
@@ -47,17 +47,17 @@ class SessionTest(unittest.TestCase):
             self.session.experiments["bar.psyexp"],
             Experiment(
                 key="bar.psyexp",
-                resources={"bar": False},
+                resources={"baz/bar.png": False},
                 parameters=["participant", "session", "rewards"],
             ),
         )
 
     def test_validity_updates(self):
         self.assertFalse(self.session._resourceChecker.collections["foo.psyexp"].valid)
-        self.local_filepath("foo").touch()
+        self.local_filepath("foo.png").touch()
         time.sleep(0.02)
         self.assertTrue(self.session._resourceChecker.collections["foo.psyexp"].valid)
-        os.remove(self.local_filepath("foo"))
+        os.remove(self.local_filepath("foo.png"))
         time.sleep(0.02)
         self.assertFalse(self.session._resourceChecker.collections["foo.psyexp"].valid)
 
@@ -119,7 +119,7 @@ class SessionTest(unittest.TestCase):
         )
 
     def test_run_experiment(self):
-        with self.with_window(), self.with_file("foo"):
+        with self.with_window(), self.with_file("foo.png"):
             self.session.runExperiment(
                 "foo.psyexp",
                 participant="Lolo",
