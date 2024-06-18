@@ -17,6 +17,7 @@ class Experiment(BaseModel):
 
 
 class Session:
+
     def __init__(self, root, session=None):
 
         root = Path(root).resolve()
@@ -149,6 +150,9 @@ class Session:
 
     def validateResources(self, paths):
         self._resourceChecker.validate(paths)
+
+    def events(self):
+        pass
 
     def close(self):
         try:
