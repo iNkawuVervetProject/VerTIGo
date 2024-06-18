@@ -19,7 +19,24 @@ class Experiment(BaseModel):
 
 class Session:
 
-    def __init__(self, root, session=None):
+    class _CurrentExperimentField:
+        def __init__(self, updates: UpdateBroadcaster):
+            self._updates = updates
+            self._updates.experiment = ""
+
+        def __set__(self, obj, value):
+            setattr(obj, "_currentExperiment", value)
+            if value is None:
+                self._updates.experiment = ""
+            elif isinstance(value, str):
+                self._updates.experiment = value
+            else:
+                self._updates.experiment = value.name
+
+        def __get__(self, obj, objType=None):
+            return getattr(obj, "_currentExperiment", None)
+
+    def __init__(self, root, session=None, loop=None):
 
         root = Path(root).resolve()
         self._resourceChecker = DependencyChecker(root)
@@ -31,10 +48,17 @@ class Session:
         else:
             self._session = session
 
-        self._updates = UpdateBroadcaster()
+        self._updates = UpdateBroadcaster(loop)
+
+        # modify session so the currentExperiment modification triggers updates
+        setattr(
+            self._session.__class__,
+            "currentExperiment",
+            Session._CurrentExperimentField(self._updates),
+        )
 
         self._updates.window = False
-        self._updates.experiment = None
+        self._updates.experiment = ""
         self._updates.catalog = {}
 
         self._observer = observers.Observer()
@@ -69,12 +93,14 @@ class Session:
         self._framerate = (
             self._session.win.getActualFrameRate() if framerate is None else framerate
         )
+        self._updates.window = True
 
     def closeWindow(self):
         if self._session.win is None:
             return
         self._session.win.close()
         self._session.win = None
+        self._updates.window = False
 
     def sessionLoop(self):
         """Runs the Session main loop.
@@ -107,6 +133,7 @@ class Session:
             ],
         )
         self._experiments[key] = self._buildExperimentInfo(key)
+        self._updates.catalog = self._experiments
 
     def _buildExperimentInfo(self, key):
         expInfo = self._session.getExpInfoFromExperiment(key)
@@ -124,6 +151,7 @@ class Session:
         del self._experiments[key]
         del self._session.experimentObjects[key]
         del self._session.experiments[key]
+        self._updates.catalog = self._experiments
 
     def runExperiment(self, key, **kwargs):
         if self._session.win is None:
@@ -155,12 +183,13 @@ class Session:
             raise RuntimeError("no experiment is running")
 
         self._session.stopExperiment()
+        self._updates.experiment = ""
 
     def validateResources(self, paths):
         self._resourceChecker.validate(paths)
 
-    def events(self):
-        pass
+    def updates(self):
+        return self._updates.updates()
 
     def close(self):
         try:
