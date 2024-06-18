@@ -16,6 +16,11 @@ def build_mock_session(root):
 
     mock.currentExperiment = None
     mock._currentExperiment = None
+
+    mock.experiments = {
+        "foo.psyexp": None,
+        "bar.psyexp": None,
+    }
     mock.experimentObjects = {
         "foo.psyexp": fooExp,
         "bar.psyexp": barExp,

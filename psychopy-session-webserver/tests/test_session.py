@@ -1,3 +1,4 @@
+import asyncio
 import os
 import tempfile
 import time
@@ -7,6 +8,7 @@ from ctypes import ArgumentError
 from pathlib import Path
 
 from psychopy_session_webserver import Experiment, Session
+from psychopy_session_webserver.update_broadcaster import UpdateEvent
 
 from tests.mock_session import build_mock_session
 
@@ -152,3 +154,105 @@ class SessionTest(unittest.TestCase):
             {"participant": "Lolo", "session": 2, "frameRate": 30.0},
             blocking=False,
         )
+
+
+class SesstionEventTest(unittest.IsolatedAsyncioTestCase):
+
+    async def asyncSetUp(self) -> None:
+        self.loop = asyncio.get_running_loop()
+
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.sessionDir = Path(self.tempdir.name).joinpath("session")
+
+        os.makedirs(self.sessionDir)
+
+        self.psy_session = build_mock_session(self.sessionDir)
+
+        self.local_filepath("foo.psyexp").touch()
+
+        self.session = Session(
+            root=self.sessionDir, session=self.psy_session, loop=self.loop
+        )
+        self.updates = self.session.updates()
+
+        event = await anext(self.updates)
+        self.assertEqual(UpdateEvent(type="experimentUpdate", data=""), event)
+        event = await anext(self.updates)
+        self.assertEqual(UpdateEvent(type="windowUpdate", data=False), event)
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "catalogUpdate")
+        self.assertDictEqual(
+            event.data,
+            {
+                "foo.psyexp": Experiment(
+                    key="foo.psyexp",
+                    parameters=["participant", "session"],
+                    resources={"foo.png": False},
+                )
+            },
+        )
+
+    async def asyncTearDown(self) -> None:
+        self.session.close()
+        self.tempdir.cleanup()
+
+    def local_filepath(self, path):
+        return self.sessionDir.joinpath(path)
+
+    async def test_catalog_updates(self):
+
+        self.local_filepath("foo.png").touch()
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "catalogUpdate")
+        self.assertDictEqual(
+            event.data,
+            {
+                "foo.psyexp": Experiment(
+                    key="foo.psyexp",
+                    parameters=["participant", "session"],
+                    resources={"foo.png": True},
+                )
+            },
+        )
+
+        os.remove(self.local_filepath("foo.psyexp"))
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "catalogUpdate")
+        self.assertDictEqual({}, event.data)
+
+    async def test_window_updates(self):
+
+        self.session.openWindow()
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "windowUpdate")
+        self.assertEqual(event.data, True)
+
+        self.session.closeWindow()
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "windowUpdate")
+        self.assertEqual(event.data, False)
+
+    async def test_experiment_update(self):
+        self.local_filepath("foo.png").touch()
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "catalogUpdate")
+
+        self.session.openWindow()
+
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "windowUpdate")
+        self.assertEqual(event.data, True)
+
+        self.session.runExperiment(
+            "foo.psyexp",
+            participant="Lolo",
+            session=2,
+        )
+
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "experimentUpdate")
+        self.assertEqual(event.data, "foo.psyexp")
+
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "experimentUpdate")
+        self.assertEqual(event.data, "")

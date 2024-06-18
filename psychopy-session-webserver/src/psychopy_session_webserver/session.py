@@ -63,7 +63,6 @@ class Session:
         )
 
         self._updates.window = False
-        self._updates.experiment = ""
         self._updates.catalog = {}
 
         self._observer = observers.Observer()
@@ -197,7 +196,14 @@ class Session:
         self._updates.experiment = ""
 
     def validateResources(self, paths):
-        self._resourceChecker.validate(paths)
+        modifiedExperiments = self._resourceChecker.validate(paths)
+        for key in modifiedExperiments:
+            self._experiments[key].resources = self._resourceChecker.collections[
+                key
+            ].resources
+
+        if len(modifiedExperiments) > 0:
+            self._updates.catalog = self._experiments
 
     def updates(self):
         return self._updates.updates()

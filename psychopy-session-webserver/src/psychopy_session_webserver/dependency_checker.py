@@ -38,7 +38,8 @@ class DependencyChecker:
         def validate(self):
             """(re)Validate presence of dependencies on the filesystem."""
             oldValid = self.valid
-            self.resources = self._resourceExists(self.resources)
+            for r in self.resources:
+                self.resources[r] = self.filepath(r).exists()
             return oldValid != self.valid
 
         def filepath(self, path):
@@ -56,9 +57,6 @@ class DependencyChecker:
             if p.is_absolute():
                 return p
             return Path(self.root).joinpath(path)
-
-        def _resourceExists(self, resources):
-            return {str(r): self.filepath(r).exists() for r in resources}
 
         @computed_field
         @property
@@ -138,8 +136,4 @@ class DependencyChecker:
             for exp in self._resources.get(self._filepath(p), []):
                 exps[exp] = True
 
-        modified = False
-        for key in exps:
-            modified = self.collections[key].validate() or modified
-
-        return modified
+        return [key for key in exps if self.collections[key].validate() is True]
