@@ -20,18 +20,21 @@ class Experiment(BaseModel):
 class Session:
 
     class _CurrentExperimentField:
-        def __init__(self, updates: UpdateBroadcaster):
+
+        def _transform(self, value):
+            if value is None:
+                return ""
+            elif isinstance(value, str):
+                return str
+            return value.name
+
+        def __init__(self, updates: UpdateBroadcaster, value):
             self._updates = updates
-            self._updates.experiment = ""
+            self._updates.experiment = self._transform(value)
 
         def __set__(self, obj, value):
-            setattr(obj, "_currentExperiment", value)
-            if value is None:
-                self._updates.experiment = ""
-            elif isinstance(value, str):
-                self._updates.experiment = value
-            else:
-                self._updates.experiment = value.name
+            obj._currentExperiment = value
+            self._updates.experiment = self._transform(value)
 
         def __get__(self, obj, objType=None):
             return getattr(obj, "_currentExperiment", None)
@@ -54,7 +57,9 @@ class Session:
         setattr(
             self._session.__class__,
             "currentExperiment",
-            Session._CurrentExperimentField(self._updates),
+            Session._CurrentExperimentField(
+                self._updates, self._session.currentExperiment
+            ),
         )
 
         self._updates.window = False
@@ -154,6 +159,12 @@ class Session:
         self._updates.catalog = self._experiments
 
     def runExperiment(self, key, **kwargs):
+        if self._session.currentExperiment is not None:
+            raise RuntimeError(
+                f"experiment '{self._session.currentExperiment.name}' is already"
+                " running"
+            )
+
         if self._session.win is None:
             raise RuntimeError("window is not opened. Call Session.openWindow() first")
 

@@ -125,6 +125,21 @@ class SessionTest(unittest.TestCase):
             "experiment 'foo.psyexp' is missing the resource(s) ['foo.png']",
         )
 
+    def test_run_experiment_assert_none_running(self):
+        with self.with_window(), self.with_file("foo.png"):
+            self.session.runExperiment(
+                "foo.psyexp",
+                participant="Lolo",
+                session=2,
+            )
+            with self.assertRaises(RuntimeError) as e:
+                self.session.runExperiment(
+                    "foo.psyexp",
+                    participant="Lolo",
+                    session=3,
+                )
+        self.assertEqual(str(e.exception), "experiment 'foo.psyexp' is already running")
+
     def test_run_experiment(self):
         with self.with_window(), self.with_file("foo.png"):
             self.session.runExperiment(
