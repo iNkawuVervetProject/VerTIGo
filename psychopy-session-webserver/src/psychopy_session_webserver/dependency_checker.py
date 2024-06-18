@@ -5,23 +5,58 @@ from pydantic import BaseModel, computed_field
 
 
 class DependencyChecker:
-    """DependencyChecker keep record of presence of Dependencies for a collection of keys"""
+    """DependencyChecker efficiently keep record of presence of Dependencies for a
+    collection of keys."""
 
     class CollectionInfo(BaseModel):
+        """CollectionInfo lists the dependencies for a resource.
+
+        Attributes
+        ----------
         key: str
-        root: str
+            the key this CollectionInfo refers to.
+        root: pathlib.Path
+            the filesystem root the dependencies are (optionally) relative to.
+
+        resources: Dict[str,bool]
+            the list of resources this key depends on, a value of true indicates the
+            dependencies exists on the filesystem.
+        """
+
+        key: str
+        root: Path
         resources: Dict[str, bool]
 
         def __init__(self, key, root, resources):
-            resourcesDict = {str(r): Path(root).joinpath(r).exists() for r in resources}
             super(DependencyChecker.CollectionInfo, self).__init__(
-                key=key, root=str(root), resources=resourcesDict
+                key=key, root=Path(root).resolve(), resources={}
             )
+            self.resources = self._resourceExists(resources)
 
         def validate(self):
-            self.resources = dict(
-                {r: Path(self.root).joinpath(r).exists() for r in self.resources}
-            )
+            """(re)Validate presence of dependencies on the filesystem."""
+            oldValid = self.valid
+            self.resources = self._resourceExists(self.resources)
+            return oldValid != self.valid
+
+        def filepath(self, path):
+            """Given a path-like object, returns its absolute path.
+
+            If the given path is relative, express it relatively from self.root,
+            otherwise return the absolute path.
+
+            Arguments
+            ---------
+            path:
+                pathlib.Path like object that is either relative (to the root) or absolute.
+            """
+            p = Path(path)
+            if p.is_absolute():
+                return p
+            return Path(self.root).joinpath(path)
+
+        def _resourceExists(self, resources):
+            return {str(r): self.filepath(r).exists() for r in resources}
 
         @computed_field
         @property
@@ -38,17 +73,12 @@ class DependencyChecker:
 
         Parameters
         ----------
-        root : str | pathlib.Path
-            the root for all dependencies to track
+        root :
+            a pathlib.Path like object that is the root for all dependencies to track.
         """
         self._root = Path(root).resolve()
         self._resources = {}
         self.collections = {}
-
-    def _ensure_relative(self, p):
-        if Path(p).is_absolute() is False:
-            return p
-        return Path(p).resolve().relative_to(self._root)
 
     def addDependencies(self, key, resources):
         """Adds or updates dependencies for a key.
@@ -63,7 +93,7 @@ class DependencyChecker:
         self.collections[key] = DependencyChecker.CollectionInfo(
             key=key,
             root=self._root,
-            resources=[self._ensure_relative(r) for r in resources],
+            resources=resources,
         )
 
         self._rebuildReverseMap()
@@ -83,6 +113,11 @@ class DependencyChecker:
                     self._resources[r] = []
                 self._resources[r].append(key)
 
+    def _ensure_relative(self, path):
+        if Path(path).is_absolute() is False:
+            return path
+        return Path(path).resolve().relative_to(self._root)
+
     def validate(self, paths):
         """Validate all keys that depends on a list of paths
 
@@ -94,6 +129,7 @@ class DependencyChecker:
         if not isinstance(paths, list):
             paths = [paths]
         exps = {}
+
         for p in paths:
             for exp in self._resources.get(self._ensure_relative(p), []):
                 exps[exp] = True

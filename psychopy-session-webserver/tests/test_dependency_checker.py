@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.psychopy_session_webserver.dependency_checker import DependencyChecker
+from psychopy_session_webserver.dependency_checker import DependencyChecker
 
 
 class DependencyCheckerTest(unittest.TestCase):
@@ -59,3 +59,11 @@ class DependencyCheckerTest(unittest.TestCase):
             "d", [Path(self.tmpdir.name).joinpath(p) for p in ["a", "b", "c"]]
         )
         self.assertTrue(self.checker.collections["d"].valid)
+        self.assertDictEqual(
+            self.checker.collections["d"].resources,
+            {
+                "a": True,
+                "b": True,
+                "c": True,
+            },
+        )

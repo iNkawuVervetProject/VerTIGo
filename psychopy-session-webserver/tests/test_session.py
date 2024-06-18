@@ -1,57 +1,20 @@
-from contextlib import contextmanager
 import os
 import tempfile
 import time
 import unittest
+from contextlib import contextmanager
 from ctypes import ArgumentError
 from pathlib import Path
-from unittest.mock import Mock, PropertyMock
 
-from src.psychopy_session_webserver import Experiment, Session
+from psychopy_session_webserver import Experiment, Session
+
+from .mock_session import build_mock_session
 
 
 class SessionTest(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
-        self.psy_session = Mock()
-        self.psy_session.root = self.tempdir.name
-        self.psy_session.win = None
-
-        foo = Mock()
-        bar = Mock()
-        self.psy_session.experimentObjects = {
-            "foo.psyexp": foo,
-            "bar.psyexp": bar,
-        }
-        foo.getResourceFiles.return_value = ["foo"]
-        bar.getResourceFiles.return_value = ["bar"]
-
-        expInfos = {
-            "foo.psyexp": {
-                "participant": 123,
-                "session": 1,
-                "date|hid": "foo",
-                "psychopy_version|hid": "bar",
-            },
-            "bar.psyexp": {
-                "participant": 123,
-                "session": 1,
-                "rewards": 3,
-                "date|hid": "foo",
-                "psychopy_version|hid": "bar",
-            },
-        }
-
-        def getExpInfos(key):
-            return expInfos[key]
-
-        self.psy_session.getExpInfoFromExperiment.side_effect = getExpInfos
-
-        def openWindow(*args, **kwargs):
-            self.psy_session.win = Mock()
-            self.psy_session.win.getActualFrameRate.return_value = 30.0
-
-        self.psy_session.setupWindowFromParams.side_effect = openWindow
+        self.psy_session = build_mock_session(self.tempdir.name)
 
         self.local_filepath("foo.psyexp").touch()
 
