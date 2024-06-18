@@ -18,14 +18,19 @@ def build_mock_session(root):
     }
 
     fooExp.getResourceFiles.return_value = [
-        {"rel": "foo.png", abs: str(root.joinpath("foo.png")), "name": "foo.png"},
+        {"rel": "foo.png", "abs": str(root.joinpath("foo.png")), "name": "foo.png"},
     ]
 
     barExp.getResourceFiles.return_value = [
         {
             "rel": "baz/bar.png",
-            abs: str(root.joinpath("baz/bar.png")),
+            "abs": str(root.joinpath("baz/bar.png")),
             "name": "bar.png",
+        },
+        {
+            "rel": "../absolute.png",
+            "abs": str(root.joinpath("../absolute.png").resolve()),
+            "name": "asbolute.png",
         },
     ]
 

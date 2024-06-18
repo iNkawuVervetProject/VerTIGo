@@ -3,7 +3,7 @@ from glob import glob
 from pathlib import Path
 from typing import Dict, List
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel
 from watchdog import observers
 
 from psychopy_session_webserver.dependency_checker import DependencyChecker
@@ -89,7 +89,14 @@ class Session:
 
         self._session.addExperiment(file, key)
         resources = self._session.experimentObjects[key].getResourceFiles()
-        self._resourceChecker.addDependencies(key, [r['rel'] for r in resources])
+
+        self._resourceChecker.addDependencies(
+            key,
+            [
+                r["rel"] if r["rel"].startswith("..") == False else r["abs"]
+                for r in resources
+            ],
+        )
         self._experiments[key] = self._buildExperimentInfo(key)
 
     def _buildExperimentInfo(self, key):

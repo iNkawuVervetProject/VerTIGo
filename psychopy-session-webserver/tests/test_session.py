@@ -8,20 +8,24 @@ from pathlib import Path
 
 from psychopy_session_webserver import Experiment, Session
 
-from .mock_session import build_mock_session
+from tests.mock_session import build_mock_session
 
 
 class SessionTest(unittest.TestCase):
+    maxDiff = None
+
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
-        self.psy_session = build_mock_session(self.tempdir.name)
+        self.sessionDir = Path(self.tempdir.name).joinpath("session")
+        self.psy_session = build_mock_session(self.sessionDir)
 
+        os.makedirs(self.sessionDir)
         self.local_filepath("foo.psyexp").touch()
 
-        self.session = Session(root=self.tempdir.name, session=self.psy_session)
+        self.session = Session(root=self.sessionDir, session=self.psy_session)
 
     def local_filepath(self, path):
-        return Path(self.tempdir.name).joinpath(path)
+        return self.sessionDir.joinpath(path)
 
     def tearDown(self):
         self.session.close()
@@ -30,6 +34,7 @@ class SessionTest(unittest.TestCase):
 
     def test_existing_experiment_are_listed(self):
         self.assertIn("foo.psyexp", self.session.experiments)
+
         self.assertEqual(
             self.session.experiments["foo.psyexp"],
             Experiment(
@@ -43,14 +48,16 @@ class SessionTest(unittest.TestCase):
         self.local_filepath("bar.psyexp").touch()
         time.sleep(0.02)
         self.assertIn("bar.psyexp", self.session.experiments)
-        self.assertEqual(
-            self.session.experiments["bar.psyexp"],
-            Experiment(
-                key="bar.psyexp",
-                resources={"baz/bar.png": False},
-                parameters=["participant", "session", "rewards"],
-            ),
+        expected = Experiment(
+            key="bar.psyexp",
+            resources={
+                "baz/bar.png": False,
+                str(Path(self.tempdir.name).joinpath("absolute.png")): False,
+            },
+            parameters=["participant", "session", "rewards"],
         )
+        got = self.session.experiments["bar.psyexp"]
+        self.assertEqual(expected, got, msg=f"expected: {expected}, got: {got}")
 
     def test_validity_updates(self):
         self.assertFalse(self.session._resourceChecker.collections["foo.psyexp"].valid)
@@ -115,7 +122,7 @@ class SessionTest(unittest.TestCase):
 
         self.assertEqual(
             str(e.exception),
-            "experiment 'foo.psyexp' is missing the resource(s) ['foo']",
+            "experiment 'foo.psyexp' is missing the resource(s) ['foo.png']",
         )
 
     def test_run_experiment(self):
