@@ -8,6 +8,7 @@ from watchdog import observers
 
 from psychopy_session_webserver.dependency_checker import DependencyChecker
 from psychopy_session_webserver.file_event_handler import FileEventHandler
+from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 
 
 class Experiment(BaseModel):
@@ -29,6 +30,12 @@ class Session:
             self._session = session.Session(root)
         else:
             self._session = session
+
+        self._updates = UpdateBroadcaster()
+
+        self._updates.window = False
+        self._updates.experiment = None
+        self._updates.catalog = {}
 
         self._observer = observers.Observer()
         self._event_handler = FileEventHandler(session=self, root=root)
@@ -55,6 +62,7 @@ class Session:
         """
         if self._session.win is not None:
             return
+
         self._session.setupWindowFromParams(
             kwargs, blocking=False, measureFrameRate=False
         )

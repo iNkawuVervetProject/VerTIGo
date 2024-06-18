@@ -19,10 +19,8 @@ class UpdateBroadcaster:
             return getattr(obj, self._name)
 
         def __set__(self, obj, value):
-            old = getattr(obj, self._name, None)
             setattr(obj, self._name, value)
-            if old != value:
-                obj._emitUpdate(self)
+            obj._emitUpdate(self)
 
         def __delete__(self, instance):
             del instance._stores[self._name[1:]]
