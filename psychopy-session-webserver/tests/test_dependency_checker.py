@@ -23,7 +23,6 @@ class DependencyCheckerTest(unittest.TestCase):
             self.checker.addDependencies(
                 key, [Path(self.tmpdir.name).joinpath(f) for f in files]
             )
-        print("coucou")
 
     def tearDown(self):
         self.tmpdir.cleanup()
@@ -43,7 +42,6 @@ class DependencyCheckerTest(unittest.TestCase):
         self.assertTrue(self.checker.collections["b"].valid)
         self.assertFalse(self.checker.collections["c"].valid)
 
-    @unittest.skip("not working yet")
     def test_revalidate_a_list_of_path(self):
 
         paths = ["a", "c"]
@@ -57,17 +55,14 @@ class DependencyCheckerTest(unittest.TestCase):
         self.assertTrue(self.checker.collections["b"].valid)
         self.assertFalse(self.checker.collections["c"].valid)
 
-    @unittest.skip("not working yet")
     def test_works_with_absolute_path(self):
-        self.checker.addDependencies(
-            "d", [Path(self.tmpdir.name).joinpath(p) for p in ["a", "b", "c"]]
-        )
+        paths = [
+            Path(self.tmpdir.name).joinpath("a"),
+            "b",
+            Path(self.tmpdir.name).joinpath("c"),
+        ]
+        self.checker.addDependencies("d", paths)
         self.assertTrue(self.checker.collections["d"].valid)
         self.assertDictEqual(
-            self.checker.collections["d"].resources,
-            {
-                "a": True,
-                "b": True,
-                "c": True,
-            },
+            self.checker.collections["d"].resources, {str(p): True for p in paths}
         )
