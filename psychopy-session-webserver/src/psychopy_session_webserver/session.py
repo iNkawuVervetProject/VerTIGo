@@ -28,14 +28,9 @@ class Session:
                 return str
             return value.name
 
-        def __init__(self):
-            self._updates = None
-
         def __set__(self, obj, value):
-            if self._updates is None:
-                self._updates = obj._updates
             obj._currentExperiment = value
-            self._updates.broadcast("experiment", self._transform(value))
+            obj._updates.broadcast("experiment", self._transform(value))
 
         def __get__(self, obj, objType=None):
             return getattr(obj, "_currentExperiment", None)
@@ -60,6 +55,7 @@ class Session:
             "currentExperiment",
             Session._CurrentExperimentField(),
         )
+        setattr(self._session, "_updates", self._updates)
         # this will now broadcast no current experiment
         self._session.currentExperiment = None
         self._updates.broadcast("window", False)

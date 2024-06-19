@@ -156,7 +156,7 @@ class SessionTest(unittest.TestCase):
         )
 
 
-class SesstionEventTest(unittest.IsolatedAsyncioTestCase):
+class SessionEventTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self) -> None:
         self.loop = asyncio.get_running_loop()
@@ -188,10 +188,10 @@ class SesstionEventTest(unittest.IsolatedAsyncioTestCase):
             },
         )
         event = await anext(self.updates)
-        self.assertEqual(UpdateEvent(type="windowUpdate", data=False), event)
+        self.assertEqual(UpdateEvent(type="experimentUpdate", data=""), event)
 
         event = await anext(self.updates)
-        self.assertEqual(UpdateEvent(type="experimentUpdate", data=""), event)
+        self.assertEqual(UpdateEvent(type="windowUpdate", data=False), event)
 
     async def asyncTearDown(self) -> None:
         self.session.close()
@@ -203,7 +203,6 @@ class SesstionEventTest(unittest.IsolatedAsyncioTestCase):
     async def test_catalog_updates(self):
 
         self.local_filepath("foo.png").touch()
-        print("\nevent 1")
         event = await anext(self.updates)
         self.assertEqual(event.type, "catalogUpdate")
         self.assertDictEqual(
@@ -218,7 +217,6 @@ class SesstionEventTest(unittest.IsolatedAsyncioTestCase):
         )
 
         os.remove(self.local_filepath("foo.psyexp"))
-        print("\nevent 2")
         event = await anext(self.updates)
         self.assertEqual(event.type, "catalogUpdate")
         self.assertDictEqual({}, event.data)
