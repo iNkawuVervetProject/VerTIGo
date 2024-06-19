@@ -26,8 +26,11 @@ async def get_experiments() -> Catalog:
 async def send_server_side_event(agen):
     while True:
         event = await anext(agen)
-        data = dict(event)["data"]
-        yield f"event:{event.type}\ndata:{orjson.dumps(data)}\n\n"
+        if isinstance(event.data, BaseModel):
+            dump = event.data.model_dump_json()
+        else:
+            dump = event.__pydantic_serializer__.to_json(event.data, warnings=False)
+        yield f"event:{event.type}\ndata:{str(dump)}\n\n"
 
 
 @app.get("/events")

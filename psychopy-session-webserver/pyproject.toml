@@ -23,6 +23,7 @@ dependencies = [
    "psychopy",
    "watchdog",
    "structlog",
+   "numpy<2",
    "netifaces",
 ]
 
