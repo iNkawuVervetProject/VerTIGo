@@ -1,20 +1,13 @@
 from ctypes import ArgumentError
+from gettext import Catalog
 from glob import glob
 from pathlib import Path
-from typing import Dict, List
-
-from pydantic import BaseModel
 from watchdog import observers
 
 from psychopy_session_webserver.dependency_checker import DependencyChecker
 from psychopy_session_webserver.file_event_handler import FileEventHandler
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
-
-
-class Experiment(BaseModel):
-    key: str
-    resources: Dict[str, bool]
-    parameters: List[str]
+from psychopy_session_webserver.types import Experiment, Catalog
 
 
 class Session:
@@ -70,7 +63,7 @@ class Session:
             self.addExperiment(file=p)
 
     @property
-    def experiments(self) -> dict[str, Experiment]:
+    def experiments(self) -> Catalog:
         return self._experiments
 
     def openWindow(self, framerate: int | float | None = None, **kwargs):
