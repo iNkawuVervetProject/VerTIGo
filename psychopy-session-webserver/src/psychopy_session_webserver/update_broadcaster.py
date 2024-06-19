@@ -16,14 +16,20 @@ class UpdateBroadcaster:
         self._stores = {}
         self._loop = loop
 
+    def _push_all(self, value):
+        for q in self._queues:
+            if self._loop is None:
+                q.put_nowait(value)
+            else:
+                self._loop.call_soon_threadsafe(q.put_nowait, value)
+
+    def close(self):
+        self._push_all(None)
+
     def broadcast(self, name: str, value: Any):
         self._stores[name] = value
         event = UpdateEvent(type=name + "Update", data=value)
-        for q in self._queues:
-            if self._loop is None:
-                q.put_nowait(event)
-            else:
-                self._loop.call_soon_threadsafe(q.put_nowait, event)
+        self._push_all(event)
 
     async def updates(self):
         q = Queue()
@@ -33,6 +39,8 @@ class UpdateBroadcaster:
         try:
             while True:
                 update = await q.get()
+                if update is None:
+                    return
                 yield update
         finally:
             self._queues.remove(q)

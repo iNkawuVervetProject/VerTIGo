@@ -211,7 +211,7 @@ class Session:
         return self._updates.updates()
 
     def close(self):
-
+        self._updates.close()
         try:
             self._session.stop()
         finally:

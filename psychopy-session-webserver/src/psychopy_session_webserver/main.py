@@ -1,7 +1,7 @@
+import os
 import asyncio
 import ipaddress
 
-import orjson
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from hypercorn.config import Config
@@ -17,6 +17,11 @@ app = FastAPI()
 
 session: Session = None
 
+windowParams = {}
+
+if "PSYSW_DEBUG" in os.environ:
+    windowParams = {"fullscr": False}
+
 
 @app.get("/experiments")
 async def get_experiments() -> Catalog:
@@ -24,13 +29,12 @@ async def get_experiments() -> Catalog:
 
 
 async def send_server_side_event(agen):
-    while True:
-        event = await anext(agen)
+    async for event in agen:
         if isinstance(event.data, BaseModel):
             dump = event.data.model_dump_json()
         else:
             dump = event.__pydantic_serializer__.to_json(event.data, warnings=False)
-        yield f"event:{event.type}\ndata:{str(dump)}\n\n"
+        yield f"event:{event.type}\ndata:{dump.decode(encoding='utf-8')}\n\n"
 
 
 @app.get("/events")
@@ -43,7 +47,7 @@ async def get_events():
 @app.put("/window")
 async def open_window():
     try:
-        session.openWindow()
+        session.openWindow(**windowParams)
     except Exception as e:
         raise HTTPException(status_code=409, detail=str(e))
 
