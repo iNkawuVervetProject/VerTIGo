@@ -13,17 +13,12 @@ class UpdateBroadcasterTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.loop = asyncio.get_running_loop()
 
-    def test_dynamically_add_attributes(self):
-        b = UpdateBroadcaster()
-        b.foo = "something"
-        self.assertTrue(isinstance(getattr(b, "foo"), UpdateBroadcaster._Store))
-
     async def test_receive_updates(self):
         b = UpdateBroadcaster(loop=self.loop)
 
         updates = b.updates()
 
-        b.foo = "bar"
+        b.broadcast("foo", "bar")
 
         event = await anext(updates)
         self.assertEqual(event.type, "fooUpdate")
@@ -32,7 +27,7 @@ class UpdateBroadcasterTest(unittest.IsolatedAsyncioTestCase):
     async def test_receive_immediatly_firstvalue(self):
         b = UpdateBroadcaster(loop=self.loop)
 
-        b.foo = "bar"
+        b.broadcast("foo", "bar")
 
         updates = b.updates()
 
@@ -40,7 +35,7 @@ class UpdateBroadcasterTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(event.type, "fooUpdate")
         self.assertEqual(event.data, "bar")
 
-        b.foo = "baz"
+        b.broadcast("foo", "baz")
 
         event = await anext(updates)
         self.assertEqual(event.type, "fooUpdate")
@@ -49,7 +44,7 @@ class UpdateBroadcasterTest(unittest.IsolatedAsyncioTestCase):
     async def test_updates_cleanup(self):
         b = UpdateBroadcaster(loop=self.loop)
 
-        b.foo = "bar"
+        b.broadcast("foo", "bar")
 
         updates = b.updates()
 
@@ -65,7 +60,7 @@ class UpdateBroadcasterTest(unittest.IsolatedAsyncioTestCase):
     async def test_works_with_nested_fields(self):
         b = UpdateBroadcaster(loop=self.loop)
 
-        b.nested = UpdateBroadcasterTest.Nested(field=1)
+        b.broadcast("nested", UpdateBroadcasterTest.Nested(field=1))
 
         updates = b.updates()
 
@@ -74,7 +69,7 @@ class UpdateBroadcasterTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(event.data, UpdateBroadcasterTest.Nested(field=1))
 
         # Note we should reassign the field
-        b.nested = UpdateBroadcasterTest.Nested(field=10)
+        b.broadcast("nested", UpdateBroadcasterTest.Nested(field=10))
 
         event = await anext(updates)
         self.assertEqual(event.type, "nestedUpdate")
@@ -84,7 +79,7 @@ class UpdateBroadcasterTest(unittest.IsolatedAsyncioTestCase):
         b = UpdateBroadcaster(loop=self.loop)
 
         dic = {"a": 1, "b": 2}
-        b.dictionnary = dic
+        b.broadcast("dictionnary", dic)
 
         it = b.updates()
         event = await anext(it)
@@ -93,7 +88,7 @@ class UpdateBroadcasterTest(unittest.IsolatedAsyncioTestCase):
         dic["b"] = 4
 
         # Note we should reassign the field
-        b.dictionnary = dic
+        b.broadcast("dictionnary", dic)
         event = await anext(it)
         self.assertEqual(event.type, "dictionnaryUpdate")
         self.assertDictEqual(event.data, dic)

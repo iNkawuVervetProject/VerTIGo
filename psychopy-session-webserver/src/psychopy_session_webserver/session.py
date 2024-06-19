@@ -28,13 +28,14 @@ class Session:
                 return str
             return value.name
 
-        def __init__(self, updates: UpdateBroadcaster, value):
-            self._updates = updates
-            self._updates.experiment = self._transform(value)
+        def __init__(self):
+            self._updates = None
 
         def __set__(self, obj, value):
+            if self._updates is None:
+                self._updates = obj._updates
             obj._currentExperiment = value
-            self._updates.experiment = self._transform(value)
+            self._updates.broadcast("experiment", self._transform(value))
 
         def __get__(self, obj, objType=None):
             return getattr(obj, "_currentExperiment", None)
@@ -57,13 +58,12 @@ class Session:
         setattr(
             self._session.__class__,
             "currentExperiment",
-            Session._CurrentExperimentField(
-                self._updates, self._session.currentExperiment
-            ),
+            Session._CurrentExperimentField(),
         )
-
-        self._updates.window = False
-        self._updates.catalog = {}
+        # this will now broadcast no current experiment
+        self._session.currentExperiment = None
+        self._updates.broadcast("window", False)
+        self._updates.broadcast("catalog", {})
 
         self._observer = observers.Observer()
         self._event_handler = FileEventHandler(session=self, root=root)
@@ -97,14 +97,14 @@ class Session:
         self._framerate = (
             self._session.win.getActualFrameRate() if framerate is None else framerate
         )
-        self._updates.window = True
+        self._updates.broadcast("window", True)
 
     def closeWindow(self):
         if self._session.win is None:
             return
         self._session.win.close()
         self._session.win = None
-        self._updates.window = False
+        self._updates.broadcast("window", False)
 
     def sessionLoop(self):
         """Runs the Session main loop.
@@ -137,7 +137,7 @@ class Session:
             ],
         )
         self._experiments[key] = self._buildExperimentInfo(key)
-        self._updates.catalog = self._experiments
+        self._updates.broadcast("catalog", self._experiments)
 
     def _buildExperimentInfo(self, key):
         expInfo = self._session.getExpInfoFromExperiment(key)
@@ -155,7 +155,7 @@ class Session:
         del self._experiments[key]
         del self._session.experimentObjects[key]
         del self._session.experiments[key]
-        self._updates.catalog = self._experiments
+        self._updates.broadcast("catalog", self._experiments)
 
     def runExperiment(self, key, **kwargs):
         if self._session.currentExperiment is not None:
@@ -193,7 +193,6 @@ class Session:
             raise RuntimeError("no experiment is running")
 
         self._session.stopExperiment()
-        self._updates.experiment = ""
 
     def validateResources(self, paths):
         modifiedExperiments = self._resourceChecker.validate(paths)
@@ -203,7 +202,7 @@ class Session:
             ].resources
 
         if len(modifiedExperiments) > 0:
-            self._updates.catalog = self._experiments
+            self._updates.broadcast("catalog", self._experiments)
 
     def updates(self):
         return self._updates.updates()
