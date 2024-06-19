@@ -2,12 +2,16 @@ from ctypes import ArgumentError
 from gettext import Catalog
 from glob import glob
 from pathlib import Path
+
+from psychopy.session import _queue
 from watchdog import observers
 
 from psychopy_session_webserver.dependency_checker import DependencyChecker
 from psychopy_session_webserver.file_event_handler import FileEventHandler
+from psychopy_session_webserver.types import Catalog, Experiment, Parameter
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
-from psychopy_session_webserver.types import Experiment, Catalog
+
+_queue._alive = False
 
 
 class Session:
@@ -28,7 +32,7 @@ class Session:
         def __get__(self, obj, objType=None):
             return getattr(obj, "_currentExperiment", None)
 
-    def __init__(self, root, session=None, loop=None):
+    def __init__(self, root, session=None, loop=None, dataDir=None):
 
         root = Path(root).resolve()
         self._resourceChecker = DependencyChecker(root)
@@ -36,7 +40,7 @@ class Session:
         if session is None:
             from psychopy import session
 
-            self._session = session.Session(root)
+            self._session = session.Session(root, dataDir=dataDir)
         else:
             self._session = session
 
@@ -78,10 +82,19 @@ class Session:
         3
         """
         if self._session.win is not None:
-            return
+            raise RuntimeError("window is already opened")
 
+        params = {
+            "fullscr": True,
+            "screen": 0,
+            "winType": "pyglet",
+            "checkTiming": False,
+            "color": [0, 0, 0],
+            "colorSpace": "rgb",
+        }
+        params.update(kwargs)
         self._session.setupWindowFromParams(
-            kwargs, blocking=False, measureFrameRate=False
+            params, blocking=True, measureFrameRate=False
         )
         self._framerate = (
             self._session.win.getActualFrameRate() if framerate is None else framerate
@@ -90,7 +103,8 @@ class Session:
 
     def closeWindow(self):
         if self._session.win is None:
-            return
+            raise RuntimeError("window is already closed")
+
         self._session.win.close()
         self._session.win = None
         self._updates.broadcast("window", False)
@@ -146,7 +160,7 @@ class Session:
         del self._session.experiments[key]
         self._updates.broadcast("catalog", self._experiments)
 
-    def runExperiment(self, key, **kwargs):
+    def runExperiment(self, key: str, **kwargs):
         if self._session.currentExperiment is not None:
             raise RuntimeError(
                 f"experiment '{self._session.currentExperiment.name}' is already"
@@ -197,6 +211,7 @@ class Session:
         return self._updates.updates()
 
     def close(self):
+
         try:
             self._session.stop()
         finally:

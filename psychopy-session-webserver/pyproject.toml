@@ -23,6 +23,7 @@ dependencies = [
    "psychopy",
    "watchdog",
    "structlog",
+   "netifaces",
 ]
 
 [project.optional-dependencies]

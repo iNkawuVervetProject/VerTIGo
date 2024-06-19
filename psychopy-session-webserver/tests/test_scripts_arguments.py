@@ -1,6 +1,6 @@
 import unittest
 
-from psychopy_session_webserver.main import parse_options
+from psychopy_session_webserver.options import parse_options
 
 
 class ScriptArgumentTest(unittest.TestCase):
