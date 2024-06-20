@@ -3,16 +3,15 @@ from gettext import Catalog
 from glob import glob
 from pathlib import Path
 
-from psychopy.session import _queue
 import structlog
 from watchdog import observers
 
 from psychopy_session_webserver.dependency_checker import DependencyChecker
 from psychopy_session_webserver.file_event_handler import FileEventHandler
-from psychopy_session_webserver.types import Catalog, Experiment, Parameter
+from psychopy_session_webserver.types import Catalog, Experiment
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 
-_queue._alive = False
+_reset_queue_once = True
 
 
 class Session:
@@ -42,6 +41,11 @@ class Session:
         self._experiments = {}
         if session is None:
             from psychopy import session
+
+            global _reset_queue_once
+            if _reset_queue_once is True:
+                _reset_queue_once = False
+                session._queue._alive = False
 
             self._session = session.Session(root, dataDir=dataDir)
         else:

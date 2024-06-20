@@ -1,20 +1,29 @@
-import functools
+import inspect
 import io
+import os
 import unittest
 
 import structlog
+
+
+def _add_logs(obj):
+    obj.__logs = io.StringIO()
+    if "VERBOSE" not in os.environ:
+        structlog.configure(
+            logger_factory=structlog.PrintLoggerFactory(file=obj.__logs)
+        )
+
+
+def _teardown():
+    structlog.reset_defaults()
 
 
 def _intercept_test_case(cls):
     if hasattr(cls, "setUp"):
         orig_setUp = cls.setUp
 
-        @functools.wraps(orig_setUp)
         def wrappedSetUp(self):
-            self.__logs = io.StringIO()
-            structlog.configure(
-                logger_factory=structlog.PrintLoggerFactory(file=self.__logs)
-            )
+            _add_logs(self)
             orig_setUp(self)
 
         setattr(cls, "setUp", wrappedSetUp)
@@ -22,20 +31,16 @@ def _intercept_test_case(cls):
     else:
 
         def setUp(self):
-            self.__logs = io.StringIO()
-            structlog.configure(
-                logger_factory=structlog.PrintLoggerFactory(file=self.__logs)
-            )
+            _add_logs(self)
 
         setattr(cls, "setUp", setUp)
 
     if hasattr(cls, "tearDownClass"):
         orig_tearDownClass = cls.tearDownClass.__func__
 
-        @functools.wraps(orig_tearDownClass)
         @classmethod
         def wrappedTearDownClass(cls):
-            structlog.reset_defaults()
+            _teardown()
             orig_tearDownClass(cls)
 
         setattr(cls, "tearDownClass", wrappedTearDownClass)
@@ -43,33 +48,48 @@ def _intercept_test_case(cls):
 
         @classmethod
         def tearDownClass(cls):
-            structlog.reset_defaults()
+            _teardown()
 
         setattr(cls, "tearDownClass", tearDownClass)
 
+    return cls
+
 
 def _intercept_async_test_case(cls):
-    orig_asyncSetUp = cls.asyncSetUp
+    if hasattr(cls, "asyncSetUp"):
+        orig_asyncSetUp = cls.asyncSetUp
 
-    async def wrappedSetUp(self):
-        self.__logs = io.StringIO()
-        structlog.configure(
-            logger_factory=structlog.PrintLoggerFactory(file=self.__logs)
-        )
-        if orig_asyncSetUp is not None:
+        async def wrappedSetUp(self):
+            _add_logs(self)
             await orig_asyncSetUp(self)
 
-    setattr(cls, "asyncSetUp", wrappedSetUp)
+        setattr(cls, "asyncSetUp", wrappedSetUp)
 
-    orig_tearDownClass = cls.tearDownClass
+    else:
 
-    @classmethod
-    def wrappedTearDownClass(cls):
-        structlog.reset_defaults()
-        if orig_tearDownClass is not None:
+        async def setUp(self):
+            _add_logs(self)
+
+        setattr(cls, "asyncSetUp", setUp)
+
+    if hasattr(cls, "tearDownClass"):
+        orig_tearDownClass = cls.tearDownClass
+
+        @classmethod
+        def wrappedTearDownClass(cls):
+            _teardown()
             orig_tearDownClass(cls)
 
-    setattr(cls, "tearDownClass", wrappedTearDownClass)
+        setattr(cls, "tearDownClass", wrappedTearDownClass)
+    else:
+
+        @classmethod
+        def tearDownClass(cls):
+            _teardown()
+
+        setattr(cls, "tearDownClass", tearDownClass)
+
+    return cls
 
 
 def intercept_structlog(cls):
@@ -79,3 +99,5 @@ def intercept_structlog(cls):
         _intercept_async_test_case(cls)
     else:
         raise RuntimeError("could not intercept structlog")
+
+    return cls

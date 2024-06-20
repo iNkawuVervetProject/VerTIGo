@@ -1,19 +1,19 @@
-import structlog
 import io
 import os
 import tempfile
 import time
+import unittest
 from pathlib import Path
-from unittest import TestCase
 from unittest.mock import Mock, call
 
-from tests.logutils import intercept_structlog
 from psychopy_session_webserver.file_event_handler import FileEventHandler
 from watchdog.observers import Observer
 
+from tests.logutils import intercept_structlog
+
 
 @intercept_structlog
-class FileEventHandlerTest(TestCase):
+class FileEventHandlerTest(unittest.TestCase):
 
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
@@ -101,3 +101,7 @@ class FileEventHandlerTest(TestCase):
             call.validateResources(paths=["foo"]),
             call.validateResources(paths=["foo", "bar"]),
         ])
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=42)

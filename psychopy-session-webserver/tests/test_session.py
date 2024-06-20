@@ -1,19 +1,16 @@
 import asyncio
-import io
 import os
 import tempfile
 import time
 import unittest
 from contextlib import contextmanager
-from ctypes import ArgumentError
 from pathlib import Path
 
-import structlog
-
-from psychopy_session_webserver import Experiment, Session
+from psychopy_session_webserver.session import Session
+from psychopy_session_webserver.types import Experiment
 from psychopy_session_webserver.update_broadcaster import UpdateEvent
-from tests.logutils import intercept_structlog
 
+from tests.logutils import intercept_structlog
 from tests.mock_session import build_mock_session
 
 
