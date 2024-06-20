@@ -4,6 +4,7 @@ from glob import glob
 from pathlib import Path
 
 from psychopy.session import _queue
+import structlog
 from watchdog import observers
 
 from psychopy_session_webserver.dependency_checker import DependencyChecker
@@ -33,8 +34,10 @@ class Session:
             return getattr(obj, "_currentExperiment", None)
 
     def __init__(self, root, session=None, loop=None, dataDir=None):
-
         root = Path(root).resolve()
+
+        self.logger = structlog.get_logger().bind(module="Session", root=root)
+
         self._resourceChecker = DependencyChecker(root)
         self._experiments = {}
         if session is None:
@@ -99,6 +102,7 @@ class Session:
         self._framerate = (
             self._session.win.getActualFrameRate() if framerate is None else framerate
         )
+        self.logger.info("opened window", params=params, framerate=self._framerate)
         self._updates.broadcast("window", True)
 
     def closeWindow(self):
@@ -107,6 +111,7 @@ class Session:
 
         self._session.win.close()
         self._session.win = None
+        self.logger.info("closed window")
         self._updates.broadcast("window", False)
 
     def sessionLoop(self):
@@ -120,6 +125,7 @@ class Session:
         This method **must** be called from threading.main_thread().
 
         """
+        self.logger.info("starting main loop")
         self._session.start()
 
     def addExperiment(self, file, key=None):
@@ -140,6 +146,7 @@ class Session:
             ],
         )
         self._experiments[key] = self._buildExperimentInfo(key)
+        self.logger.info("added experiment", key=key)
         self._updates.broadcast("catalog", self._experiments)
 
     def _buildExperimentInfo(self, key):
@@ -174,13 +181,13 @@ class Session:
             k for k in self._experiments[key].parameters if k not in kwargs
         ]
         if len(missingParameters) > 0:
-            raise ArgumentError(f"missing required parameter(s) {missingParameters}")
+            raise RuntimeError(f"missing required parameter(s) {missingParameters}")
 
         invalidParameters = [
             k for k in kwargs if k not in self._experiments[key].parameters
         ]
         if len(invalidParameters) > 0:
-            raise ArgumentError(f"invalid experiment parameter(s) {invalidParameters}")
+            raise RuntimeError(f"invalid experiment parameter(s) {invalidParameters}")
 
         if self._resourceChecker.collections[key].valid is False:
             raise RuntimeError(
@@ -189,6 +196,7 @@ class Session:
             )
 
         kwargs["frameRate"] = self._framerate
+        self.logger.info("starting experiment", key=key)
         self._session.runExperiment(key, kwargs, blocking=False)
 
     def stopExperiment(self):

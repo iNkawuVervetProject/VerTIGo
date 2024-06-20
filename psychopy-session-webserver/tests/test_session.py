@@ -1,4 +1,5 @@
 import asyncio
+import io
 import os
 import tempfile
 import time
@@ -7,12 +8,16 @@ from contextlib import contextmanager
 from ctypes import ArgumentError
 from pathlib import Path
 
+import structlog
+
 from psychopy_session_webserver import Experiment, Session
 from psychopy_session_webserver.update_broadcaster import UpdateEvent
+from tests.logutils import intercept_structlog
 
 from tests.mock_session import build_mock_session
 
 
+@intercept_structlog
 class SessionTest(unittest.TestCase):
     maxDiff = None
 
@@ -96,13 +101,13 @@ class SessionTest(unittest.TestCase):
         )
 
     def test_run_experiment_asserts_required_parameters(self):
-        with self.with_window(), self.assertRaises(ArgumentError) as e:
+        with self.with_window(), self.assertRaises(RuntimeError) as e:
             self.session.runExperiment("foo.psyexp")
 
         self.assertRegex(str(e.exception), "missing required parameter\\(s\\) \\[.*\\]")
 
     def test_run_experiment_asserts_missing_parameters(self):
-        with self.with_window(), self.assertRaises(ArgumentError) as e:
+        with self.with_window(), self.assertRaises(RuntimeError) as e:
             self.session.runExperiment(
                 "foo.psyexp",
                 participant="Lolo",
@@ -156,8 +161,8 @@ class SessionTest(unittest.TestCase):
         )
 
 
+@intercept_structlog
 class SessionEventTest(unittest.IsolatedAsyncioTestCase):
-
     async def asyncSetUp(self) -> None:
         self.loop = asyncio.get_running_loop()
 

@@ -140,5 +140,6 @@ def main():
         session.close()
     finally:
         server.stop()
+        pass
 
-    server.join()
+     server.join()
