@@ -101,11 +101,11 @@ class Session:
                 return
             try:
                 res = task()
-                if future is not None:
+                if future.done() is False:
                     future.get_loop().call_soon_threadsafe(future.set_result, res)
             except Exception as err:
-                if future is not None:
-                    future.get_loop().call_soon_thredsafe(future.set_exception, err)
+                if future.done() is False:
+                    future.get_loop().call_soon_threadsafe(future.set_exception, err)
                 else:
                     self._bind_logger().error("task error", exc_info=err)
 
@@ -174,6 +174,9 @@ class Session:
         self._updates.broadcast("catalog", self._experiments)
 
     def runExperiment(self, key: str, logger=None, earlyFuture=None, **kwargs):
+        if key not in self._experiments:
+            raise RuntimeError(f"unknown experiment '{key}'")
+
         if self._session.currentExperiment is not None:
             raise RuntimeError(
                 f"experiment '{self._session.currentExperiment.name}' is already"
@@ -215,7 +218,7 @@ class Session:
         future = asyncio.get_event_loop().create_future()
         self._push_task(
             self.runExperiment,
-            future=None,
+            future=future,
             key=key,
             logger=logger,
             earlyFuture=future,

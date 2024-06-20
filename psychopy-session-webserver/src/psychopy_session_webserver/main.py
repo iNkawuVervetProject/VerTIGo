@@ -71,8 +71,9 @@ async def log_access(request: Request, call_next):
     return response
 
 
+@app.exception_handler(KeyError)
 @app.exception_handler(RuntimeError)
-async def handle_session_error(request: Request, exc: RuntimeError):
+async def handle_session_error(request: Request, exc: Exception):
     end = time.time_ns()
     await request.state.slog.awarn(
         "BAD", exc_info=exc, time=format_ns(end - request.state.start)
