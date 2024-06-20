@@ -1,4 +1,4 @@
-from ctypes import ArgumentError
+import os
 from gettext import Catalog
 from glob import glob
 from pathlib import Path
@@ -27,15 +27,17 @@ class Session:
 
         def __set__(self, obj, value):
             obj._currentExperiment = value
-            obj._updates.broadcast("experiment", self._transform(value))
+            if hasattr(obj, "_updates"):
+                obj._updates.broadcast("experiment", self._transform(value))
 
         def __get__(self, obj, objType=None):
             return getattr(obj, "_currentExperiment", None)
 
-    def __init__(self, root, session=None, loop=None, dataDir=None):
+    def __init__(self, root, session=None, loop=None, dataDir=None, logger=None):
         root = Path(root).resolve()
-
-        self.logger = structlog.get_logger().bind(module="Session", root=root)
+        self._root = str(root)
+        self.logger = None
+        self.logger = self._bind_logger(logger)
 
         self._resourceChecker = DependencyChecker(root)
         self._experiments = {}
@@ -73,49 +75,24 @@ class Session:
         for p in glob("**/*.psyexp", root_dir=root, recursive=True):
             self.addExperiment(file=p)
 
+    def _bind_logger(self, logger=None):
+        if logger is not None:
+            return logger.bind(module="Session", root=self._root)
+        if self.logger is None:
+            self.logger = structlog.get_logger().bind(module="Session", root=self._root)
+        return self.logger
+
     @property
     def experiments(self) -> Catalog:
         return self._experiments
 
-    def openWindow(self, framerate: int | float | None = None, **kwargs):
-        """Opens the window for the session
-
-        Parameters
-        ----------
-        Those are passed to psychopy.visual.Window initializor.
-        size : tuple
-            the size of the window
-
-        3
-        """
-        if self._session.win is not None:
-            raise RuntimeError("window is already opened")
-
-        params = {
-            "fullscr": True,
-            "screen": 0,
-            "winType": "pyglet",
-            "checkTiming": False,
-            "color": [0, 0, 0],
-            "colorSpace": "rgb",
-        }
-        params.update(kwargs)
-        self._session.setupWindowFromParams(
-            params, blocking=True, measureFrameRate=False
-        )
-        self._framerate = (
-            self._session.win.getActualFrameRate() if framerate is None else framerate
-        )
-        self.logger.info("opened window", params=params, framerate=self._framerate)
-        self._updates.broadcast("window", True)
-
-    def closeWindow(self):
+    def closeWindow(self, logger=None):
         if self._session.win is None:
             raise RuntimeError("window is already closed")
 
         self._session.win.close()
         self._session.win = None
-        self.logger.info("closed window")
+        self._bind_logger(logger).info("closed window")
         self._updates.broadcast("window", False)
 
     def sessionLoop(self):
@@ -129,7 +106,7 @@ class Session:
         This method **must** be called from threading.main_thread().
 
         """
-        self.logger.info("starting main loop")
+        self._bind_logger().info("starting main loop")
         self._session.start()
 
     def addExperiment(self, file, key=None):
@@ -150,7 +127,7 @@ class Session:
             ],
         )
         self._experiments[key] = self._buildExperimentInfo(key)
-        self.logger.info("added experiment", key=key)
+        self._bind_logger().info("added experiment", key=key)
         self._updates.broadcast("catalog", self._experiments)
 
     def _buildExperimentInfo(self, key):
@@ -171,15 +148,12 @@ class Session:
         del self._session.experiments[key]
         self._updates.broadcast("catalog", self._experiments)
 
-    def runExperiment(self, key: str, **kwargs):
+    def runExperiment(self, key: str, logger=None, **kwargs):
         if self._session.currentExperiment is not None:
             raise RuntimeError(
                 f"experiment '{self._session.currentExperiment.name}' is already"
                 " running"
             )
-
-        if self._session.win is None:
-            raise RuntimeError("window is not opened. Call Session.openWindow() first")
 
         missingParameters = [
             k for k in self._experiments[key].parameters if k not in kwargs
@@ -199,14 +173,21 @@ class Session:
                 f"{self._resourceChecker.collections[key].missing}"
             )
 
-        kwargs["frameRate"] = self._framerate
-        self.logger.info("starting experiment", key=key)
-        self._session.runExperiment(key, kwargs, blocking=False)
+        expInfo = self._session.getExpInfoFromExperiment(key)
+        expInfo.update(kwargs)
 
-    def stopExperiment(self):
+        if self._session.win is None:
+            self._session.setupWindowFromExperiment(key, blocking=True)
+            self._updates.broadcast("window", True)
+
+        self._bind_logger(logger).info("starting experiment", key=key)
+        self._session.runExperiment(key, expInfo, blocking=False)
+
+    def stopExperiment(self, logger=None):
         if self._session.currentExperiment is None:
             raise RuntimeError("no experiment is running")
 
+        self._bind_logger(logger).info("stopping experiment")
         self._session.stopExperiment()
 
     def validateResources(self, paths):

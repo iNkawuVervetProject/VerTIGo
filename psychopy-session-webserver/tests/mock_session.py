@@ -1,6 +1,6 @@
-from pathlib import Path
 import threading
 import time
+from pathlib import Path
 from unittest.mock import Mock
 
 
@@ -68,7 +68,7 @@ def build_mock_session(root):
         mock.win = Mock()
         mock.win.getActualFrameRate.return_value = 30.0
 
-    mock.setupWindowFromParams.side_effect = openWindow
+    mock.setupWindowFromExperiment.side_effect = openWindow
 
     def runExperiment(key, params, blocking):
         foo = Mock()

@@ -124,7 +124,7 @@
       </PolygonComponent>
       <MouseComponent name="mouse" plugin="None">
         <Param val="polygon" valType="list" updates="constant" name="clickable"/>
-        <Param val="1" valType="list" updates="constant" name="correctAns"/>
+        <Param val="polygon" valType="list" updates="constant" name="correctAns"/>
         <Param val="False" valType="bool" updates="None" name="disabled"/>
         <Param val="" valType="code" updates="None" name="durationEstim"/>
         <Param val="any click" valType="str" updates="constant" name="forceEndRoutineOnPress"/>

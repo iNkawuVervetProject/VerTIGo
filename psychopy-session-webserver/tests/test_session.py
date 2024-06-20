@@ -71,14 +71,6 @@ class SessionTest(unittest.TestCase):
         self.assertFalse(self.session._resourceChecker.collections["foo.psyexp"].valid)
 
     @contextmanager
-    def with_window(self):
-        try:
-            self.session.openWindow()
-            yield
-        finally:
-            self.session.closeWindow()
-
-    @contextmanager
     def with_file(self, path):
         path = self.local_filepath(path)
         path.touch()
@@ -87,22 +79,14 @@ class SessionTest(unittest.TestCase):
         os.remove(path)
         time.sleep(0.02)
 
-    def test_run_experiment_asserts_an_opened_window(self):
-        with self.assertRaises(RuntimeError) as e:
-            self.session.runExperiment("foo.psyexp")
-
-        self.assertEqual(
-            str(e.exception), "window is not opened. Call Session.openWindow() first"
-        )
-
     def test_run_experiment_asserts_required_parameters(self):
-        with self.with_window(), self.assertRaises(RuntimeError) as e:
+        with self.assertRaises(RuntimeError) as e:
             self.session.runExperiment("foo.psyexp")
 
         self.assertRegex(str(e.exception), "missing required parameter\\(s\\) \\[.*\\]")
 
     def test_run_experiment_asserts_missing_parameters(self):
-        with self.with_window(), self.assertRaises(RuntimeError) as e:
+        with self.assertRaises(RuntimeError) as e:
             self.session.runExperiment(
                 "foo.psyexp",
                 participant="Lolo",
@@ -115,7 +99,7 @@ class SessionTest(unittest.TestCase):
         )
 
     def test_run_experiment_assert_resources(self):
-        with self.with_window(), self.assertRaises(RuntimeError) as e:
+        with self.assertRaises(RuntimeError) as e:
             self.session.runExperiment(
                 "foo.psyexp",
                 participant="Lolo",
@@ -128,7 +112,7 @@ class SessionTest(unittest.TestCase):
         )
 
     def test_run_experiment_assert_none_running(self):
-        with self.with_window(), self.with_file("foo.png"):
+        with self.with_file("foo.png"):
             self.session.runExperiment(
                 "foo.psyexp",
                 participant="Lolo",
@@ -143,7 +127,7 @@ class SessionTest(unittest.TestCase):
         self.assertEqual(str(e.exception), "experiment 'foo.psyexp' is already running")
 
     def test_run_experiment(self):
-        with self.with_window(), self.with_file("foo.png"):
+        with self.with_file("foo.png"):
             self.session.runExperiment(
                 "foo.psyexp",
                 participant="Lolo",
@@ -151,7 +135,12 @@ class SessionTest(unittest.TestCase):
             )
         self.psy_session.runExperiment.assert_called_once_with(
             "foo.psyexp",
-            {"participant": "Lolo", "session": 2, "frameRate": 30.0},
+            {
+                "participant": "Lolo",
+                "session": 2,
+                "date|hid": "foo",
+                "psychopy_version|hid": "1.1.1",
+            },
             blocking=False,
         )
 
@@ -220,34 +209,19 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(event.type, "catalogUpdate")
         self.assertDictEqual({}, event.data)
 
-    async def test_window_updates(self):
-
-        self.session.openWindow()
-        event = await anext(self.updates)
-        self.assertEqual(event.type, "windowUpdate")
-        self.assertEqual(event.data, True)
-
-        self.session.closeWindow()
-        event = await anext(self.updates)
-        self.assertEqual(event.type, "windowUpdate")
-        self.assertEqual(event.data, False)
-
     async def test_experiment_update(self):
         self.local_filepath("foo.png").touch()
         event = await anext(self.updates)
         self.assertEqual(event.type, "catalogUpdate")
-
-        self.session.openWindow()
-
-        event = await anext(self.updates)
-        self.assertEqual(event.type, "windowUpdate")
-        self.assertEqual(event.data, True)
 
         self.session.runExperiment(
             "foo.psyexp",
             participant="Lolo",
             session=2,
         )
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "windowUpdate")
+        self.assertEqual(event.data, True)
 
         event = await anext(self.updates)
         self.assertEqual(event.type, "experimentUpdate")
@@ -256,3 +230,8 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
         event = await anext(self.updates)
         self.assertEqual(event.type, "experimentUpdate")
         self.assertEqual(event.data, "")
+
+        self.session.closeWindow()
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "windowUpdate")
+        self.assertEqual(event.data, False)

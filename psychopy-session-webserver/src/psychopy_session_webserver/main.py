@@ -1,9 +1,13 @@
-import os
 import asyncio
 import ipaddress
+import logging
+import os
+import time
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
+import structlog
+from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import HTTPException
+from fastapi.responses import JSONResponse, StreamingResponse
 from hypercorn.config import Config
 from psychopy.session import asyncio
 from pydantic import BaseModel
@@ -12,6 +16,7 @@ from psychopy_session_webserver.options import parse_options
 from psychopy_session_webserver.server import BackgroundServer
 from psychopy_session_webserver.session import Session
 from psychopy_session_webserver.types import Catalog, Parameter
+from psychopy_session_webserver.utils import format_ns
 
 app = FastAPI()
 
@@ -19,8 +24,60 @@ session: Session = None
 
 windowParams = {}
 
+logLevel = logging.INFO
+
+
 if "PSYSW_DEBUG" in os.environ:
     windowParams = {"fullscr": False}
+    # logLevel = logging.DEBUG
+
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.processors.add_log_level,
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.ExceptionRenderer(),
+        structlog.dev.set_exc_info,
+        structlog.processors.TimeStamper("iso"),
+        structlog.dev.ConsoleRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(logLevel),
+    context_class=dict,
+    logger_factory=structlog.PrintLoggerFactory(),
+    cache_logger_on_first_use=False,
+)
+
+logger = structlog.get_logger()
+
+
+@app.middleware("http")
+async def log_access(request: Request, call_next):
+    slog = logger.bind(
+        method=request.method,
+        URI=request.url.path,
+        client=request.client.host,
+        userAgent=request.headers["user-agent"] or "<missing>",
+    )
+    request.state.slog = slog
+    request.state.start = time.time_ns()
+
+    response = await call_next(request)
+    end = time.time_ns()
+    if response.status_code < 400:
+        await slog.ainfo(
+            "OK", status=response.status_code, time=format_ns(end - request.state.start)
+        )
+
+    return response
+
+
+@app.exception_handler(RuntimeError)
+async def handle_session_error(request: Request, exc: RuntimeError):
+    end = time.time_ns()
+    await request.state.slog.awarn(
+        "BAD", exc_info=exc, time=format_ns(end - request.state.start)
+    )
+    return JSONResponse(status_code=500, content={"detail": str(exc)})
 
 
 @app.get("/experiments")
@@ -44,20 +101,9 @@ async def get_events():
     )
 
 
-@app.put("/window")
-async def open_window():
-    try:
-        session.openWindow(**windowParams)
-    except Exception as e:
-        raise HTTPException(status_code=409, detail=str(e))
-
-
 @app.delete("/window")
-async def close_window():
-    try:
-        session.closeWindow()
-    except Exception as e:
-        raise HTTPException(status_code=409, detail=str(e))
+async def close_window(request: Request):
+    session.closeWindow(logger=request.state.slog)
 
 
 class RunExperimentRequest(BaseModel):
@@ -66,19 +112,13 @@ class RunExperimentRequest(BaseModel):
 
 
 @app.post("/experiment/")
-async def run_experiment(request: RunExperimentRequest):
-    try:
-        session.runExperiment(request.key, **request.parameter)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+async def run_experiment(body: RunExperimentRequest, request: Request):
+    session.runExperiment(body.key, logger=request.state.slog, **body.parameter)
 
 
 @app.delete("/experiment")
-async def stop_experiment():
-    try:
-        session.stopExperiment()
-    except Exception as e:
-        raise HTTPException(status_code=409, detail=str(e))
+async def stop_experiment(request: Request):
+    session.stopExperiment(logger=request.state.slog)
 
 
 def list_ip_address():
@@ -142,4 +182,4 @@ def main():
         server.stop()
         pass
 
-     server.join()
+    server.join()
