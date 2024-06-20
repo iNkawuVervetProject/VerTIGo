@@ -1,7 +1,10 @@
+import asyncio
 import os
+from functools import partial
 from gettext import Catalog
 from glob import glob
 from pathlib import Path
+from queue import Queue
 
 import structlog
 from watchdog import observers
@@ -10,8 +13,6 @@ from psychopy_session_webserver.dependency_checker import DependencyChecker
 from psychopy_session_webserver.file_event_handler import FileEventHandler
 from psychopy_session_webserver.types import Catalog, Experiment
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
-
-_reset_queue_once = True
 
 
 class Session:
@@ -44,16 +45,12 @@ class Session:
         if session is None:
             from psychopy import session
 
-            global _reset_queue_once
-            if _reset_queue_once is True:
-                _reset_queue_once = False
-                session._queue._alive = False
-
             self._session = session.Session(root, dataDir=dataDir)
         else:
             self._session = session
 
         self._updates = UpdateBroadcaster(loop)
+        self._tasks = Queue()
 
         # modify session so the currentExperiment modification triggers updates
         setattr(
@@ -71,6 +68,7 @@ class Session:
         self._event_handler = FileEventHandler(session=self, root=root)
         self._observer.schedule(self._event_handler, root, recursive=True)
         self._observer.start()
+        self._sessionLoop = None
 
         for p in glob("**/*.psyexp", root_dir=root, recursive=True):
             self.addExperiment(file=p)
@@ -86,15 +84,6 @@ class Session:
     def experiments(self) -> Catalog:
         return self._experiments
 
-    def closeWindow(self, logger=None):
-        if self._session.win is None:
-            raise RuntimeError("window is already closed")
-
-        self._session.win.close()
-        self._session.win = None
-        self._bind_logger(logger).info("closed window")
-        self._updates.broadcast("window", False)
-
     def sessionLoop(self):
         """Runs the Session main loop.
 
@@ -106,8 +95,44 @@ class Session:
         This method **must** be called from threading.main_thread().
 
         """
-        self._bind_logger().info("starting main loop")
-        self._session.start()
+        while True:
+            task, future = self._tasks.get()
+            if task is None:
+                return
+            try:
+                res = task()
+                if future is not None:
+                    future.get_loop().call_soon_threadsafe(future.set_result, res)
+            except Exception as err:
+                if future is not None:
+                    future.get_loop().call_soon_thredsafe(future.set_exception, err)
+                else:
+                    self._bind_logger().error("task error", exc_info=err)
+
+    def _push_task(self, fn, future, *args, **kwargs):
+        self._tasks.put((partial(fn, *args, **kwargs), future))
+
+    def closeWindow(self, logger=None):
+        if self._session.win is None:
+            raise RuntimeError("window is already closed")
+
+        if self._session.currentExperiment is not None:
+            raise RuntimeError("an experiment is running")
+
+        self._session.win.close()
+        self._session.win = None
+        self._bind_logger(logger).info("closed window")
+        self._updates.broadcast("window", False)
+
+    async def asyncCloseWindow(self, logger=None):
+        future = asyncio.get_event_loop().create_future()
+
+        self._push_task(self.closeWindow, future, logger=logger)
+
+        await future
+        exc = future.exception()
+        if exc is not None:
+            raise exc
 
     def addExperiment(self, file, key=None):
         if Path(file).is_absolute() is False:
@@ -148,7 +173,7 @@ class Session:
         del self._session.experiments[key]
         self._updates.broadcast("catalog", self._experiments)
 
-    def runExperiment(self, key: str, logger=None, **kwargs):
+    def runExperiment(self, key: str, logger=None, earlyFuture=None, **kwargs):
         if self._session.currentExperiment is not None:
             raise RuntimeError(
                 f"experiment '{self._session.currentExperiment.name}' is already"
@@ -181,7 +206,25 @@ class Session:
             self._updates.broadcast("window", True)
 
         self._bind_logger(logger).info("starting experiment", key=key)
-        self._session.runExperiment(key, expInfo, blocking=False)
+        if earlyFuture is not None:
+            # early future return
+            earlyFuture.get_loop().call_soon_threadsafe(earlyFuture.set_result, None)
+        self._session.runExperiment(key, expInfo, blocking=True)
+
+    async def asyncRunExperiment(self, key: str, logger=None, **kwargs):
+        future = asyncio.get_event_loop().create_future()
+        self._push_task(
+            self.runExperiment,
+            future=None,
+            key=key,
+            logger=logger,
+            earlyFuture=future,
+            **kwargs,
+        )
+        await future
+        exc = future.exception()
+        if exc is not None:
+            raise exc
 
     def stopExperiment(self, logger=None):
         if self._session.currentExperiment is None:
@@ -189,6 +232,14 @@ class Session:
 
         self._bind_logger(logger).info("stopping experiment")
         self._session.stopExperiment()
+
+    async def asyncStopExperiment(self, logger=None):
+        future = asyncio.get_event_loop().create_future()
+        self._push_task(self.stopExperiment, future, logger=logger)
+        await future
+        exc = future.exception()
+        if exc is not None:
+            raise exc
 
     def validateResources(self, paths):
         modifiedExperiments = self._resourceChecker.validate(paths)

@@ -103,7 +103,7 @@ async def get_events():
 
 @app.delete("/window")
 async def close_window(request: Request):
-    session.closeWindow(logger=request.state.slog)
+    await session.asyncCloseWindow(logger=request.state.slog)
 
 
 class RunExperimentRequest(BaseModel):
@@ -113,12 +113,14 @@ class RunExperimentRequest(BaseModel):
 
 @app.post("/experiment/")
 async def run_experiment(body: RunExperimentRequest, request: Request):
-    session.runExperiment(body.key, logger=request.state.slog, **body.parameter)
+    await session.asyncRunExperiment(
+        body.key, logger=request.state.slog, **body.parameter
+    )
 
 
 @app.delete("/experiment")
 async def stop_experiment(request: Request):
-    session.stopExperiment(logger=request.state.slog)
+    await session.asyncStopExperiment(logger=request.state.slog)
 
 
 def list_ip_address():
@@ -175,7 +177,7 @@ def main():
 
     server.start()
     try:
-        session.sessionLoop()
+        asyncio.run(session.sessionLoop())
     except KeyboardInterrupt:
         session.close()
     finally:
