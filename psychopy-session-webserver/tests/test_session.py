@@ -141,7 +141,7 @@ class SessionTest(unittest.TestCase):
                 "date|hid": "foo",
                 "psychopy_version|hid": "1.1.1",
             },
-            blocking=False,
+            blocking=True,
         )
 
 

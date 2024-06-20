@@ -68,7 +68,6 @@ class Session:
         self._event_handler = FileEventHandler(session=self, root=root)
         self._observer.schedule(self._event_handler, root, recursive=True)
         self._observer.start()
-        self._sessionLoop = None
 
         for p in glob("**/*.psyexp", root_dir=root, recursive=True):
             self.addExperiment(file=p)
