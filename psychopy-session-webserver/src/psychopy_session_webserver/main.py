@@ -178,11 +178,11 @@ def main():
 
     server.start()
     try:
-        asyncio.run(session.sessionLoop())
+        session.run()
     except KeyboardInterrupt:
-        session.close()
+        structlog.get_logger().info("ending gracefully")
     finally:
+        session.close()
         server.stop()
-        pass
 
     server.join()

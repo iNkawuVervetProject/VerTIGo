@@ -5,40 +5,26 @@ from gettext import Catalog
 from glob import glob
 from pathlib import Path
 from queue import Queue
+from typing import Optional
 
 import structlog
 from watchdog import observers
 
+from psychopy_session_webserver.async_task_runner import AsyncTaskRunner
 from psychopy_session_webserver.dependency_checker import DependencyChecker
 from psychopy_session_webserver.file_event_handler import FileEventHandler
 from psychopy_session_webserver.types import Catalog, Experiment
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 
 
-class Session:
-
-    class _CurrentExperimentField:
-
-        def _transform(self, value):
-            if value is None:
-                return ""
-            elif isinstance(value, str):
-                return str
-            return value.name
-
-        def __set__(self, obj, value):
-            obj._currentExperiment = value
-            if hasattr(obj, "_updates"):
-                obj._updates.broadcast("experiment", self._transform(value))
-
-        def __get__(self, obj, objType=None):
-            return getattr(obj, "_currentExperiment", None)
+class Session(AsyncTaskRunner):
 
     def __init__(self, root, session=None, loop=None, dataDir=None, logger=None):
         root = Path(root).resolve()
         self._root = str(root)
         self.logger = None
         self.logger = self._bind_logger(logger)
+        super(Session, self).__init__(logger=self.logger)
 
         self._resourceChecker = DependencyChecker(root)
         self._experiments = {}
@@ -52,15 +38,8 @@ class Session:
         self._updates = UpdateBroadcaster(loop)
         self._tasks = Queue()
 
-        # modify session so the currentExperiment modification triggers updates
-        setattr(
-            self._session.__class__,
-            "currentExperiment",
-            Session._CurrentExperimentField(),
-        )
-        setattr(self._session, "_updates", self._updates)
-        # this will now broadcast no current experiment
-        self._session.currentExperiment = None
+        self._currentExperiment = None
+        self._updates.broadcast("experiment", "")
         self._updates.broadcast("window", False)
         self._updates.broadcast("catalog", {})
 
@@ -83,39 +62,11 @@ class Session:
     def experiments(self) -> Catalog:
         return self._experiments
 
-    def sessionLoop(self):
-        """Runs the Session main loop.
-
-        This method runs the session main loop, where the actual psychopy experiment
-        will be run.
-
-        Warnings
-        --------
-        This method **must** be called from threading.main_thread().
-
-        """
-        while True:
-            task, future = self._tasks.get()
-            if task is None:
-                return
-            try:
-                res = task()
-                if future.done() is False:
-                    future.get_loop().call_soon_threadsafe(future.set_result, res)
-            except Exception as err:
-                if future.done() is False:
-                    future.get_loop().call_soon_threadsafe(future.set_exception, err)
-                else:
-                    self._bind_logger().error("task error", exc_info=err)
-
-    def _push_task(self, fn, future, *args, **kwargs):
-        self._tasks.put((partial(fn, *args, **kwargs), future))
-
     def closeWindow(self, logger=None):
         if self._session.win is None:
             raise RuntimeError("window is already closed")
 
-        if self._session.currentExperiment is not None:
+        if self._currentExperiment is not None:
             raise RuntimeError("an experiment is running")
 
         self._session.win.close()
@@ -123,15 +74,9 @@ class Session:
         self._bind_logger(logger).info("closed window")
         self._updates.broadcast("window", False)
 
-    async def asyncCloseWindow(self, logger=None):
-        future = asyncio.get_event_loop().create_future()
-
-        self._push_task(self.closeWindow, future, logger=logger)
-
-        await future
-        exc = future.exception()
-        if exc is not None:
-            raise exc
+    @AsyncTaskRunner.in_loop()
+    def asyncCloseWindow(self, logger=None):
+        self.closeWindow(logger)
 
     def addExperiment(self, file, key=None):
         if Path(file).is_absolute() is False:
@@ -172,14 +117,14 @@ class Session:
         del self._session.experiments[key]
         self._updates.broadcast("catalog", self._experiments)
 
-    def runExperiment(self, key: str, logger=None, earlyFuture=None, **kwargs):
+    def _prepareExperiment(self, key: str, *, logger, **kwargs):
+        logger.debug("preparing", current=self._currentExperiment)
         if key not in self._experiments:
             raise RuntimeError(f"unknown experiment '{key}'")
 
-        if self._session.currentExperiment is not None:
+        if self._currentExperiment is not None:
             raise RuntimeError(
-                f"experiment '{self._session.currentExperiment.name}' is already"
-                " running"
+                f"experiment '{self._currentExperiment}' is already running"
             )
 
         missingParameters = [
@@ -203,30 +148,51 @@ class Session:
         expInfo = self._session.getExpInfoFromExperiment(key)
         expInfo.update(kwargs)
 
+        return expInfo
+
+    def _runExperiment(
+        self, key, *, expInfo, logger, earlyFuture: Optional[asyncio.Future] = None
+    ):
         if self._session.win is None:
+            logger.debug("opening window")
             self._session.setupWindowFromExperiment(key, blocking=True)
             self._updates.broadcast("window", True)
 
-        self._bind_logger(logger).info("starting experiment", key=key)
+            self._currentExperiment = key
+        self._updates.broadcast("experiment", key)
+
+        logger.info("starting", current=self._currentExperiment)
+
         if earlyFuture is not None:
-            # early future return
             earlyFuture.get_loop().call_soon_threadsafe(earlyFuture.set_result, None)
-        self._session.runExperiment(key, expInfo, blocking=True)
+
+        try:
+            self._session.runExperiment(key, expInfo, blocking=True)
+        finally:
+            self._currentExperiment = None
+            self._updates.broadcast("experiment", "")
+            logger.debug("done", current=self._currentExperiment)
+
+    def runExperiment(self, key: str, logger=None, **kwargs):
+        logger = self._bind_logger(logger).bind(experiment=key)
+        expInfo = self._prepareExperiment(key, logger=logger, **kwargs)
+        self._runExperiment(key, logger=logger, expInfo=expInfo)
 
     async def asyncRunExperiment(self, key: str, logger=None, **kwargs):
+        logger = self._bind_logger(logger).bind(experiment=key)
+        # we make all necessary check before sending the task
+        expInfo = self._prepareExperiment(key, logger=logger, **kwargs)
+
+        # we inject our own future to return early from the experiment run
         future = asyncio.get_event_loop().create_future()
-        self._push_task(
-            self.runExperiment,
-            future=future,
-            key=key,
-            logger=logger,
-            earlyFuture=future,
-            **kwargs,
-        )
-        await future
-        exc = future.exception()
-        if exc is not None:
-            raise exc
+
+        @AsyncTaskRunner.in_loop(runner=self, future=future)
+        def run():
+            # by passing early future, it will be done before the completion of the
+            # experiment.
+            self._runExperiment(key, logger=logger, expInfo=expInfo, earlyFuture=future)
+
+        await run()
 
     def stopExperiment(self, logger=None):
         if self._session.currentExperiment is None:
@@ -235,13 +201,9 @@ class Session:
         self._bind_logger(logger).info("stopping experiment")
         self._session.stopExperiment()
 
-    async def asyncStopExperiment(self, logger=None):
-        future = asyncio.get_event_loop().create_future()
-        self._push_task(self.stopExperiment, future, logger=logger)
-        await future
-        exc = future.exception()
-        if exc is not None:
-            raise exc
+    @AsyncTaskRunner.in_loop()
+    def asyncStopExperiment(self, logger=None):
+        self.stopExperiment(logger)
 
     def validateResources(self, paths):
         modifiedExperiments = self._resourceChecker.validate(paths)
@@ -257,6 +219,8 @@ class Session:
         return self._updates.updates()
 
     def close(self):
+        super(Session, self).close()
+
         self._updates.close()
         try:
             self._session.stop()

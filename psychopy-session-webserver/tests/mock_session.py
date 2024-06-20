@@ -71,16 +71,9 @@ def build_mock_session(root):
     mock.setupWindowFromExperiment.side_effect = openWindow
 
     def runExperiment(key, params, blocking):
-        foo = Mock()
-        foo.name = key
-        mock.currentExperiment = foo
-
-        def endLater():
-            time.sleep(0.1)
-            mock.currentExperiment = None
-
-        t = threading.Thread(target=endLater)
-        t.start()
+        mock._currentExperiment = key
+        time.sleep(0.1)
+        mock._currentExperiment = None
 
     mock.runExperiment.side_effect = runExperiment
 

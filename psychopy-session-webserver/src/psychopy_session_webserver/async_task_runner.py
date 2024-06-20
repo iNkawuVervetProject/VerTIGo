@@ -1,7 +1,7 @@
+import asyncio
+from dataclasses import dataclass
 from functools import partial
 from queue import Queue
-from dataclasses import dataclass
-import asyncio
 from typing import Any, Awaitable, Callable, Optional
 
 import structlog
@@ -47,19 +47,18 @@ class AsyncTaskRunner:
         self._tasks.put(AsyncTaskRunner._Task(task=fn, future=future))
 
     @staticmethod
-    def in_loop(*, runner=None):
+    def in_loop(*, runner=None, future=None):
         def decorator(fn) -> Callable[[], Awaitable]:
             async def call(*args, **kwargs):
                 _runner = runner or args[0]
-                print(runner, args, kwargs)
-                future = asyncio.get_event_loop().create_future()
-                _runner._put_task(partial(fn, *args, **kwargs), future)
+                _future = future or asyncio.get_event_loop().create_future()
+                _runner._put_task(partial(fn, *args, **kwargs), _future)
 
-                await future
-                exc = future.exception()
+                await _future
+                exc = _future.exception()
                 if exc is not None:
                     raise exc
-                return future.result()
+                return _future.result()
 
             return call
 

@@ -1,6 +1,7 @@
 import asyncio
 import os
 import tempfile
+import threading
 import time
 import unittest
 from contextlib import contextmanager
@@ -111,21 +112,6 @@ class SessionTest(unittest.TestCase):
             "experiment 'foo.psyexp' is missing the resource(s) ['foo.png']",
         )
 
-    def test_run_experiment_assert_none_running(self):
-        with self.with_file("foo.png"):
-            self.session.runExperiment(
-                "foo.psyexp",
-                participant="Lolo",
-                session=2,
-            )
-            with self.assertRaises(RuntimeError) as e:
-                self.session.runExperiment(
-                    "foo.psyexp",
-                    participant="Lolo",
-                    session=3,
-                )
-        self.assertEqual(str(e.exception), "experiment 'foo.psyexp' is already running")
-
     def test_run_experiment(self):
         with self.with_file("foo.png"):
             self.session.runExperiment(
@@ -235,3 +221,37 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
         event = await anext(self.updates)
         self.assertEqual(event.type, "windowUpdate")
         self.assertEqual(event.data, False)
+
+    @contextmanager
+    def with_file(self, path):
+        path = self.local_filepath(path)
+        path.touch()
+        time.sleep(0.02)
+        yield
+        os.remove(path)
+        time.sleep(0.02)
+
+    @contextmanager
+    def with_loop(self):
+        thread = threading.Thread(target=self.session.run)
+        thread.start()
+        try:
+            yield
+        finally:
+            self.session.close()
+            thread.join()
+
+    async def test_run_experiment_assert_none_running(self):
+        with self.with_file("foo.png"), self.with_loop():
+            await self.session.asyncRunExperiment(
+                "foo.psyexp",
+                participant="Lolo",
+                session=2,
+            )
+            with self.assertRaises(RuntimeError) as e:
+                await self.session.asyncRunExperiment(
+                    "foo.psyexp",
+                    participant="Lolo",
+                    session=3,
+                )
+        self.assertEqual(str(e.exception), "experiment 'foo.psyexp' is already running")
