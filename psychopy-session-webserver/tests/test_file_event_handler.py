@@ -9,14 +9,12 @@ from unittest.mock import Mock, call
 from psychopy_session_webserver.file_event_handler import FileEventHandler
 from watchdog.observers import Observer
 
-from tests.logutils import intercept_structlog
 
-
-@intercept_structlog
 class FileEventHandlerTest(unittest.TestCase):
 
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
         self.observer = Observer()
         self.mock = Mock()
         self.handler = FileEventHandler(
@@ -27,12 +25,11 @@ class FileEventHandlerTest(unittest.TestCase):
         self.observer.schedule(self.handler, self.tempdir.name, recursive=True)
         self.observer.start()
 
-    def tearDown(self):
-        self.observer.stop()
-        self.observer.join()
+        def stopAndJoin():
+            self.observer.stop()
+            self.observer.join()
 
-        self.tempdir.cleanup()
-        del self.mock
+        self.addCleanup(stopAndJoin)
 
     def local_filepath(self, path):
         return Path(self.tempdir.name).joinpath(path)

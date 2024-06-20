@@ -10,11 +10,9 @@ from psychopy_session_webserver.session import Session
 from psychopy_session_webserver.types import Experiment
 from psychopy_session_webserver.update_broadcaster import UpdateEvent
 
-from tests.logutils import intercept_structlog
 from tests.mock_session import build_mock_session
 
 
-@intercept_structlog
 class SessionTest(unittest.TestCase):
     maxDiff = None
 
@@ -158,7 +156,6 @@ class SessionTest(unittest.TestCase):
         )
 
 
-@intercept_structlog
 class SessionEventTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.loop = asyncio.get_running_loop()

@@ -29,7 +29,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black>=22.10"
+    "black>=22.10",
+	"pytest"
 ]
 
 
