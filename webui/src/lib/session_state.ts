@@ -15,7 +15,7 @@ export function synchronizeState(): void {
 			return;
 		}
 		subscribed = true;
-		const eventSource = new EventSource('https://sse.dev/test');
+		const eventSource = new EventSource('/lalala');
 		eventSource.onmessage = (event) => {
 			const data = JSON.parse(event.data);
 
