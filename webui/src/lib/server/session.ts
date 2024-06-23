@@ -1,13 +1,6 @@
+import type { Catalog, Parameters } from '$lib/types';
 import { get, writable, type Unsubscriber, type Writable } from 'svelte/store';
 
-type Parameters = { [key: string]: any };
-interface Experiment {
-	key: string;
-	resources: { [key: string]: boolean };
-	parameters: Parameters;
-}
-
-type Catalog = { [key: string]: Experiment };
 class Session {
 	private _catalog: Catalog = {
 		'valid.psyexp': {
