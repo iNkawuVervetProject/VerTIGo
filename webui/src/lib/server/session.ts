@@ -1,15 +1,10 @@
-import { get, writable, type Writable } from 'svelte/store';
+import { get, writable, type Unsubscriber, type Writable } from 'svelte/store';
 
 type Parameters = { [key: string]: any };
 interface Experiment {
 	key: string;
 	resources: { [key: string]: boolean };
 	parameters: Parameters;
-}
-
-interface UpdateEvent {
-	name: string;
-	data: any;
 }
 
 type Catalog = { [key: string]: Experiment };
@@ -30,16 +25,32 @@ class Session {
 		return this._catalog;
 	}
 
-	public events(onEvent: (name: string, data: any) => void): void {
-		this.catalog.subscribe((value: Catalog) => {
-			onEvent('catalogUpdate', value);
-		});
-		this.experiment.subscribe((value: string) => {
-			onEvent('experimentUpdate', value);
-		});
-		this.window.subscribe((value: boolean) => {
-			onEvent('windowUpdate', value);
-		});
+	public subscribeEvents(onEvent: (name: string, data: any) => void): Unsubscriber {
+		const unsubscribe: Unsubscriber[] = [];
+
+		unsubscribe.push(
+			this.catalog.subscribe((value: Catalog) => {
+				onEvent('catalogUpdate', value);
+			})
+		);
+
+		unsubscribe.push(
+			this.experiment.subscribe((value: string) => {
+				onEvent('experimentUpdate', value);
+			})
+		);
+
+		unsubscribe.push(
+			this.window.subscribe((value: boolean) => {
+				onEvent('windowUpdate', value);
+			})
+		);
+
+		return () => {
+			unsubscribe.forEach((u: Unsubscriber) => {
+				u();
+			});
+		};
 	}
 
 	public runExperiment(key: string, parameters: Parameters): void {
