@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Experiment from '$lib/experiment.svelte';
 	import { messages, catalog, experiment, window } from '$lib/session_state';
 
 	async function startExperiment(key: string) {
@@ -20,16 +21,9 @@
 	<p>{m.msg} - {m.now}</p>
 {/each}
 
-<h2>Experiment</h2>
-{#each Object.entries($catalog) as [key, exp]}
-	<p>{key}, {JSON.stringify(exp)}</p>
-	<button
-		on:click={(e) => {
-			startExperiment(key);
-		}}
-	>
-		Start
-	</button>
+<h2>Experiments</h2>
+{#each Object.entries($catalog) as [key, experiment]}
+	<Experiment {experiment} />
 {/each}
 
 <h2>State</h2>

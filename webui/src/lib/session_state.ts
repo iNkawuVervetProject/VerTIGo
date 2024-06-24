@@ -11,7 +11,9 @@ export const messages: Writable<any[]> = writable<any[]>([]);
 
 export function synchronizeState(): void {
 	onMount(() => {
+		console.log('synchronizing....');
 		if (subscribed) {
+			console.log('already synchronized');
 			return;
 		}
 		subscribed = true;
