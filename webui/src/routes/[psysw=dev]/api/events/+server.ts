@@ -7,7 +7,7 @@ export const GET: RequestHandler = async ({}) => {
 	const stream = new ReadableStream({
 		start(controller) {
 			unsubscribe = session.subscribeEvents((name: string, data: any) => {
-				controller.enqueue(`event:"${name}"\ndata: ${JSON.stringify(data)}\n\n`);
+				controller.enqueue(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`);
 			});
 		},
 		cancel() {

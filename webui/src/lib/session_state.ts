@@ -15,13 +15,20 @@ export function synchronizeState(): void {
 			return;
 		}
 		subscribed = true;
-		const eventSource = new EventSource('/lalala');
+		const eventSource = new EventSource('/psysw/api/events');
 		eventSource.onmessage = (event) => {
 			const data = JSON.parse(event.data);
-
-			messages.update((arr: any[]) => {
-				return arr.concat(data);
-			});
+			messages.update((arr: any[]) => arr.concat(data));
 		};
+		eventSource.addEventListener('windowUpdate', (event) => {
+			const data = JSON.parse(event.data);
+			window.set(data);
+		});
+		eventSource.addEventListener('experimentUpdate', (event) => {
+			experiment.set(JSON.parse(event.data));
+		});
+		eventSource.addEventListener('catalogUpdate', (event) => {
+			catalog.set(JSON.parse(event.data));
+		});
 	});
 }
