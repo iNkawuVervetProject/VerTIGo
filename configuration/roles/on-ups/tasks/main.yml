@@ -8,12 +8,13 @@
 
 - name: ensure standalone
   lineinfile:
+    path: /etc/nut/nut.conf
     regexp: '^MODE='
     line: 'MODE=standalone'
   notify:
     - restart nut-server
 
-- name: ensure device configuration:
+- name: ensure device configuration
   blockinfile:
     path: /etc/nut/ups.conf
     block: |
@@ -25,7 +26,16 @@
           desc = "Mini-Box OpenUPS"
           productid = d004
           ignorelb
-          override.battery.charge.low = 3
+          override.battery.charge.low = 5
+  notify:
+    - restart nut-server
+
+- name: ensure upsd listen
+  blockinfile:
+    path: /etc/nut/upsd.conf
+    block: |
+      LISTEN 127.0.0.1 3493
+      LISTEN ::1 3493
   notify:
     - restart nut-server
 
@@ -42,11 +52,10 @@
     - restart nut-server
 
 
-
 - name: ensure upsmon MONITOR
-  fileinfile:
+  lineinfile:
     path: /etc/nut/upsmon.conf
     regexp: '^MONITOR'
-    line: 'MONITOR openups@localhost 1 admin some_complex_password
+    line: 'MONITOR openups@localhost 1 admin some_complex_password'
   notify:
     - restart nut-server

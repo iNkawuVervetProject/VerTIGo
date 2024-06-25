@@ -1,0 +1,22 @@
+---
+- name: get vnc status
+  shell: raspi-config nonint get_vnc
+  register: vnc_status
+
+- name: enable vnc server
+  shell: raspi-config nonint do_vnc
+  when: vnc_status.stdout != '0'
+
+- name: set vnc config
+  lineinfile:
+    path: /etc/wayvnc/config
+    line: "{{ item }}"
+    state: absent
+  with_items:
+    - enable_auth=true
+    - enable_pam=true
+    - private_key_file=tls_key.pem
+    - certificate_file=tls_cert.pem
+    - rsa_private_key_file=rsa_key.pem
+  notify:
+    - restart wayvnc

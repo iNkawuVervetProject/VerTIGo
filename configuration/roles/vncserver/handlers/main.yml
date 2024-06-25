@@ -1,0 +1,5 @@
+---
+- name: restart wayvnc
+  service:
+    name: wayvnc
+    state: restarted

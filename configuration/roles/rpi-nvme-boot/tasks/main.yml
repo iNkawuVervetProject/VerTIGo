@@ -1,0 +1,38 @@
+---
+- name: ensure rpi-eeprom package
+  apt:
+    name:
+      - rpi-eeprom
+    state: present
+
+- name: ensure nvme is enabled
+  lineinfile:
+    path: /boot/firmware/config.txt
+    insertafter: "^\\[all\\]"
+    line: "dtparam=nvme"
+  notify: reboot for config.txt
+
+- name: copy config file
+  copy:
+    src: eeprom.cfg
+    dest: /var/lib/eeprom-wanted.cfg
+
+- name: get current eeprom config
+  shell: rpi-eeprom-config -o /var/lib/eeprom-current.cfg
+
+- name: get wanted checksum
+  stat:
+    path: /var/lib/eeprom-wanted.cfg
+    get_checksum: yes
+  register: wanted
+
+- name: get current checksum
+  stat:
+    path: /var/lib/eeprom-current.cfg
+    get_checksum: yes
+  register: current
+
+- name: set current config
+  shell: rpi-eeprom-config --apply /var/lib/eeprom-wanted.cfg
+  when: wanted.stat.checksum != current.stat.checksum
+  notify: reboot for config.txt
