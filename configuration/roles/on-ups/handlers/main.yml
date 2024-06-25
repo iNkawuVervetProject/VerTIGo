@@ -1,0 +1,7 @@
+---
+
+- name: restart nut-server
+  service:
+    name: nut-server
+    enabled: true
+    state: restarted

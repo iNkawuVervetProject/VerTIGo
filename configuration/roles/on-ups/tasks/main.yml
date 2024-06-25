@@ -1,0 +1,52 @@
+---
+- name: ensures nut is installed
+  apt:
+    name:
+      - nut
+    state: present
+    update_cache: true
+
+- name: ensure standalone
+  lineinfile:
+    regexp: '^MODE='
+    line: 'MODE=standalone'
+  notify:
+    - restart nut-server
+
+- name: ensure device configuration:
+  blockinfile:
+    path: /etc/nut/ups.conf
+    block: |
+      [openups]
+          driver = usbhid-ups
+          port = auto
+          vendorid = 04d8
+          pollfreq = 30
+          desc = "Mini-Box OpenUPS"
+          productid = d004
+          ignorelb
+          override.battery.charge.low = 3
+  notify:
+    - restart nut-server
+
+- name: ensure upsd user access
+  blockinfile:
+    path: /etc/nut/upsd.users
+    block: |
+      [admin]
+          password = some_complex_password
+          actions = SET
+          instcmds = ALL
+          upsmon master
+  notify:
+    - restart nut-server
+
+
+
+- name: ensure upsmon MONITOR
+  fileinfile:
+    path: /etc/nut/upsmon.conf
+    regexp: '^MONITOR'
+    line: 'MONITOR openups@localhost 1 admin some_complex_password
+  notify:
+    - restart nut-server
