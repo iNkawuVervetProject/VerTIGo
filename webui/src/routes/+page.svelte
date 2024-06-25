@@ -1,16 +1,7 @@
 <script lang="ts">
 	import Experiment from '$lib/experiment.svelte';
 	import { messages, catalog, experiment, window } from '$lib/session_state';
-
-	async function startExperiment(key: string) {
-		await fetch('/psysw/api/experiment', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ key: key, parameters: {} })
-		});
-	}
+	import { maybeRequiredParameters } from '$lib/parameters';
 </script>
 
 <h1>Welcome to SvelteKit</h1>
@@ -19,6 +10,11 @@
 <h2>Messages</h2>
 {#each $messages as m}
 	<p>{m.msg} - {m.now}</p>
+{/each}
+
+<h2>Parameters</h2>
+{#each $maybeRequiredParameters as p}
+	<p>{p}</p>
 {/each}
 
 <h2>Experiments</h2>

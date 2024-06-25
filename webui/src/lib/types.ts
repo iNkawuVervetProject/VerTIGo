@@ -3,11 +3,13 @@ export interface Catalog {
 }
 
 export interface Parameters {
-	[key: string]: any;
+	participant: string;
+	session: number;
+	[key: string]: string | number;
 }
 
 export interface Experiment {
 	key: string;
 	resources: { [key: string]: boolean };
-	parameters: Parameters;
+	parameters: string[];
 }

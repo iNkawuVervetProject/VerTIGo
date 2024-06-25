@@ -5,8 +5,18 @@ class Session {
 	private _catalog: Catalog = {
 		'valid.psyexp': {
 			key: 'valid.psyexp',
-			resources: {},
-			parameters: {}
+			resources: { 'somepic.png': true },
+			parameters: ['participant', 'session']
+		},
+		'unvalid.psyexp': {
+			key: 'unvalid.psyexp',
+			resources: { 'missing.png': false, 'missing_again.png': false },
+			parameters: ['participant', 'session']
+		},
+		'more.psyexp': {
+			key: 'more.psyexp',
+			resources: { 'somepic.png': true },
+			parameters: ['participant', 'session', 'age']
 		}
 	};
 	private window: Writable<boolean> = writable<boolean>(false);
