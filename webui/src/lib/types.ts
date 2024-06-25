@@ -13,3 +13,13 @@ export interface Experiment {
 	resources: { [key: string]: boolean };
 	parameters: string[];
 }
+
+export class Participant {
+	name: string;
+	sessions: number;
+
+	public constructor(name: string, sessions: number = 0) {
+		this.name = name;
+		this.sessions = sessions;
+	}
+}
