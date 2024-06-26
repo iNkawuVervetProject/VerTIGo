@@ -1,5 +1,6 @@
 from functools import partial
 from queue import Empty, SimpleQueue
+from typing import Union
 
 from psychopy import core
 from psychopy.core import threading
@@ -26,7 +27,7 @@ class _NoDevice:
         self.start = self.clock.getTime()
         self.count = 0
 
-    def dispensed(self) -> None | int | PelletDispenserError:
+    def dispensed(self) -> Union[None, int, PelletDispenserError]:
         t = self.clock.getTime()
         if (t - self.start) < _NoDevice._Delay:
             return None
@@ -66,7 +67,7 @@ class _AsyncDevice:
         self._dispensed = None
         self.inqueue.put(count)
 
-    def dispensed(self) -> None | int | PelletDispenserError:
+    def dispensed(self) -> Union[None, int, PelletDispenserError]:
         # return last result if any
         if self._dispensed is not None:
             return self._dispensed
@@ -126,7 +127,7 @@ class PelletDispenserDevice:
     def close(self):
         self.device.close()
 
-    def dispense(self, count: int | None = None):
+    def dispense(self, count: Union[int, None] = None):
         if count is None:
             if self.count is not None:
                 self.device.dispense(self.count)
@@ -143,5 +144,5 @@ class PelletDispenserDevice:
         self.count = count
 
     @property
-    def dispensed(self) -> None | int | PelletDispenserError:
+    def dispensed(self) -> Union[None, int, PelletDispenserError]:
         return self.device.dispensed()
