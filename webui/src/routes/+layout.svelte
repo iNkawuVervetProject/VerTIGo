@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.postcss';
-	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
+	import { AppShell, AppBar, LightSwitch } from '@skeletonlabs/skeleton';
 
 	import { synchronizeState } from '$lib/session_state';
 
@@ -13,38 +13,25 @@
 		<!-- App Bar -->
 		<AppBar>
 			<svelte:fragment slot="lead">
-				<strong class="text-xl uppercase">Skeleton</strong>
+				<strong class="text-xl uppercase">ZACI UI</strong>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				<a
 					class="variant-ghost-surface btn btn-sm"
-					href="https://discord.gg/EXqV7W8MtY"
-					target="_blank"
-					rel="noreferrer"
-				>
-					Discord
-				</a>
-				<a
-					class="variant-ghost-surface btn btn-sm"
-					href="https://twitter.com/SkeletonUI"
-					target="_blank"
-					rel="noreferrer"
-				>
-					Twitter
-				</a>
-				<a
-					class="variant-ghost-surface btn btn-sm"
-					href="https://github.com/skeletonlabs/skeleton"
+					href="https://github.com/atuleu/zaci"
 					target="_blank"
 					rel="noreferrer"
 				>
 					GitHub
 				</a>
+				<LightSwitch />
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>
 	<!-- Page Route Content -->
-	<slot />
+	<div class="container mx-auto space-y-8 p-8">
+		<slot />
+	</div>
 </AppShell>
 
 <style></style>

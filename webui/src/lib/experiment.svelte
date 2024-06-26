@@ -19,27 +19,6 @@
 	$: isRunning = $currentExperiment === experiment.key;
 </script>
 
-<p>
-	Title: {experiment.key}
-	{#if isRunning}
-		is running
-	{/if}
-</p>
-
-{#if canRun}
-	<p>can be run</p>
-{:else}
-	<p>cannot be run:</p>
-{/if}
-
-<ul>
-	{#each missingResources as r}
-		<li>missing ressource '{r}'</li>
-	{/each}
-</ul>
-
-<ul>
-	{#each missingParameters as p}
-		<li>missing parameter '{p}'</li>
-	{/each}
-</ul>
+<section class="card w-full">
+	<div class="space-y-4 p-4"></div>
+</section>
