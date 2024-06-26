@@ -11,12 +11,19 @@ class ParticipantService {
 	static localPath: string = LOCAL_STORAGE_DIR + '/participants.json';
 
 	static async OpenLocal(): Promise<ParticipantService> {
-		const content = await fs.readFile(ParticipantService.localPath);
-		return new ParticipantService(JSON.parse(content));
+		try {
+			const content = await fs.promises.readFile(ParticipantService.localPath);
+			return new ParticipantService(JSON.parse(content));
+		} catch (e) {
+			return new ParticipantService({});
+		}
 	}
 
 	private async saveLocal(): Promise<void> {
-		await fs.writeFile(ParticipantService.localPath, JSON.stringify(this.participants));
+		await fs.promises.writeFile(
+			ParticipantService.localPath,
+			JSON.stringify(this.participants)
+		);
 	}
 
 	async participant(name: string): Promise<Participant> {

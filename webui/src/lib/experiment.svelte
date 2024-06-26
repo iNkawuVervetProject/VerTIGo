@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Experiment } from '$lib/types';
 	import { parameters } from './parameters';
+	import { experiment as currentExperiment } from './session_state';
 
 	export let experiment: Experiment;
 
@@ -11,10 +12,20 @@
 	$: missingParameters = experiment.parameters?.filter(
 		(p) => !(p in $parameters) || (p == 'participant' && $parameters.participant?.length === 0)
 	);
-	$: canRun = missingParameters.length === 0 && missingResources.length === 0;
+	$: canRun =
+		$currentExperiment === '' &&
+		missingParameters.length === 0 &&
+		missingResources.length === 0;
+	$: isRunning = $currentExperiment === experiment.key;
 </script>
 
-<p>Title: {experiment.key}</p>
+<p>
+	Title: {experiment.key}
+	{#if isRunning}
+		is running
+	{/if}
+</p>
+
 {#if canRun}
 	<p>can be run</p>
 {:else}
