@@ -19,6 +19,10 @@
 	$: isRunning = $currentExperiment === experiment.key;
 </script>
 
-<section class="card w-full">
-	<div class="space-y-4 p-4"></div>
+<section
+	class="card min-h-24 w-full space-y-4 p-8"
+	class:variant-ghost-surface={!isRunning}
+	class:variant-ghost-secondary={isRunning}
+>
+	<h1 class="text-2xl">{experiment.key}</h1>
 </section>
