@@ -1,0 +1,2 @@
+---
+boot_partition: "{{ ansible_mounts|json_query('[?mount == `/`].device') | first}}"

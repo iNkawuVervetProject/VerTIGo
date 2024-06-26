@@ -36,3 +36,27 @@
   shell: rpi-eeprom-config --apply /var/lib/eeprom-wanted.cfg
   when: wanted.stat.checksum != current.stat.checksum
   notify: reboot for config.txt
+
+- name: ensure root is on nvme
+  block:
+    - name: clone rpi-clone from Jeff Gerling's repo
+      git:
+        repo: https://github.com/geerlingguy/rpi-clone.git
+        dest: /usr/local/src/rpi-clone
+
+    - name: installs rpi-clone
+      file:
+        src: "/usr/local/src/{{ item }}"
+        dest: "/usr/local/sbin/{{ item }}"
+        remote_src: true
+      with_items:
+        - rpi-clone
+        - rpi-clone-setup
+
+    - name: clone the boot partition
+      shell: rpi-clone -U /dev/nvme0n1
+
+    - name: reboot system
+      reboot:
+
+  when: boot_partition != '/dev/nvme0n1p2'
