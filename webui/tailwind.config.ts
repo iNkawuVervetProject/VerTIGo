@@ -2,7 +2,8 @@ import type { Config } from 'tailwindcss';
 import { join } from 'path';
 
 import { skeleton } from '@skeletonlabs/tw-plugin';
-
+import forms from '@tailwindcss/forms';
+import typography from '@tailwindcss/typography';
 const config = {
 	darkMode: 'class',
 	content: [
@@ -14,7 +15,11 @@ const config = {
 		extend: {}
 	},
 
-	plugins: ['@tailwindcss/typography', skeleton({ themes: { preset: ['skeleton'] } })]
+	plugins: [
+		forms,
+		typography,
+		skeleton({ themes: { preset: [{ name: 'skeleton', enhancements: true }] } })
+	]
 } satisfies Config;
 
 export default config;
