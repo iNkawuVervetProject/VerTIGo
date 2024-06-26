@@ -1,1 +1,8 @@
 ---
+- name: ensure zaci account is set
+  user:
+    name: zaci
+    comment: Zaci Main Account
+    groups:
+      - sudo
+    password: "{{ zaci_password }}"
