@@ -1,6 +1,7 @@
-import type { Catalog, Parameters } from '$lib/types';
+import { Participant, type Catalog, type Parameters, type ParticipantByName } from '$lib/types';
 import { get, writable, type Unsubscriber, type Writable } from 'svelte/store';
 
+// A stub session
 class Session {
 	private _catalog: Catalog = {
 		'valid.psyexp': {
@@ -19,11 +20,24 @@ class Session {
 			parameters: ['participant', 'session', 'age']
 		}
 	};
+
+	private _participants: ParticipantByName = Object.assign(
+		{},
+		...[
+			new Participant('asari', 123453),
+			new Participant('turian', 1),
+			new Participant('salarian', 42)
+		].map((p: Participant) => ({ [p.name]: p }))
+	);
+
 	private window: Writable<boolean> = writable<boolean>(false);
 	private experiment: Writable<string> = writable<string>('');
 	private catalog: Writable<Catalog> = writable<Catalog>(this._catalog);
+	private participants: Writable<ParticipantByName> = writable<ParticipantByName>(
+		this._participants
+	);
+	private timeout?: ReturnType<typeof setTimeout> = undefined;
 
-	private timeout: number = -1;
 	public experiments(): Catalog {
 		return this._catalog;
 	}
@@ -49,6 +63,12 @@ class Session {
 			})
 		);
 
+		unsubscribe.push(
+			this.participants.subscribe((value: ParticipantByName) => {
+				onEvent('participanUpdate', value);
+			})
+		);
+
 		return () => {
 			unsubscribe.forEach((u: Unsubscriber) => {
 				u();
@@ -68,7 +88,15 @@ class Session {
 
 		this.window.set(true);
 		this.experiment.set(key);
-
+		const participant = parameters.participant;
+		if (!(participant in this._participants)) {
+			this._participants[participant] = new Participant(participant, 0);
+		}
+		this._participants[participant].nextSession = Math.max(
+			this._participants[participant].nextSession,
+			parameters.session + 1
+		);
+		this.participants.set(this._participants);
 		//experiment finishes after 10s
 		this.timeout = setTimeout(() => {
 			this._stopExperiment();
@@ -76,14 +104,17 @@ class Session {
 	}
 
 	public stopExperiment(): void {
-		if (this.timeout == -1) {
+		if (this.timeout === undefined) {
 			throw new Error('no experiment started');
 		}
 		this._stopExperiment();
 	}
 
 	private _stopExperiment(): void {
-		this.timeout = -1;
+		if (this.timeout !== undefined) {
+			clearTimeout(this.timeout);
+		}
+		this.timeout = undefined;
 		this.experiment.set('');
 	}
 

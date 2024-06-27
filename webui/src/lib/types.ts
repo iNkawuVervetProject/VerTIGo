@@ -15,11 +15,12 @@ export interface Experiment {
 }
 
 export class Participant {
-	name: string;
-	sessions: number;
+	public constructor(
+		public name: string,
+		public nextSession: number = 1
+	) {}
+}
 
-	public constructor(name: string, sessions: number = 0) {
-		this.name = name;
-		this.sessions = sessions;
-	}
+export interface ParticipantByName {
+	[key: string]: Participant;
 }
