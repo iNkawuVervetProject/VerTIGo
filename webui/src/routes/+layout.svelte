@@ -1,5 +1,7 @@
 <script lang="ts">
 	import '../app.postcss';
+	import '@fortawesome/fontawesome-free/css/all.min.css';
+
 	import { AppShell, AppBar, LightSwitch } from '@skeletonlabs/skeleton';
 
 	import { synchronizeState } from '$lib/session_state';
