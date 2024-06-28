@@ -65,7 +65,7 @@ class Session {
 
 		unsubscribe.push(
 			this.participants.subscribe((value: ParticipantByName) => {
-				onEvent('participanUpdate', value);
+				onEvent('participantUpdate', value);
 			})
 		);
 

@@ -1,30 +1,29 @@
 <script lang="ts">
 	import { parameters } from '$lib/parameters';
+	import { participants } from './session_state';
 	import { Autocomplete } from '@skeletonlabs/skeleton';
 	import type { AutocompleteOption } from '@skeletonlabs/skeleton';
 
-	const participantOptions: AutocompleteOption<string>[] = [
-		{ label: 'Asari', value: 'asari', keywords: 'female, biotic' },
-		{ label: 'Krogan', value: 'krogan', keywords: 'violent, genophage' },
-		{ label: 'Salarian', value: 'salarian', keywords: 'fast, scientist' },
-		{ label: 'Quarian', value: 'quarian', keywords: 'fast, scientist' },
-		{ label: 'Turian', value: 'turian', keywords: 'fast, scientist' },
-		{ label: 'Vorcha', value: 'vorcha', keywords: 'fast, scientist' },
-		{ label: 'Batarian', value: 'batarian', keywords: 'fast, scientist' }
-	];
-
+	$: participantOptions = Object.entries($participants).map(
+		([key, p]) =>
+			({
+				label: `<p>${key}</p><p class="text-right text-sm italic w-full"">(next:${p.nextSession})</p>`,
+				value: p.name,
+				meta: { nextSession: p.nextSession }
+			}) as AutocompleteOption<string>
+	);
 	let showSuggestions = false;
 	let suggestions: any;
 
 	function onParticipantSelection(event: CustomEvent<AutocompleteOption<string>>): void {
-		$parameters.participant = event.detail.label;
+		$parameters.participant = event.detail.value;
 		showSuggestions = false;
 	}
 </script>
 
 <div class="relative">
 	<input
-		class="input max-w-sm"
+		class="input md:max-w-sm"
 		type="search"
 		name="participant"
 		bind:value={$parameters.participant}
@@ -41,7 +40,7 @@
 	/>
 
 	<div
-		class="card absolute top-12 z-10 max-h-48 w-full max-w-sm overflow-y-auto p-4"
+		class="card absolute top-12 z-10 max-h-48 w-full overflow-y-auto p-4 md:max-w-sm"
 		class:hidden={!showSuggestions}
 		tabindex="-1"
 		bind:this={suggestions}

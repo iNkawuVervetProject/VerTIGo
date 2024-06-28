@@ -7,19 +7,23 @@ let subscribed = false;
 // a custom store that incrementally merge a dict. If a key points to a null object it is
 // removed. the backend can the incrementally sends diff to the frontend.
 function dictStore<Value, Dict extends { [key: string]: Value }>(obj: Dict) {
-	const { subscribe, update } = writable<Dict>(obj);
+	const { subscribe, set } = writable<Dict>(obj);
 
 	return {
 		subscribe,
 		data: obj,
-		update: (other: Dict): void => {
+		set,
+		mergeDiffs: (other: Dict): void => {
+			console.log('update current:', obj, 'diff: ', other);
+
 			obj = { ...obj, ...other } as Dict;
 			for (const [key, value] of Object.entries(other)) {
 				if (value == null) {
 					delete obj[key];
 				}
 			}
-			update((obj) => obj);
+			console.log('now::', obj);
+			set(obj);
 		}
 	};
 }
@@ -37,9 +41,7 @@ export const messages: Writable<any[]> = writable<any[]>([]);
 
 export function synchronizeState(): void {
 	onMount(() => {
-		console.log('synchronizing....');
 		if (subscribed) {
-			console.log('already synchronized');
 			return;
 		}
 		subscribed = true;
@@ -57,11 +59,11 @@ export function synchronizeState(): void {
 		});
 		eventSource.addEventListener('catalogUpdate', (event) => {
 			const updates = JSON.parse(event.data) as Catalog;
-			_catalog.update(updates);
+			_catalog.mergeDiffs(updates);
 		});
 		eventSource.addEventListener('participantUpdate', (event) => {
 			const updates = JSON.parse(event.data) as ParticipantByName;
-			_participants.update(updates);
+			_participants.mergeDiffs(updates);
 		});
 	});
 }
