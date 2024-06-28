@@ -24,3 +24,9 @@ export class Participant {
 export interface ParticipantByName {
 	[key: string]: Participant;
 }
+
+export interface BatteryState {
+	level: number;
+	onBattery: boolean;
+	charging: boolean;
+}

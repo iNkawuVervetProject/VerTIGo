@@ -1,16 +1,11 @@
 import { dev } from '$app/environment';
 import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
+import type { BatteryState } from '$lib/types';
 
 import { exec as execClbk } from 'child_process';
 import { promisify } from 'util';
 
 const exec = promisify(execClbk);
-
-interface BatteryState {
-	level: number;
-	onBattery: boolean;
-	charging: boolean;
-}
 
 let state: BatteryState | undefined = undefined;
 export function getBatteryState(): BatteryState | undefined {
