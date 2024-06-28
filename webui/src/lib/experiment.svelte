@@ -1,9 +1,40 @@
 <script lang="ts">
-	import type { Experiment } from '$lib/types';
+	import type { Experiment, Participant } from '$lib/types';
 	import { parameters } from './parameters';
-	import { experiment as currentExperiment } from './session_state';
+	import { experiment as currentExperiment, participants } from './session_state';
+	import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton';
 
 	export let experiment: Experiment;
+
+	const modalStore = getModalStore();
+
+	async function confirmStop(key: string): Promise<boolean> {
+		return new Promise<boolean>((resolve) => {
+			const modal: ModalSettings = {
+				type: 'confirm',
+				title: 'Please Confirm',
+				body: `Do you wish to stop ${key}?`,
+				response: (r: boolean) => {
+					resolve(r);
+				}
+			};
+			modalStore.trigger(modal);
+		});
+	}
+
+	async function confirmStart(participant: Participant, session: number): Promise<boolean> {
+		return new Promise<boolean>((resolve) => {
+			const modal: ModalSettings = {
+				type: 'confirm',
+				title: 'Please Confirm Override Session',
+				body: `Pariticipant ${participant.name} may already have recorded session ${session}. Do you wish to continue?`,
+				response: (r: boolean) => {
+					resolve(r);
+				}
+			};
+			modalStore.trigger(modal);
+		});
+	}
 
 	async function start() {
 		const params = Object.assign(
@@ -12,6 +43,17 @@
 				[p]: $parameters[p]
 			}))
 		);
+		if ($parameters.session != undefined && $parameters.participant != undefined) {
+			const session = $parameters.session;
+			const p = $participants[$parameters.participant];
+			if (session < p.nextSession) {
+				const confirm = await confirmStart(p, session);
+				if (confirm == false) {
+					return;
+				}
+			}
+		}
+
 		await fetch('/psysw/api/experiment', {
 			method: 'POST',
 			body: JSON.stringify({ key: experiment.key, parameters: params })
@@ -19,6 +61,10 @@
 	}
 
 	async function stop() {
+		const confirm = await confirmStop($currentExperiment);
+		if (confirm == false) {
+			return;
+		}
 		await fetch('/psysw/api/experiment', { method: 'DELETE' });
 	}
 

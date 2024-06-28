@@ -5,10 +5,13 @@
 	import { AppShell, AppBar, LightSwitch } from '@skeletonlabs/skeleton';
 
 	import { synchronizeState } from '$lib/session_state';
+	import { initializeStores, Modal } from '@skeletonlabs/skeleton';
 
+	initializeStores();
 	synchronizeState();
 </script>
 
+<Modal />
 <!-- App Shell -->
 <AppShell>
 	<svelte:fragment slot="header">
