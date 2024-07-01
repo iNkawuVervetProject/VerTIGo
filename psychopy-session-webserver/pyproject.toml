@@ -25,6 +25,7 @@ dependencies = [
    "structlog",
    "numpy<2",
    "netifaces",
+   "PyXDG"
 ]
 
 [project.optional-dependencies]
