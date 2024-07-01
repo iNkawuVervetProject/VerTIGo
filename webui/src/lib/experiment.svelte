@@ -46,7 +46,7 @@
 		if ($parameters.session != undefined && $parameters.participant != undefined) {
 			const session = $parameters.session;
 			const p = $participants[$parameters.participant];
-			if (session < p.nextSession) {
+			if (p != undefined && session < p.nextSession) {
 				const confirm = await confirmStart(p, session);
 				if (confirm == false) {
 					return;

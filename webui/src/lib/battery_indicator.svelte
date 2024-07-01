@@ -27,8 +27,8 @@
 		class:fa-plug={!state.charging ?? false}
 		class:fa-plug-circle-bolt={state.charging ?? false}
 		class:fa-plug-circle-exclamation={state.charging == undefined}
-		class:text-error-500={state.level == undefined || state.level < 5}
-		class:text-warning-500={(state.level ?? 10) < 10}
+		class:text-warning-500={(state.level ?? 10) < 10 && (state.level ?? 10) > 5}
+		class:text-error-500={state.level == undefined || state.level <= 5}
 	/>
 	<p class="min-w-8 text-left">{state.level ?? '??'}%</p>
 </div>

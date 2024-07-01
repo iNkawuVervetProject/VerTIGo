@@ -43,7 +43,8 @@
 					message: 'Could not read battery status',
 					autohide: false,
 					background: 'variant-filled-error',
-					hideDismiss: true
+					hideDismiss: true,
+					classes: 'w-96 md:w-[32rem]'
 				});
 			}
 
@@ -55,7 +56,8 @@
 			warningToast = toasts.trigger({
 				message: 'Battery level is low, system will turnoff soon unless plugged.',
 				autohide: false,
-				background: 'variant-filled-warning'
+				background: 'variant-filled-warning',
+				classes: 'w-96 md:w-[32rem]'
 			});
 		}
 
@@ -67,7 +69,8 @@
 				message: 'Battery level is critically low, system will turnoff now.',
 				autohide: false,
 				background: 'variant-filled-error',
-				hideDismiss: true
+				hideDismiss: true,
+				classes: 'w-96 md:w-[32rem]'
 			});
 		}
 
