@@ -1,0 +1,21 @@
+---
+- name: ensure driver for the onboard sound is removed
+  lineinfile:
+    path: /boot/firmware/config.txt
+    regexp: "^dtparam=audio=on"
+    state: absent
+  notify: reboots pi
+
+- name: ensure audio on hdmi is disabled
+  lineinfile:
+    path: /boot/firmware/config.txt
+    regexp: "^dtoverlay=vc4-kms-v3d"
+    line: "dtoverlay=vc4-kms-v3d,noaudio"
+  notify: reboots pi
+
+- name: ensure miniamp is setupe
+  lineinfile:
+    path: /boot/firmware/config.txt
+    line: "dtoverlay=hifiberry-dac"
+    state: present
+  notify: reboots pi
