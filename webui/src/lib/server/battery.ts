@@ -55,7 +55,7 @@ if (PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev) {
 	setInterval(() => {
 		if (state?.onBattery) {
 			state.level -= 1;
-			if (state.level == 3) {
+			if (state.level == 1) {
 				state.onBattery = false;
 				state.charging = true;
 			}
@@ -70,8 +70,7 @@ if (PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev) {
 				state.onBattery = true;
 			}
 		}
-		console.log(state);
-	}, 1000);
+	}, 300);
 } else {
 	setInterval(async () => {
 		await readBatteryState();

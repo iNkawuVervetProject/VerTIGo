@@ -1,7 +1,7 @@
 import type { BatteryState } from '$lib/types';
 import type { LayoutLoad } from './$types';
 
-export const load: LayoutLoad = async ({}) => {
+export const load: LayoutLoad = async ({ fetch }) => {
 	try {
 		const state = await fetch('/api/battery').then((resp) => resp.json());
 		return {

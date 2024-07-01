@@ -5,7 +5,7 @@
 	import { AppShell, AppBar, LightSwitch } from '@skeletonlabs/skeleton';
 
 	import { synchronizeState } from '$lib/session_state';
-	import { initializeStores, Modal } from '@skeletonlabs/skeleton';
+	import { initializeStores, Modal, Toast, getToastStore } from '@skeletonlabs/skeleton';
 	import { invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import type { LayoutData } from './$types';
@@ -16,19 +16,78 @@
 	synchronizeState();
 
 	onMount(() => {
-		const frequency = dev ? 2000 : 10000;
+		const frequency = dev ? 300 : 10000;
 		const interval = setInterval(() => {
-			invalidate('/');
-			console.log('invalidating /');
+			invalidate('/api/battery');
 		}, frequency);
 
 		return () => clearInterval(interval);
 	});
 
+	const toasts = getToastStore();
+
 	export let data: LayoutData;
+
+	let previous: number | undefined = 100;
+	let alertToast: string | undefined = undefined;
+	let warningToast: string | undefined = undefined;
+
+	function onNewBatteryValue(level: number | undefined, charging: boolean): void {
+		if (level == undefined) {
+			if (previous != undefined) {
+				if (alertToast != undefined) {
+					toasts.close(alertToast);
+				}
+
+				alertToast = toasts.trigger({
+					message: 'Could not read battery status',
+					autohide: false,
+					background: 'variant-filled-error',
+					hideDismiss: true
+				});
+			}
+
+			previous = undefined;
+			return;
+		}
+
+		if ((previous ?? 11) > 10 && level <= 10) {
+			warningToast = toasts.trigger({
+				message: 'Battery level is low, system will turnoff soon unless plugged.',
+				autohide: false,
+				background: 'variant-filled-warning'
+			});
+		}
+
+		if ((previous ?? 6) > 5 && level <= 5) {
+			if (alertToast != undefined) {
+				toasts.close(alertToast);
+			}
+			alertToast = toasts.trigger({
+				message: 'Battery level is critically low, system will turnoff now.',
+				autohide: false,
+				background: 'variant-filled-error',
+				hideDismiss: true
+			});
+		}
+
+		previous = level;
+		if ((charging || level > 5) && alertToast != undefined) {
+			toasts.close(alertToast);
+			alertToast = undefined;
+		}
+
+		if ((charging || level > 10) && warningToast != undefined) {
+			toasts.close(warningToast);
+			warningToast = undefined;
+		}
+	}
+
+	$: onNewBatteryValue(data.battery.level, data.battery.charging ?? false);
 </script>
 
 <Modal />
+<Toast />
 <!-- App Shell -->
 <AppShell>
 	<svelte:fragment slot="header">
