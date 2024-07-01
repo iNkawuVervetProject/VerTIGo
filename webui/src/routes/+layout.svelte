@@ -6,9 +6,26 @@
 
 	import { synchronizeState } from '$lib/session_state';
 	import { initializeStores, Modal } from '@skeletonlabs/skeleton';
+	import { invalidate } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import type { LayoutData } from './$types';
+	import { dev } from '$app/environment';
+	import BatteryIndicator from '$lib/battery_indicator.svelte';
 
 	initializeStores();
 	synchronizeState();
+
+	onMount(() => {
+		const frequency = dev ? 2000 : 10000;
+		const interval = setInterval(() => {
+			invalidate('/');
+			console.log('invalidating /');
+		}, frequency);
+
+		return () => clearInterval(interval);
+	});
+
+	export let data: LayoutData;
 </script>
 
 <Modal />
@@ -29,6 +46,7 @@
 				>
 					GitHub
 				</a>
+				<BatteryIndicator state={data.battery} />
 				<LightSwitch />
 			</svelte:fragment>
 		</AppBar>

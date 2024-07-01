@@ -14,15 +14,12 @@ function dictStore<Value, Dict extends { [key: string]: Value }>(obj: Dict) {
 		data: obj,
 		set,
 		mergeDiffs: (other: Dict): void => {
-			console.log('update current:', obj, 'diff: ', other);
-
 			obj = { ...obj, ...other } as Dict;
 			for (const [key, value] of Object.entries(other)) {
 				if (value == null) {
 					delete obj[key];
 				}
 			}
-			console.log('now::', obj);
 			set(obj);
 		}
 	};

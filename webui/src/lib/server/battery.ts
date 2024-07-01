@@ -70,6 +70,7 @@ if (PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev) {
 				state.onBattery = true;
 			}
 		}
+		console.log(state);
 	}, 1000);
 } else {
 	setInterval(async () => {
