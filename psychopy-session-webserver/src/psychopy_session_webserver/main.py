@@ -3,6 +3,7 @@ import ipaddress
 import logging
 import os
 import time
+from typing import Dict
 
 import structlog
 from fastapi import FastAPI, Request, Response
@@ -15,7 +16,7 @@ from pydantic import BaseModel
 from psychopy_session_webserver.options import parse_options
 from psychopy_session_webserver.server import BackgroundServer
 from psychopy_session_webserver.session import Session
-from psychopy_session_webserver.types import Catalog, Parameter
+from psychopy_session_webserver.types import Catalog, Parameter, Participant
 from psychopy_session_webserver.utils import format_ns
 
 app = FastAPI()
@@ -105,6 +106,11 @@ async def get_events():
 @app.delete("/window")
 async def close_window(request: Request):
     await session.asyncCloseWindow(logger=request.state.slog)
+
+
+@app.get("/participants")
+async def get_participants() -> Dict[str, Participant]:
+    return session.participants
 
 
 class RunExperimentRequest(BaseModel):

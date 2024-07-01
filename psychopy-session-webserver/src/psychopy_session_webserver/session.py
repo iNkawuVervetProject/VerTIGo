@@ -5,7 +5,7 @@ from gettext import Catalog
 from glob import glob
 from pathlib import Path
 from queue import Queue
-from typing import Optional
+from typing import Dict, Optional
 
 import structlog
 from watchdog import observers
@@ -14,7 +14,7 @@ from psychopy_session_webserver.async_task_runner import AsyncTaskRunner
 from psychopy_session_webserver.dependency_checker import DependencyChecker
 from psychopy_session_webserver.file_event_handler import FileEventHandler
 from psychopy_session_webserver.participants_updater import ParticipantUpdater
-from psychopy_session_webserver.types import Catalog, Experiment
+from psychopy_session_webserver.types import Catalog, Experiment, Participant
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 
 
@@ -63,6 +63,10 @@ class Session(AsyncTaskRunner):
     @property
     def experiments(self) -> Catalog:
         return self._experiments
+
+    @property
+    def participants(self) -> Dict[str, Participant]:
+        return self._participants._participants
 
     def closeWindow(self, logger=None):
         if self._session.win is None:
