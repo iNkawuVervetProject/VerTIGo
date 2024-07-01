@@ -20,3 +20,23 @@
   shell: |
     env SUDO_USER=zaci raspi-config nonint do_boot_behaviour "B4 Desktop Autologin"
   when: zaci_autologin.changed
+
+- name: install required packages
+  apt:
+    name:
+      - build-essential
+      - libssl-dev
+      - zlib1g-dev
+      - libbz2-dev
+      - libreadline-dev
+      - libsqlite3-dev
+      - curl
+      - git
+      - libncursesw5-dev
+      - xz-utils
+      - tk-dev
+      - libxml2-dev
+      - libxmlsec1-dev
+      - libffi-dev
+      - liblzma-dev
+    state: present

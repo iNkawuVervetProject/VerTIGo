@@ -1,0 +1,12 @@
+---
+dependencies:
+  - role: staticdev.pyenv
+    vars:
+      pyenv_env: "system"
+      pyenv_python_versions:
+        - 3.10.14
+      pyenv_python_configure_opts: --enable-optimizations --with-lto --enable-shared
+      pyenv_virtualenvs:
+        - venv_name: psychopy_session_webserver
+          py_version: 3.10.14
+      pyenv_make_opts: "-j4"
