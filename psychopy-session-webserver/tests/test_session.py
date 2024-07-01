@@ -7,8 +7,12 @@ import unittest
 from contextlib import contextmanager
 from pathlib import Path
 
+from structlog import get_logger
+from xdg import BaseDirectory
+
+from psychopy_session_webserver.participants_updater import ParticipantUpdater
 from psychopy_session_webserver.session import Session
-from psychopy_session_webserver.types import Experiment
+from psychopy_session_webserver.types import Experiment, Participant
 from psychopy_session_webserver.update_broadcaster import UpdateEvent
 
 from tests.mock_session import build_mock_session
@@ -19,7 +23,13 @@ class SessionTest(unittest.TestCase):
 
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
+
         self.sessionDir = Path(self.tempdir.name).joinpath("session")
+        ParticipantUpdater._filepath = Path(self.tempdir.name).joinpath(
+            "xdg_data_dir/participants.json"
+        )
+        os.makedirs(ParticipantUpdater._filepath.parent)
+
         self.psy_session = build_mock_session(self.sessionDir)
 
         os.makedirs(self.sessionDir)
@@ -34,6 +44,9 @@ class SessionTest(unittest.TestCase):
         self.session.close()
         self.tempdir.cleanup()
         del self.session
+        ParticipantUpdater._filepath = Path(
+            BaseDirectory.save_data_path("psychopy_session_webserver")
+        ).joinpath("participants.json")
 
     def test_existing_experiment_are_listed(self):
         self.assertIn("foo.psyexp", self.session.experiments)
@@ -136,6 +149,12 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
         self.loop = asyncio.get_running_loop()
 
         self.tempdir = tempfile.TemporaryDirectory()
+
+        ParticipantUpdater._filepath = Path(self.tempdir.name).joinpath(
+            "xdg_data_dir/participants.json"
+        )
+        os.makedirs(ParticipantUpdater._filepath.parent)
+
         self.sessionDir = Path(self.tempdir.name).joinpath("session")
 
         os.makedirs(self.sessionDir)
@@ -165,11 +184,17 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(UpdateEvent(type="experimentUpdate", data=""), event)
 
         event = await anext(self.updates)
+        self.assertEqual("participantsUpdate", event.type)
+
+        event = await anext(self.updates)
         self.assertEqual(UpdateEvent(type="windowUpdate", data=False), event)
 
     async def asyncTearDown(self) -> None:
         self.session.close()
         self.tempdir.cleanup()
+        ParticipantUpdater._filepath = Path(
+            BaseDirectory.save_data_path("psychopy_session_webserver")
+        ).joinpath("participants.json")
 
     def local_filepath(self, path):
         return self.sessionDir.joinpath(path)
@@ -193,7 +218,7 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
         os.remove(self.local_filepath("foo.psyexp"))
         event = await anext(self.updates)
         self.assertEqual(event.type, "catalogUpdate")
-        self.assertDictEqual({}, event.data)
+        self.assertDictEqual({"foo.psyexp": None}, event.data)
 
     async def test_experiment_update(self):
         self.local_filepath("foo.png").touch()
@@ -208,6 +233,10 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
         event = await anext(self.updates)
         self.assertEqual(event.type, "windowUpdate")
         self.assertEqual(event.data, True)
+
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "participantsUpdate")
+        self.assertEqual(event.data, {"Lolo": Participant(name="Lolo", nextSession=3)})
 
         event = await anext(self.updates)
         self.assertEqual(event.type, "experimentUpdate")

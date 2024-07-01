@@ -5,6 +5,7 @@ import os
 import time
 from typing import Dict
 
+from pydantic_core import to_json
 import structlog
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import HTTPException
@@ -89,10 +90,7 @@ async def get_experiments() -> Catalog:
 
 async def send_server_side_event(agen):
     async for event in agen:
-        if isinstance(event.data, BaseModel):
-            dump = event.data.model_dump_json()
-        else:
-            dump = event.__pydantic_serializer__.to_json(event.data, warnings=False)
+        dump = to_json(event.data, indent=None)
         yield f"event:{event.type}\ndata:{dump.decode(encoding='utf-8')}\n\n"
 
 

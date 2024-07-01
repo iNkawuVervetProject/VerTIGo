@@ -28,8 +28,8 @@ Catalog: TypeAlias = Dict[str, Experiment]
 Updatable: TypeAlias = Union[
     str,
     bool,
-    Mapping[str, Union[None, Experiment]],
-    Mapping[str, Union[None, Participant]],
+    Dict[str, Union[None, Experiment]],
+    Dict[str, Union[None, Participant]],
 ]
 
 

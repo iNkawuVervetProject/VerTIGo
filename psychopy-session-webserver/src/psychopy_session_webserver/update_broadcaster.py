@@ -26,7 +26,7 @@ class UpdateBroadcaster:
             self._stores[name] = {}
         if isinstance(self._stores, dict) == False:
             raise RuntimeError(f"'{name}' is not a dict")
-        if value is None:
+        if value is None and key in self._stores[name]:
             del self._stores[name][key]
         else:
             self._stores[name][key] = value

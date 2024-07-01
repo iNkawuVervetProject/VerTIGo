@@ -7,7 +7,7 @@ from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 from pydantic_core import to_json, from_json
 
 
-import xdg
+from xdg import BaseDirectory
 
 
 class ParticipantUpdater:
@@ -20,21 +20,20 @@ class ParticipantUpdater:
         self._updates.broadcast("participants", self._participants)
 
     def __setitem__(self, name: str, session: int) -> None:
-        updated = self._participants.get(
-            name, Participant(name=name, nextSession=0)
-        ).update(session)
+        if name not in self._participants:
+            self._participants[name] = Participant(name=name, nextSession=0)
 
-        if updated == False:
+        if self._participants[name].update(session) == False:
             return
 
         self._save_to_xdg()
-        self._updates.broadcastDict("participants", name, session)
+        self._updates.broadcastDict("participants", name, self._participants[name])
 
     def __getitem__(self, name: str) -> Participant:
         return self._participants[name]
 
     _filepath = Path(
-        xdg.BaseDirectory.save_data_path("psychopy_session_webserver")
+        BaseDirectory.save_data_path("psychopy_session_webserver")
     ).joinpath("participants.json")
 
     def _load_from_xdg(self):
@@ -52,7 +51,7 @@ class ParticipantUpdater:
 
     def _update_from_data(self, dataDir):
         participants = {}
-        for f in glob(str(Path(dataDir).joinpath("**/*.psydat"))):
+        for f in glob(str(Path(dataDir or "data").joinpath("**/*.psydat"))):
             name = Path(f).stem.split("_")[0]
             participants[name] = participants.get(name, 1) + 1
 
