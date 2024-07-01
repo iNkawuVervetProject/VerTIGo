@@ -1,0 +1,10 @@
+mutf8-1.0.6-cp310-cp310-linux_aarch64.whl filter=lfs diff=lfs merge=lfs -text
+numpy-1.26.4-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl filter=lfs diff=lfs merge=lfs -text
+pillow-10.3.0-cp310-cp310-manylinux_2_28_aarch64.whl filter=lfs diff=lfs merge=lfs -text
+psutil-5.9.8-cp310-abi3-linux_aarch64.whl filter=lfs diff=lfs merge=lfs -text
+psychtoolbox-3.0.19.0-cp310-cp310-linux_aarch64.whl filter=lfs diff=lfs merge=lfs -text
+PyQt6-6.7.0-cp38-abi3-manylinux_2_28_aarch64.whl filter=lfs diff=lfs merge=lfs -text
+PyQt6_sip-13.6.0-cp310-cp310-linux_aarch64.whl filter=lfs diff=lfs merge=lfs -text
+six-1.16.0-py2.py3-none-any.whl filter=lfs diff=lfs merge=lfs -text
+ffpyplayer-4.5.1-cp310-cp310-linux_aarch64.whl filter=lfs diff=lfs merge=lfs -text
+wxPython-4.2.1-cp310-cp310-linux_aarch64.whl filter=lfs diff=lfs merge=lfs -text
