@@ -3,6 +3,8 @@ dependencies:
   - role: staticdev.pyenv
     vars:
       pyenv_env: "system"
+      pyenv_version: "v2.4.5"
+      pyenv_virtualenv_version: "v1.2.3"
       pyenv_python_versions:
         - 3.10.14
       pyenv_python_configure_opts: --enable-optimizations --with-lto --enable-shared
