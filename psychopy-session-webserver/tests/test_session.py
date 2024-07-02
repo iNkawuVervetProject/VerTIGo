@@ -7,10 +7,11 @@ import unittest
 from contextlib import contextmanager
 from pathlib import Path
 
+from pydantic import ValidationError
 from structlog import get_logger
 from xdg import BaseDirectory
 
-from psychopy_session_webserver.participants_updater import ParticipantUpdater
+from psychopy_session_webserver.participants_registry import ParticipantRegistry
 from psychopy_session_webserver.session import Session
 from psychopy_session_webserver.types import Experiment, Participant
 from psychopy_session_webserver.update_broadcaster import UpdateEvent
@@ -25,10 +26,10 @@ class SessionTest(unittest.TestCase):
         self.tempdir = tempfile.TemporaryDirectory()
 
         self.sessionDir = Path(self.tempdir.name).joinpath("session")
-        ParticipantUpdater._filepath = Path(self.tempdir.name).joinpath(
+        ParticipantRegistry._filepath = Path(self.tempdir.name).joinpath(
             "xdg_data_dir/participants.json"
         )
-        os.makedirs(ParticipantUpdater._filepath.parent)
+        os.makedirs(ParticipantRegistry._filepath.parent)
 
         self.psy_session = build_mock_session(self.sessionDir)
 
@@ -44,7 +45,7 @@ class SessionTest(unittest.TestCase):
         self.session.close()
         self.tempdir.cleanup()
         del self.session
-        ParticipantUpdater._filepath = Path(
+        ParticipantRegistry._filepath = Path(
             BaseDirectory.save_data_path("psychopy_session_webserver")
         ).joinpath("participants.json")
 
@@ -125,6 +126,16 @@ class SessionTest(unittest.TestCase):
             "experiment 'foo.psyexp' is missing the resource(s) ['foo.png']",
         )
 
+    def test_run_experiment_validate_participant_name(self):
+        with self.with_file("foo.png"), self.assertRaises(ValidationError) as e:
+            self.session.runExperiment(
+                "foo.psyexp",
+                participant="some invalid name",
+                session=3,
+            )
+
+        self.assertRegex(str(e.exception), "1 validation error for Participant")
+
     def test_run_experiment(self):
         with self.with_file("foo.png"):
             self.session.runExperiment(
@@ -150,10 +161,10 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
 
         self.tempdir = tempfile.TemporaryDirectory()
 
-        ParticipantUpdater._filepath = Path(self.tempdir.name).joinpath(
+        ParticipantRegistry._filepath = Path(self.tempdir.name).joinpath(
             "xdg_data_dir/participants.json"
         )
-        os.makedirs(ParticipantUpdater._filepath.parent)
+        os.makedirs(ParticipantRegistry._filepath.parent)
 
         self.sessionDir = Path(self.tempdir.name).joinpath("session")
 
@@ -192,7 +203,7 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
     async def asyncTearDown(self) -> None:
         self.session.close()
         self.tempdir.cleanup()
-        ParticipantUpdater._filepath = Path(
+        ParticipantRegistry._filepath = Path(
             BaseDirectory.save_data_path("psychopy_session_webserver")
         ).joinpath("participants.json")
 
@@ -230,13 +241,14 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
             participant="Lolo",
             session=2,
         )
-        event = await anext(self.updates)
-        self.assertEqual(event.type, "windowUpdate")
-        self.assertEqual(event.data, True)
 
         event = await anext(self.updates)
         self.assertEqual(event.type, "participantsUpdate")
         self.assertEqual(event.data, {"Lolo": Participant(name="Lolo", nextSession=3)})
+
+        event = await anext(self.updates)
+        self.assertEqual(event.type, "windowUpdate")
+        self.assertEqual(event.data, True)
 
         event = await anext(self.updates)
         self.assertEqual(event.type, "experimentUpdate")

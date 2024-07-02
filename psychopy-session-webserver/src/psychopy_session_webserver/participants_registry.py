@@ -10,7 +10,7 @@ from pydantic_core import to_json, from_json
 from xdg import BaseDirectory
 
 
-class ParticipantUpdater:
+class ParticipantRegistry:
 
     def __init__(self, updates: UpdateBroadcaster, dataDir=None):
         self._updates = updates
@@ -20,10 +20,12 @@ class ParticipantUpdater:
         self._updates.broadcast("participants", self._participants)
 
     def __setitem__(self, name: str, session: int) -> None:
+        updated = False
         if name not in self._participants:
-            self._participants[name] = Participant(name=name, nextSession=0)
+            self._participants[name] = Participant(name=name, nextSession=session)
+            updated = True
 
-        if self._participants[name].update(session) == False:
+        if updated == False and self._participants[name].update(session) == False:
             return
 
         self._save_to_xdg()
@@ -37,16 +39,16 @@ class ParticipantUpdater:
     ).joinpath("participants.json")
 
     def _load_from_xdg(self):
-        if ParticipantUpdater._filepath.exists() == False:
+        if ParticipantRegistry._filepath.exists() == False:
             return
 
-        with open(ParticipantUpdater._filepath, "r") as f:
+        with open(ParticipantRegistry._filepath, "r") as f:
             self._participants.update(
                 {k: Participant(**v) for k, v in from_json(f.read()).items()}
             )
 
     def _save_to_xdg(self):
-        with open(ParticipantUpdater._filepath, "wb") as f:
+        with open(ParticipantRegistry._filepath, "wb") as f:
             f.write(to_json(self._participants, indent=2))
 
     def _update_from_data(self, dataDir):
@@ -56,6 +58,6 @@ class ParticipantUpdater:
             participants[name] = participants.get(name, 1) + 1
 
         for name, nextSession in participants.items():
-            self._participants.get(name, Participant(name=name, nextSession=1)).update(
-                nextSession
-            )
+            if name not in self._participants:
+                self._participants[name] = Participant(name=name, nextSession=1)
+            self._participants[name].update(nextSession)

@@ -13,7 +13,7 @@ from watchdog import observers
 from psychopy_session_webserver.async_task_runner import AsyncTaskRunner
 from psychopy_session_webserver.dependency_checker import DependencyChecker
 from psychopy_session_webserver.file_event_handler import FileEventHandler
-from psychopy_session_webserver.participants_updater import ParticipantUpdater
+from psychopy_session_webserver.participants_registry import ParticipantRegistry
 from psychopy_session_webserver.types import Catalog, Experiment, Participant
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 
@@ -43,7 +43,7 @@ class Session(AsyncTaskRunner):
         self._updates.broadcast("experiment", "")
         self._updates.broadcast("window", False)
         self._updates.broadcast("catalog", {})
-        self._participants = ParticipantUpdater(self._updates, dataDir=dataDir)
+        self._participants = ParticipantRegistry(self._updates, dataDir=dataDir)
 
         self._observer = observers.Observer()
         self._event_handler = FileEventHandler(session=self, root=root)
@@ -154,6 +154,9 @@ class Session(AsyncTaskRunner):
         expInfo = self._session.getExpInfoFromExperiment(key)
         expInfo.update(kwargs)
 
+        if "participant" in expInfo and "session" in expInfo:
+            self._participants[expInfo["participant"]] = int(expInfo["session"]) + 1
+
         return expInfo
 
     def _runExperiment(
@@ -165,9 +168,6 @@ class Session(AsyncTaskRunner):
             self._updates.broadcast("window", True)
 
             self._currentExperiment = key
-
-        if "participant" in expInfo and "session" in expInfo:
-            self._participants[expInfo["participant"]] = int(expInfo["session"]) + 1
 
         self._updates.broadcast("experiment", key)
 

@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Mapping, TypeAlias, Union
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 ParameterDeclaration: TypeAlias = List[str]
@@ -13,8 +13,8 @@ class Experiment(BaseModel):
 
 
 class Participant(BaseModel):
-    name: str
-    nextSession: int
+    name: str = Field(pattern=r"^[a-zA-Z0-9\-]+$")
+    nextSession: int = Field(gt=0)
 
     def update(self, nextSession: int) -> bool:
         if self.nextSession >= nextSession:
