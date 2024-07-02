@@ -39,4 +39,21 @@
       - libxmlsec1-dev
       - libffi-dev
       - liblzma-dev
+      - libhidapi-hidraw0
     state: present
+
+- name: ensure shims are users writable
+  file:
+    path: /usr/local/pyenv/shims
+    state: directory
+    mode: 0775
+    owner: root
+    group: users
+
+- name: copy pre-compiled wheels
+  synchronize:
+    src: wheels/
+    dest: /usr/local/wheels/
+    rsync_opts:
+      - '--include=*.whl'
+      - '--exclude=*'

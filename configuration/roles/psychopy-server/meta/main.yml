@@ -7,6 +7,8 @@ dependencies:
       pyenv_virtualenv_version: "v1.2.3"
       pyenv_python_versions:
         - 3.10.14
+      pyenv_global:
+        - 3.10.14
       pyenv_python_configure_opts: --enable-optimizations --with-lto --enable-shared
       pyenv_virtualenvs:
         - venv_name: psychopy_session_webserver
