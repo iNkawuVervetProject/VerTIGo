@@ -19,3 +19,15 @@
     line: "dtoverlay=hifiberry-dac"
     state: present
   notify: reboots pi
+
+- name: installs alsaeq modules
+  apt:
+    name:
+      - libasound2-plugin-equal
+    state: present
+
+- name: configures alsa with alsaeq
+  copy:
+    src: asound.conf
+    dest: /etc/asound.conf
+  notify: reboots pi
