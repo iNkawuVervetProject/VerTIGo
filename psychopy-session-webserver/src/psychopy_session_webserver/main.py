@@ -5,10 +5,9 @@ import os
 import time
 from typing import Dict
 
-from pydantic_core import to_json
+from pydantic_core import ValidationError, to_json
 import structlog
-from fastapi import FastAPI, Request, Response
-from fastapi.exceptions import HTTPException
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from hypercorn.config import Config
 from psychopy.session import asyncio
@@ -17,7 +16,7 @@ from pydantic import BaseModel
 from psychopy_session_webserver.options import parse_options
 from psychopy_session_webserver.server import BackgroundServer
 from psychopy_session_webserver.session import Session
-from psychopy_session_webserver.types import Catalog, Parameter, Participant
+from psychopy_session_webserver.types import Catalog, Experiment, Parameter, Participant
 from psychopy_session_webserver.utils import format_ns
 
 app = FastAPI()
@@ -75,6 +74,7 @@ async def log_access(request: Request, call_next):
 
 @app.exception_handler(KeyError)
 @app.exception_handler(RuntimeError)
+@app.exception_handler(ValidationError)
 async def handle_session_error(request: Request, exc: Exception):
     end = time.time_ns()
     await request.state.slog.awarn(
@@ -83,7 +83,35 @@ async def handle_session_error(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": str(exc)})
 
 
-@app.get("/experiments")
+@app.get(
+    "/experiments",
+    responses={
+        200: {
+            "description": "List of available experiments.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "blue.psyexp": {
+                            "key": "blue.psyexp",
+                            "resources": {},
+                            "parameters": ["participant", "session"],
+                        },
+                        "green.psyexp": {
+                            "key": "green.psyexp",
+                            "resources": {},
+                            "parameters": ["participant", "session"],
+                        },
+                        "complex.psyexp": {
+                            "key": "complex.psyexp",
+                            "resources": {"image.png": True, "missing.png": False},
+                            "parameters": ["participant", "session", "reward"],
+                        },
+                    }
+                }
+            },
+        },
+    },
+)
 async def get_experiments() -> Catalog:
     return session.experiments
 
@@ -102,11 +130,26 @@ async def get_events():
 
 
 @app.delete("/window")
-async def close_window(request: Request):
+async def close_window(request: Request) -> None:
     await session.asyncCloseWindow(logger=request.state.slog)
 
 
-@app.get("/participants")
+@app.get(
+    "/participants",
+    responses={
+        200: {
+            "description": "List of known participants",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "asari": Participant(name="asari", nextSession=12345),
+                        "turian": Participant(name="turian", nextSession=1),
+                    }
+                }
+            },
+        }
+    },
+)
 async def get_participants() -> Dict[str, Participant]:
     return session.participants
 
@@ -117,14 +160,14 @@ class RunExperimentRequest(BaseModel):
 
 
 @app.post("/experiment/")
-async def run_experiment(body: RunExperimentRequest, request: Request):
+async def run_experiment(body: RunExperimentRequest, request: Request) -> None:
     await session.asyncRunExperiment(
         body.key, logger=request.state.slog, **body.parameter
     )
 
 
 @app.delete("/experiment")
-async def stop_experiment(request: Request):
+async def stop_experiment(request: Request) -> None:
     await session.asyncStopExperiment(logger=request.state.slog)
 
 

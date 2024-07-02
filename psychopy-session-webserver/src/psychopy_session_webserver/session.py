@@ -154,6 +154,11 @@ class Session(AsyncTaskRunner):
         expInfo = self._session.getExpInfoFromExperiment(key)
         expInfo.update(kwargs)
 
+        if int(expInfo.get("session", 1)) < 1:
+            raise RuntimeError(
+                f"session value should be at least 1 (got: {expInfo['session']})"
+            )
+
         if "participant" in expInfo and "session" in expInfo:
             self._participants[expInfo["participant"]] = int(expInfo["session"]) + 1
 
