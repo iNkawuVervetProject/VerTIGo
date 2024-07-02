@@ -1,12 +1,7 @@
 from asyncio.queues import Queue
-from typing import Any, Type
+from typing import Any, Mapping, Union
 
-from pydantic import BaseModel
-
-
-class UpdateEvent(BaseModel):
-    type: str
-    data: Any
+from psychopy_session_webserver.types import Experiment, Participant, UpdateEvent
 
 
 class UpdateBroadcaster:
@@ -26,7 +21,26 @@ class UpdateBroadcaster:
     def close(self):
         self._push_all(None)
 
+    def broadcastDict(self, name: str, key: str, value):
+        if name not in self._stores:
+            self._stores[name] = {}
+        if isinstance(self._stores, dict) == False:
+            raise RuntimeError(f"'{name}' is not a dict")
+        if value is None and key in self._stores[name]:
+            del self._stores[name][key]
+        else:
+            self._stores[name][key] = value
+
+        self._push_all(UpdateEvent(type=name + "Update", data={key: value}))
+
     def broadcast(self, name: str, value: Any):
+        if isinstance(value, dict) and isinstance(self._stores.get(name, None), dict):
+            deletedKeys = [
+                k for k in self._stores.get(name, {}).keys() if k not in value.keys()
+            ]
+            for k in deletedKeys:
+                self._push_all(UpdateEvent(type=name + "Update", data={k: None}))
+
         self._stores[name] = value
         event = UpdateEvent(type=name + "Update", data=value)
         self._push_all(event)

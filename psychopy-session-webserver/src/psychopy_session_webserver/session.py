@@ -5,7 +5,7 @@ from gettext import Catalog
 from glob import glob
 from pathlib import Path
 from queue import Queue
-from typing import Optional
+from typing import Dict, Optional
 
 import structlog
 from watchdog import observers
@@ -13,7 +13,8 @@ from watchdog import observers
 from psychopy_session_webserver.async_task_runner import AsyncTaskRunner
 from psychopy_session_webserver.dependency_checker import DependencyChecker
 from psychopy_session_webserver.file_event_handler import FileEventHandler
-from psychopy_session_webserver.types import Catalog, Experiment
+from psychopy_session_webserver.participants_registry import ParticipantRegistry
+from psychopy_session_webserver.types import Catalog, Experiment, Participant
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 
 
@@ -42,6 +43,7 @@ class Session(AsyncTaskRunner):
         self._updates.broadcast("experiment", "")
         self._updates.broadcast("window", False)
         self._updates.broadcast("catalog", {})
+        self._participants = ParticipantRegistry(self._updates, dataDir=dataDir)
 
         self._observer = observers.Observer()
         self._event_handler = FileEventHandler(session=self, root=root)
@@ -61,6 +63,10 @@ class Session(AsyncTaskRunner):
     @property
     def experiments(self) -> Catalog:
         return self._experiments
+
+    @property
+    def participants(self) -> Dict[str, Participant]:
+        return self._participants._participants
 
     def closeWindow(self, logger=None):
         if self._session.win is None:
@@ -97,7 +103,7 @@ class Session(AsyncTaskRunner):
         )
         self._experiments[key] = self._buildExperimentInfo(key)
         self._bind_logger().info("added experiment", key=key)
-        self._updates.broadcast("catalog", self._experiments)
+        self._updates.broadcastDict("catalog", key, self._experiments[key])
 
     def _buildExperimentInfo(self, key):
         expInfo = self._session.getExpInfoFromExperiment(key)
@@ -115,7 +121,7 @@ class Session(AsyncTaskRunner):
         del self._experiments[key]
         del self._session.experimentObjects[key]
         del self._session.experiments[key]
-        self._updates.broadcast("catalog", self._experiments)
+        self._updates.broadcastDict("catalog", key, None)
 
     def _prepareExperiment(self, key: str, *, logger, **kwargs):
         logger.debug("preparing", current=self._currentExperiment)
@@ -148,6 +154,14 @@ class Session(AsyncTaskRunner):
         expInfo = self._session.getExpInfoFromExperiment(key)
         expInfo.update(kwargs)
 
+        if int(expInfo.get("session", 1)) < 1:
+            raise RuntimeError(
+                f"session value should be at least 1 (got: {expInfo['session']})"
+            )
+
+        if "participant" in expInfo and "session" in expInfo:
+            self._participants[expInfo["participant"]] = int(expInfo["session"]) + 1
+
         return expInfo
 
     def _runExperiment(
@@ -159,6 +173,7 @@ class Session(AsyncTaskRunner):
             self._updates.broadcast("window", True)
 
             self._currentExperiment = key
+
         self._updates.broadcast("experiment", key)
 
         logger.info("starting", current=self._currentExperiment)
