@@ -11,12 +11,13 @@
 	import type { LayoutData } from './$types';
 	import { dev } from '$app/environment';
 	import BatteryIndicator from '$lib/battery_indicator.svelte';
+	import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 
 	initializeStores();
 	synchronizeState();
 
 	onMount(() => {
-		const frequency = dev ? 300 : 10000;
+		const frequency = PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev ? 300 : 10000;
 		const interval = setInterval(() => {
 			invalidate('/api/battery');
 		}, frequency);

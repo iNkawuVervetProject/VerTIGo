@@ -58,7 +58,7 @@ export function synchronizeState(): void {
 			const updates = JSON.parse(event.data) as Catalog;
 			_catalog.mergeDiffs(updates);
 		});
-		eventSource.addEventListener('participantUpdate', (event) => {
+		eventSource.addEventListener('participantsUpdate', (event) => {
 			const updates = JSON.parse(event.data) as ParticipantByName;
 			_participants.mergeDiffs(updates);
 		});

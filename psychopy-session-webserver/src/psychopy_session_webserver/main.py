@@ -156,19 +156,19 @@ async def get_participants() -> Dict[str, Participant]:
 
 class RunExperimentRequest(BaseModel):
     key: str
-    parameter: Parameter
+    parameters: Parameter
 
 
-@app.post("/experiment/")
+@app.post("/experiment")
 async def run_experiment(body: RunExperimentRequest, request: Request) -> None:
     await session.asyncRunExperiment(
-        body.key, logger=request.state.slog, **body.parameter
+        body.key, logger=request.state.slog, **body.parameters
     )
 
 
 @app.delete("/experiment")
 async def stop_experiment(request: Request) -> None:
-    await session.asyncStopExperiment(logger=request.state.slog)
+    session.stopExperiment(logger=request.state.slog)
 
 
 def list_ip_address():
