@@ -1,0 +1,22 @@
+---
+- name: ensure zaci account is set
+  user:
+    name: zaci
+    comment: Zaci Main Account
+    groups:
+      - sudo
+      - users
+    password: "{{ zaci_password }}"
+
+- name: check boot options
+  lineinfile:
+    path: /etc/lightdm/lightdm.conf
+    regexp: "^(#)?autologin-user=.*"
+    line: "autologin-user=zaci"
+  check_mode: true
+  register: zaci_autologin
+
+- name: set boot behavior to desktop autologin zaci
+  shell: |
+    env SUDO_USER=zaci raspi-config nonint do_boot_behaviour "B4 Desktop Autologin"
+  when: zaci_autologin.changed

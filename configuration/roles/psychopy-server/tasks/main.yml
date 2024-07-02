@@ -1,54 +1,11 @@
 ---
-- name: ensure zaci account is set
-  user:
-    name: zaci
-    comment: Zaci Main Account
-    groups:
-      - sudo
-      - users
-    password: "{{ zaci_password }}"
-
-- name: check boot options
-  lineinfile:
-    path: /etc/lightdm/lightdm.conf
-    regexp: "^(#)?autologin-user=.*"
-    line: "autologin-user=zaci"
-  check_mode: true
-  register: zaci_autologin
-
-- name: set boot behavior to desktop autologin zaci
-  shell: |
-    env SUDO_USER=zaci raspi-config nonint do_boot_behaviour "B4 Desktop Autologin"
-  when: zaci_autologin.changed
 
 - name: install required packages
   apt:
     name:
-      - build-essential
-      - libssl-dev
-      - zlib1g-dev
-      - libbz2-dev
-      - libreadline-dev
-      - libsqlite3-dev
-      - curl
-      - git
-      - libncursesw5-dev
-      - xz-utils
-      - tk-dev
-      - libxml2-dev
-      - libxmlsec1-dev
-      - libffi-dev
-      - liblzma-dev
       - libhidapi-hidraw0
     state: present
 
-- name: ensure shims are users writable
-  file:
-    path: /usr/local/pyenv/shims
-    state: directory
-    mode: 0775
-    owner: root
-    group: users
 
 - name: copy pre-compiled wheels
   synchronize:
@@ -57,3 +14,18 @@
     rsync_opts:
       - '--include=*.whl'
       - '--exclude=*'
+
+- name: install psychopy_session_webserver
+  become_user: zaci
+  become: yes
+  pip:
+    extra_args: --upgrade -f /usr/local/wheels
+    name:
+      - pip
+      - psychopy==2024.1.4
+      - unil-pellet-dispenser
+      - psychopy-zaci
+      - git+https://github.com/atuleu/zaci#egg=psychopy-session-webserver&subdirectory=psychopy-session-webserver
+
+    virtualenv: /home/zaci/psychopy/venv
+    virtualenv_command: /home/zaci/.pyenv/shims/python -m venv
