@@ -3,9 +3,9 @@
 	import { catalog, window, experiment } from '$lib/session_state';
 	import ParticipantInput from '$lib/participant_input.svelte';
 	import SessionInput from '$lib/session_input.svelte';
-	import { fade, fly } from 'svelte/transition';
+	import { slide } from 'svelte/transition';
 
-	async function closeWindow(): void {
+	async function closeWindow(): Promise<void> {
 		await fetch('/psysw/api/window', { method: 'DELETE' });
 	}
 
@@ -18,7 +18,7 @@
 		<SessionInput />
 	</div>
 	{#if $window}
-		<div transition:fly={fadeOptions}>
+		<div transition:slide={fadeOptions}>
 			<button
 				class="variant-filled-primary btn"
 				disabled={$experiment != ''}
