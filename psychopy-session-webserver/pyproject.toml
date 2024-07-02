@@ -17,6 +17,31 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+dependencies = [
+   "hypercorn",
+   "fastapi",
+   "psychopy",
+   "watchdog",
+   "structlog",
+   "numpy<2",
+   "netifaces",
+   "PyXDG"
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=22.10",
+	"pytest"
+]
+
+
+
 [project.urls]
 Homepage = "https://github.com/atuleu/zaci/psychopy-session-webserver"
 Issues = "https://github.com/atuleu/zaci/issues"
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py310', 'py311']
+preview = true
+unstable = true

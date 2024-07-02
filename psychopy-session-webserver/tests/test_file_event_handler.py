@@ -1,31 +1,35 @@
-import logging
+import io
 import os
 import tempfile
 import time
+import unittest
 from pathlib import Path
-from unittest import TestCase
 from unittest.mock import Mock, call
 
-from src.psychopy_session_webserver.file_event_handler import FileEventHandler
+from psychopy_session_webserver.file_event_handler import FileEventHandler
 from watchdog.observers import Observer
 
 
-class FileEventHandlerTest(TestCase):
+class FileEventHandlerTest(unittest.TestCase):
+
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
         self.observer = Observer()
         self.mock = Mock()
-        self.handler = FileEventHandler(session=self.mock, root=self.tempdir.name)
+        self.handler = FileEventHandler(
+            session=self.mock,
+            root=self.tempdir.name,
+        )
         self.observer = Observer()
         self.observer.schedule(self.handler, self.tempdir.name, recursive=True)
         self.observer.start()
 
-    def tearDown(self):
-        self.observer.stop()
-        self.observer.join()
+        def stopAndJoin():
+            self.observer.stop()
+            self.observer.join()
 
-        self.tempdir.cleanup()
-        del self.mock
+        self.addCleanup(stopAndJoin)
 
     def local_filepath(self, path):
         return Path(self.tempdir.name).joinpath(path)
@@ -67,13 +71,11 @@ class FileEventHandlerTest(TestCase):
         src.touch()
         os.rename(src, dest)
         time.sleep(0.02)
-        self.mock.assert_has_calls(
-            [
-                call.addExperiment(file="src.psyexp"),
-                call.removeExperiment(key="src.psyexp"),
-                call.addExperiment(file="dest.psyexp"),
-            ]
-        )
+        self.mock.assert_has_calls([
+            call.addExperiment(file="src.psyexp"),
+            call.removeExperiment(key="src.psyexp"),
+            call.addExperiment(file="dest.psyexp"),
+        ])
 
     def test_add_non_experiment(self):
         self.local_filepath("foo").touch()
@@ -92,9 +94,11 @@ class FileEventHandlerTest(TestCase):
         self.local_filepath("foo").touch()
         os.rename(src=self.local_filepath("foo"), dst=self.local_filepath("bar"))
         time.sleep(0.02)
-        self.mock.assert_has_calls(
-            [
-                call.validateResources(paths=["foo"]),
-                call.validateResources(paths=["foo", "bar"]),
-            ]
-        )
+        self.mock.assert_has_calls([
+            call.validateResources(paths=["foo"]),
+            call.validateResources(paths=["foo", "bar"]),
+        ])
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=42)

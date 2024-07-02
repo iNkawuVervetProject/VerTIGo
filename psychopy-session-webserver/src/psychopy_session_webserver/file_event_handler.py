@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from structlog import configure, get_logger
-from structlog.stdlib import LoggerFactory
+import structlog
 from watchdog import events
 
 
@@ -22,12 +21,13 @@ class FileEventHandler(events.FileSystemEventHandler):
 
     """
 
-    def __init__(self, session, root):
-        configure(logger_factory=LoggerFactory())
+    def __init__(self, session, root, logger=None):
+        if logger is None:
+            logger = structlog.get_logger()
         self.session = session
         self.root = root
         self.modified = {}
-        self.logger = get_logger()
+        self.logger = logger.bind(module="FileEvent", root=root)
 
     def on_any_event(self, event: events.FileSystemEvent) -> None:
         deletedPaths = []
