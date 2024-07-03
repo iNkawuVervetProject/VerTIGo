@@ -4,17 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "psychopy_session_webserver"
-version = "0.0.1a1"
+version = "0.0.1a2"
 authors = [
   { name="Alexandre Tuleu", email="alexandre.tuleu.2005@polytechnique.org" },
 ]
 description = "A small example package"
 readme = "README.md"
 requires-python = ">=3.8"
+license = {text = "GNU General Public License v3 (GPLv3)"}
 classifiers = [
     "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
 ]
 
 dependencies = [
@@ -31,13 +32,13 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "black>=22.10",
-	"pytest"
+    "pytest"
 ]
 
 
 
 [project.urls]
-Homepage = "https://github.com/atuleu/zaci/psychopy-session-webserver"
+Homepage = "https://github.com/atuleu/zaci/tree/main/psychopy-session-webserver"
 Issues = "https://github.com/atuleu/zaci/issues"
 
 [tool.black]

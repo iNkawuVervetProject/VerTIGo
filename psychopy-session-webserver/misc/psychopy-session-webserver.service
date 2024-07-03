@@ -1,5 +1,5 @@
 [Unit]
-Description=psychopy-session-webserver
+Description=Runs a PsychoPy session via a REST api
 After=network-online.target graphical.target
 Wants=network-online.target
 
