@@ -3,5 +3,5 @@
     # - rpi-nvme-boot
     # - vncserver
     # - on-ups
-    - hifiberry-miniamp
+    #- hifiberry-miniamp
     - psychopy-server

@@ -40,6 +40,7 @@ async function readBatteryState() {
 			}
 		}
 	} catch (e) {
+		console.error('could not get battery: ' + e);
 		state = undefined;
 	}
 }

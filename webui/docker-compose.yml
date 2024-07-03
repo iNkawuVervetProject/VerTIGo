@@ -1,0 +1,29 @@
+services:
+  webui:
+    image: webui
+    build: ./
+    container_name: svelte
+    environment:
+      - BACKEND_ORIGIN=psysw:5000
+    restart: 'unless-stopped'
+    extra_hosts:
+      - "psysw:host-gateway"
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.webui.loadbalancer.server.port=3000
+      - traefik.http.routers.webui.rule=Host(`zaci1`) || Host(`zaci1.local`)
+
+
+
+  traefik:
+    image: traefik:latest
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --accesslog=true
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: 'unless-stopped'

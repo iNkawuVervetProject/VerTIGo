@@ -3,6 +3,7 @@ dependencies:
   - role: ensure-default-user
     vars:
       user: zaci
+  - role: docker
   - role: staticdev.pyenv
     vars:
       pyenv_env: "user"

@@ -114,3 +114,27 @@
     scope: user
     name: psychopy-session-webserver
     enabled: yes
+
+- name: ensure destination dir exists
+  file:
+    path: /usr/local/src/webui
+    state: directory
+
+- name: uploads webui source files
+  synchronize:
+    src: webui/
+    dest: /usr/local/src/webui
+    rsync_opts:
+      - '--exclude=node_modules'
+      - '--exclude=.svelte-kit'
+      - '--exclude=build'
+      - '--exclude=package'
+      - '--exclude=*~'
+
+- name: boots via docker compose
+  community.docker.docker_compose_v2:
+    project_src: /usr/local/src/webui
+    state: present
+    remove_orphans: yes
+    pull: always
+    build: always

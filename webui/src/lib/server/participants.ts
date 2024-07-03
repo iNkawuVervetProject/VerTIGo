@@ -1,5 +1,5 @@
 import { Participant } from '$lib/types';
-import { LOCAL_STORAGE_DIR } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 import * as fs from 'fs';
 
@@ -8,7 +8,7 @@ type ParticipantByName = { [key: string]: Participant };
 class ParticipantService {
 	public constructor(public participants: ParticipantByName) {}
 
-	static localPath: string = LOCAL_STORAGE_DIR + '/participants.json';
+	static localPath: string = (env.LOCAL_STORAGE_DIR ?? '.') + '/participants.json';
 
 	static async OpenLocal(): Promise<ParticipantService> {
 		try {

@@ -1,0 +1,63 @@
+---
+- name: removes legacy packages
+  apt:
+    name:
+      - docker.io
+      - docker-doc
+      - docker-compose
+      - podman-docker
+    state: absent
+
+- name: installs required package
+  apt:
+    name:
+      - ca-certificates
+      - curl
+    state: present
+
+- name: ensures keyring directory is present
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: 0755
+
+- name: adds docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    keyring: /etc/apt/keyrings/docker.gpg
+
+- name: adds docker repository
+  apt_repository:
+    repo: >-
+      deb [arch={{ arch_mapping[ansible_architecture] | default(ansible_architecture) }}
+      signed-by=/etc/apt/keyrings/docker.gpg]
+      https://download.docker.com/linux/debian {{ ansible_lsb.codename }} stable
+    filename: docker
+    state: present
+  vars:
+    arch_mapping:
+      x86_64: amd64
+      aarch64: arm64
+
+- name: adds docker package
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+
+- name: creates group docker
+  group:
+    name: docker
+    state: present
+
+- name: adds connected user to docker group
+  user:
+    name: "{{ ansible_env.SUDO_USER | default(ansible_env.USER) }}"
+    groups:
+      - docker
+    append: yes
