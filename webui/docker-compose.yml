@@ -5,9 +5,11 @@ services:
     container_name: svelte
     environment:
       - BACKEND_ORIGIN=psysw:5000
+      - NUT_HOSTNAME="nut"
     restart: 'unless-stopped'
     extra_hosts:
       - "psysw:host-gateway"
+      - "nut:host-gateway"
     labels:
       - traefik.enable=true
       - traefik.http.services.webui.loadbalancer.server.port=3000

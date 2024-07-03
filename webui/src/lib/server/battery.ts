@@ -1,51 +1,43 @@
 import { dev } from '$app/environment';
-import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 import type { BatteryState } from '$lib/types';
 
-import { exec as execClbk } from 'child_process';
-import { promisify } from 'util';
-
-const exec = promisify(execClbk);
+import { NUTClient } from './nut';
+import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
+import { env } from '$env/dynamic/private';
 
 let state: BatteryState | undefined = undefined;
 export function getBatteryState(): BatteryState | undefined {
 	return state;
 }
 
-async function readBatteryState() {
+const FAKE_SERVICE: boolean = PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev;
+const NUT_HOSTNAME = env.NUT_HOSTNAME || 'localhost';
+
+let nut: NUTClient | undefined = undefined;
+
+async function readBatteryState(): Promise<void> {
+	if (nut == undefined) {
+		try {
+			nut = await NUTClient.connect(NUT_HOSTNAME, 3493);
+		} catch (e) {
+			console.error('could not connect to nut: ' + e);
+			return;
+		}
+	}
+
 	try {
-		const { stdout } = await exec('upsc openups@localhost');
-		if (state == undefined) {
-			state = { level: -1, onBattery: false, charging: false };
-		}
+		const charge = await nut.getVariable('openups', 'battery.charge');
 
-		for (const line of stdout.toString().split('\n')) {
-			if (line.startsWith('battery.charge: ')) {
-				state.level = parseInt(line.slice(16, -1));
-				continue;
-			}
+		const status = await nut.getVariable('openups', 'ups.status');
 
-			if (line.startsWith('ups.status: ')) {
-				if (line.includes('OB') || line.includes('LB')) {
-					state.onBattery = true;
-					state.charging = false;
-					continue;
-				}
-				state.onBattery = false;
-				if (line.includes('CHRG')) {
-					state.charging = true;
-				} else {
-					state.charging = false;
-				}
-			}
-		}
+		console.log('battery: charge: ', charge, 'status: ', status);
 	} catch (e) {
-		console.error('could not get battery: ' + e);
+		console.error('could not get battery state: ' + e);
 		state = undefined;
 	}
 }
 
-if (PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev) {
+if (FAKE_SERVICE) {
 	state = {
 		level: 90,
 		onBattery: true,
@@ -76,4 +68,5 @@ if (PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev) {
 	setInterval(async () => {
 		await readBatteryState();
 	}, 15000);
+	await readBatteryState();
 }
