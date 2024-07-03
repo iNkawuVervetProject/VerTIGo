@@ -3,11 +3,18 @@ Description=Runs a PsychoPy session via a REST api
 After=network-online.target graphical.target
 Wants=network-online.target
 
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+
 [Service]
+StandardOutput=journal
+StandardError=journal
 Type=simple
 TimeoutStartSec=0
 WorkingDirectory=%h/psychopy
-ExecStart=%h/.local/bin/psychopy-session-webserver-launch.sh
+ExecStart=%h/.local/bin/psychopy-session-webserver.sh
+Restart=always
 
 [Install]
 WantedBy=default.target

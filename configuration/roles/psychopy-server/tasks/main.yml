@@ -19,6 +19,13 @@
       - libsdl2-dev
       - libnotify-dev
       - libsm-dev
+      - libusb-1.0-0-dev
+      - portaudio19-dev
+      - libasound2-dev
+      - libavcodec-dev
+      - libavdevice-dev
+      - libavformat-dev
+      - libavfilter-dev
     state: present
 
 - name: adds support for qt6 to qtchooser
@@ -28,7 +35,7 @@
 
 - name: sets qt6 as default
   file:
-    path: /usr/lib/aarch64-linux-gnu/qt-default/qtchooser
+    path: /usr/lib/aarch64-linux-gnu/qt-default/qtchooser/default.conf
     src: /usr/share/qtchooser/qt6.conf
     state: link
 
@@ -50,7 +57,60 @@
       - psychopy==2024.1.4
       - unil-pellet-dispenser
       - psychopy-zaci
-      - git+https://github.com/atuleu/zaci#egg=psychopy-session-webserver&subdirectory=psychopy-session-webserver
+      - psychopy-session-webserver==0.0.1a2
 
     virtualenv: /home/zaci/psychopy/venv
     virtualenv_command: /home/zaci/.pyenv/shims/python -m venv
+
+- name: ensures psychopy group exists
+  group:
+    name: psychopy
+
+- name: ensure zaci is members of psychopy
+  user:
+    name: zaci
+    append: true
+    groups:
+      - psychopy
+
+- name: adds rules for psychopy group
+  copy:
+    src: 99-psychopylimits.conf
+    dest: /etc/security/limits.d/99-psychopylimits.conf
+
+- name: sets user needed files
+  file:
+    path: "{{item}}"
+    state: directory
+    group: zaci
+    owner: zaci
+  with_items:
+    - /home/zaci/.local/bin
+    - /home/zaci/.config/systemd/user
+
+- name: adds script file
+  copy:
+    src: psychopy-session-webserver.sh
+    dest: /home/zaci/.local/bin/psychopy-session-webserver.sh
+    owner: zaci
+    group: zaci
+    mode: 0755
+  notify:
+    - restarts service
+
+- name: adds service file
+  copy:
+    src: psychopy-session-webserver.service
+    dest: /home/zaci/.config/systemd/user/psychopy-session-webserver.service
+    owner: zaci
+    group: zaci
+  notify:
+    - reloads service
+
+- name: enable systemd service for zaci
+  become: true
+  become_user: zaci
+  systemd:
+    scope: user
+    name: psychopy-session-webserver
+    enabled: yes

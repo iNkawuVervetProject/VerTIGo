@@ -1,0 +1,18 @@
+---
+- name: reloads service
+  become: yes
+  become_user: zaci
+  systemd:
+    scope: user
+    service: psychopy-session-webserver
+    daemon_reload: yes
+    state: restart
+
+
+- name: restarts service
+  become: yes
+  become_user: zaci
+  systemd:
+    scope: user
+    service: psychopy-session-webserver
+    state: restarted
