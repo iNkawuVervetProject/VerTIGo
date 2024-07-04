@@ -15,8 +15,11 @@ services:
     command:
       - --entrypoints.web.address=:80
       - --providers.file.filename=/routes.yml
+      - --api.insecure=true
+      - --accesslog=false
     ports:
       - "80:80"
+      - "8080:8080"
     extra_hosts:
       - "zaci-localhost:host-gateway"
     volumes:

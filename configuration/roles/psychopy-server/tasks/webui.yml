@@ -14,12 +14,18 @@
       - '--exclude=build'
       - '--exclude=package'
       - '--exclude=routes.yml'
+      - '--exclude=docker-compose.yml'
       - '--exclude=*~'
 
 - name: installs reverse proxy configuration
   template:
     src: routes.yml.j2
     dest: /usr/local/src/webui/routes.yml
+
+- name: installs docker-compose
+  copy:
+    src: docker-compose.yml
+    dest: /usr/local/src/webui/docker-compose.yml
 
 - name: boots via docker compose
   community.docker.docker_compose_v2:

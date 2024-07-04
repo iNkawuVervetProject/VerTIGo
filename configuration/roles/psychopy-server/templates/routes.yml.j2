@@ -1,15 +1,18 @@
+# -*- mode: yaml -*-
 ---
-
 http:
   routers:
     svelte:
       rule: Host(`{{inventory_hostname}}.local`) || Host(`{{inventory_hostname}}`)
       service: svelte
-      entryPoints:
+      entrypoints:
         - web
 
-  service:
+  services:
     svelte:
-      loadBalancer:
+      loadbalancer:
         servers:
           - url: "http://zaci-localhost:3000"
+        healthcheck:
+          path: /
+          port: 3000

@@ -10,7 +10,7 @@ http:
       entryPoints:
         - web
 
-  service:
+  services:
     svelte:
       loadBalancer:
         servers:
