@@ -1,0 +1,17 @@
+---
+# This is a sample configuration, expectiong to be deployed on myhost. You will
+# likely modify this file.
+
+http:
+  routers:
+    svelte:
+      rule: Host(`myhost.local`) || Host(`myhost`)
+      service: svelte
+      entryPoints:
+        - web
+
+  service:
+    svelte:
+      loadBalancer:
+        servers:
+          - url: "http://zaci-localhost:3000"

@@ -1,0 +1,30 @@
+---
+- name: ensure destination dir exists
+  file:
+    path: /usr/local/src/webui
+    state: directory
+
+- name: uploads webui source files
+  synchronize:
+    src: webui/
+    dest: /usr/local/src/webui
+    rsync_opts:
+      - '--exclude=node_modules'
+      - '--exclude=.svelte-kit'
+      - '--exclude=build'
+      - '--exclude=package'
+      - '--exclude=routes.yml'
+      - '--exclude=*~'
+
+- name: installs reverse proxy configuration
+  template:
+    src: routes.yml.j2
+    dest: /usr/local/src/webui/routes.yml
+
+- name: boots via docker compose
+  community.docker.docker_compose_v2:
+    project_src: /usr/local/src/webui
+    state: present
+    remove_orphans: yes
+    pull: always
+    build: always

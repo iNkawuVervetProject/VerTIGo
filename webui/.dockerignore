@@ -13,3 +13,5 @@ package
 .prettierrc
 .eslintrc.cjs
 .editorconfig
+docker-compose.yml
+routes.yml

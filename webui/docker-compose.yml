@@ -1,31 +1,30 @@
 services:
-  webui:
-    image: webui
+  svelte:
+    image: svelte
     build: ./
     container_name: svelte
+    network_mode: "host"
     environment:
-      - BACKEND_ORIGIN=psysw:5000
-      - NUT_HOSTNAME="nut"
+      - PROTOCOL_HEADER=x-forwarded-proto
+      - HOST_HEADER=x-forwarded-host
+      - DEBUG=1
     restart: 'unless-stopped'
-    extra_hosts:
-      - "psysw:host-gateway"
-      - "nut:host-gateway"
-    labels:
-      - traefik.enable=true
-      - traefik.http.services.webui.loadbalancer.server.port=3000
-      - traefik.http.routers.webui.rule=Host(`zaci1`) || Host(`zaci1.local`)
-
 
 
   traefik:
     image: traefik:latest
     command:
       - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
-      - --accesslog=true
+      - --accesslog=false
+      - --api.insecure=true
+      - --providers.file.filename=/routes.yml
     ports:
       - "80:80"
+      - "8080:8080"
+    extra_hosts:
+      - "zaci-localhost:host-gateway"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./routes.yml:/routes.yml
     restart: 'unless-stopped'

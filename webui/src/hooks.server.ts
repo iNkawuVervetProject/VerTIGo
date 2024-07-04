@@ -4,12 +4,17 @@ import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 import type { Handle } from '@sveltejs/kit';
 
 const BACKEND_ORIGIN = env.BACKEND_ORIGIN ?? 'localhost:5000';
+const DEBUG = (env.DEBUG ?? '0') != '0';
 
 if (PUBLIC_NO_LOCAL_DEV_ENDPOINT != '0' || !dev) {
 	console.log("Will redirect /psysw/api' to http://" + BACKEND_ORIGIN);
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
+	if (DEBUG) {
+		console.log(event);
+	}
+
 	if (PUBLIC_NO_LOCAL_DEV_ENDPOINT === '0' && dev) {
 		return await resolve(event);
 	}

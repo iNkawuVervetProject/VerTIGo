@@ -1,0 +1,115 @@
+---
+- name: install required packages
+  apt:
+    name:
+      - libhidapi-hidraw0
+      - qt6-base-dev
+      - qtchooser
+      - libgtk-3-dev
+      - libgtk-4-dev
+      - libgstreamer1.0-dev
+      - libgstreamer-plugins-base1.0-dev
+      - libglut-dev
+      - libwebkit2gtk-4.0-dev
+      - libwebkitgtk-6.0-dev
+      - libjpeg-dev
+      - libpng-dev
+      - libtiff-dev
+      - libsdl2-dev
+      - libnotify-dev
+      - libsm-dev
+      - libusb-1.0-0-dev
+      - portaudio19-dev
+      - libasound2-dev
+      - libavcodec-dev
+      - libavdevice-dev
+      - libavformat-dev
+      - libavfilter-dev
+    state: present
+
+- name: adds support for qt6 to qtchooser
+  copy:
+    src: qt6.conf
+    dest: /usr/share/qtchooser/qt6.conf
+
+- name: sets qt6 as default
+  file:
+    path: /usr/lib/aarch64-linux-gnu/qt-default/qtchooser/default.conf
+    src: /usr/share/qtchooser/qt6.conf
+    state: link
+
+- name: copy pre-compiled wheels
+  synchronize:
+    src: wheels/
+    dest: /usr/local/wheels/
+    rsync_opts:
+      - '--include=*.whl'
+      - '--exclude=*'
+
+- name: install psychopy_session_webserver
+  become_user: zaci
+  become: yes
+  pip:
+    extra_args: --upgrade -f /usr/local/wheels
+    name:
+      - pip
+      - psychopy==2024.1.4
+      - unil-pellet-dispenser
+      - psychopy-zaci
+      - psychopy-session-webserver==0.0.1a2
+
+    virtualenv: /home/zaci/psychopy/venv
+    virtualenv_command: /home/zaci/.pyenv/shims/python -m venv
+
+- name: ensures psychopy group exists
+  group:
+    name: psychopy
+
+- name: ensure zaci is members of psychopy
+  user:
+    name: zaci
+    append: true
+    groups:
+      - psychopy
+
+- name: adds rules for psychopy group
+  copy:
+    src: 99-psychopylimits.conf
+    dest: /etc/security/limits.d/99-psychopylimits.conf
+
+- name: sets user needed files
+  file:
+    path: "{{item}}"
+    state: directory
+    group: zaci
+    owner: zaci
+  with_items:
+    - /home/zaci/.local/bin
+    - /home/zaci/.config/systemd/user
+
+- name: adds script file
+  copy:
+    src: psychopy-session-webserver.sh
+    dest: /home/zaci/.local/bin/psychopy-session-webserver.sh
+    owner: zaci
+    group: zaci
+    mode: 0755
+  notify:
+    - restarts service
+
+- name: adds service file
+  copy:
+    src: psychopy-session-webserver.service
+    dest: /home/zaci/.config/systemd/user/psychopy-session-webserver.service
+    owner: zaci
+    group: zaci
+  notify:
+    - reloads service
+
+- name: enable systemd service for zaci
+  become: true
+  become_user: zaci
+  systemd:
+    scope: user
+    name: psychopy-session-webserver
+    enabled: yes
