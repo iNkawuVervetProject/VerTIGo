@@ -4,7 +4,7 @@
   register: vnc_status
 
 - name: enable vnc server
-  shell: raspi-config nonint do_vnc
+  shell: raspi-config nonint do_vnc 0
   when: vnc_status.stdout != '0'
 
 - name: set vnc config

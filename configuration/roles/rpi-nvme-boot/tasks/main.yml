@@ -39,16 +39,22 @@
 
 - name: ensure root is on nvme
   block:
+    - name: ensure /usr/local/src dir exists
+      file:
+        path: /usr/local/src
+        state: directory
+
     - name: clone rpi-clone from Jeff Gerling's repo
       git:
         repo: https://github.com/geerlingguy/rpi-clone.git
         dest: /usr/local/src/rpi-clone
 
     - name: installs rpi-clone
-      file:
-        src: "/usr/local/src/{{ item }}"
+      copy:
+        src: "/usr/local/src/rpi-clone/{{ item }}"
         dest: "/usr/local/sbin/{{ item }}"
         remote_src: true
+        mode: 0755
       with_items:
         - rpi-clone
         - rpi-clone-setup
