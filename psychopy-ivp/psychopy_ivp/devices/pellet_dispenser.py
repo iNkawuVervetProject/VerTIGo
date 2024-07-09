@@ -5,8 +5,8 @@ from typing import Union
 from psychopy import core
 from psychopy.core import threading
 from psychopy.visual import Window
-from unil_pellet_dispenser import Device
-from unil_pellet_dispenser import DispenserError as PelletDispenserError
+from inkawuvp_pellet_dispenser import Device
+from inkawuvp_pellet_dispenser import DispenserError as PelletDispenserError
 
 
 class _NoDevice:

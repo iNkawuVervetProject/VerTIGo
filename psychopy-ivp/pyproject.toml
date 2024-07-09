@@ -3,9 +3,9 @@ requires = ["setuptools>=40.8.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "psychopy-zaci"
+name = "psychopy-ivp"
 version = "0.0.1a2"
-description = "Extension to add support for University of Lausanne's devices such as a pellet dispenser for Vervet Monkey's."
+description = "Extension to add support for IVP's devices such as a pellet dispenser for Vervet Monkey's."
 readme = "README.md"
 requires-python = ">= 3.7"
 license = {text = "GNU General Public License v3 (GPLv3)"}
@@ -25,14 +25,14 @@ classifiers = [
 ]
 
 dependencies = [
-    "unil-pellet-dispenser",
+    "inkawuvp-pellet-dispenser",
 ]
 
 [project.urls]
 
-Homepage = "https://github.com/atuleu/zaci/tree/main/psychopy-zaci"
-Repository = "https://github.com/atuleu/zaci"
-Issues = 'https://github.com/atuleu/zaci/issues?q=is%3Aissue+is%3Aopen+label%3A"psychopy"'
+Homepage = "https://github.com/iNkawuVervetProject/VerTIGo/tree/main/psychopy-ivp"
+Repository = "https://github.com/iNkawuVervetProject/VerTIGo"
+Issues = 'https://github.com/iNkawuVervetProject/VerTIGo/issues?q=is%3Aissue+is%3Aopen+label%3A"psychopy"'
 
 
 [tool.setuptools.packages.find]
@@ -42,7 +42,7 @@ where = ["",]
 "*" = ["*.png",]
 
 [project.entry-points."psychopy.experiment.components"]
-PelletDispenserComponent = "psychopy_zaci.components.pellet_dispenser:PelletDispenserComponent"
+PelletDispenserComponent = "psychopy_ivp.components.pellet_dispenser:PelletDispenserComponent"
 
 [tool.black]
 line-length = 80

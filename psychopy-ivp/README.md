@@ -1,19 +1,20 @@
-# psychopy-zaci
+# psychopy-ivp
 
-Extension to add support for ZACI's devices such as the pellet dispenser.
+Extension to add support for iNkawu Vervet Project's devices such as the pellet
+dispenser.
 
 ## Supported Devices
 
 Installing this package alongside PsychoPy will enable support for the following devices:
 
-* [Pellet Dispenser](https://github.com/atuleu/zaci/tree/main/devices/pellet-dispenser)
+* [Pellet Dispenser](https://github.com/iNkawuVervetProject/VerTIGo/tree/main/devices/pellet-dispenser)
 
 ## Installing
 
 Install this package with the following shell command:
 
 ```bash
-pip install psychopy-zaci
+pip install psychopy-ivp
 ```
 
 You may also use PsychoPy's builtin package manager to install this package.

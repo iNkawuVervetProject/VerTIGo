@@ -121,7 +121,7 @@ class PelletDispenserComponent(BaseComponent):
         tmplVars = {"name": self.params["name"]}
         # fmt: off
         code = (
-            "from psychopy_zaci.devices.pellet_dispenser import PelletDispenserDevice, PelletDispenserError\n"
+            "from psychopy_ivp.devices.pellet_dispenser import PelletDispenserDevice, PelletDispenserError\n"
             "\n"
             "{name} = PelletDispenserDevice(win,logging)\n"
             "\n"
