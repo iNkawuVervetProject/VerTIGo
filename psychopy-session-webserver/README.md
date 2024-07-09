@@ -44,7 +44,7 @@ An examples for a systemd service can be found in
 window, it is easier to set it up as user service.
 
 ```bash
-git clone https://github.com/atuleu/zaci
+git clone https://github.com/iNkawuVervetProject/VerTIGo
 cd zaci/psychopy-session-webserver
 
 mkdir -p $HOME/.config/systemd/user
