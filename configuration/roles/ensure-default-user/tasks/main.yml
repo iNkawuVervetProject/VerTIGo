@@ -1,22 +1,22 @@
 ---
-- name: ensure zaci account is set
+- name: ensure vertigo account is set
   user:
-    name: zaci
-    comment: Zaci Main Account
+    name: vertigo
+    comment: Vertigo Main Account
     groups:
       - sudo
-      - users
-    password: "{{ zaci_password }}"
+    append: yes
+    password: "{{ vertigo_password }}"
 
 - name: check boot options
   lineinfile:
     path: /etc/lightdm/lightdm.conf
     regexp: "^(#)?autologin-user=.*"
-    line: "autologin-user=zaci"
+    line: "autologin-user=vertigo"
   check_mode: true
-  register: zaci_autologin
+  register: vertigo_autologin
 
-- name: set boot behavior to desktop autologin zaci
+- name: set boot behavior to desktop autologin vertigo
   shell: |
-    env SUDO_USER=zaci raspi-config nonint do_boot_behaviour "B4 Desktop Autologin"
-  when: zaci_autologin.changed
+    env SUDO_USER=vertigo raspi-config nonint do_boot_behaviour "B4 Desktop Autologin"
+  when: vertigo_autologin.changed

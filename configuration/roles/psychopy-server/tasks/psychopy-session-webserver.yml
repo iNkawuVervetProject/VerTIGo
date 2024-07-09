@@ -47,27 +47,27 @@
       - '--exclude=*'
 
 - name: install psychopy_session_webserver
-  become_user: zaci
+  become_user: vertigo
   become: yes
   pip:
     extra_args: --upgrade -f /usr/local/wheels
     name:
       - pip
       - psychopy==2024.1.4
-      - unil-pellet-dispenser
-      - psychopy-zaci
+      - inkawuvp-pellet-dispenser
+      - psychopy-ivp
       - psychopy-session-webserver==0.0.1a2
 
-    virtualenv: /home/zaci/psychopy/venv
-    virtualenv_command: /home/zaci/.pyenv/shims/python -m venv
+    virtualenv: /home/vertigo/psychopy/venv
+    virtualenv_command: /home/vertigo/.pyenv/shims/python -m venv
 
 - name: ensures psychopy group exists
   group:
     name: psychopy
 
-- name: ensure zaci is members of psychopy
+- name: ensure vertigo is members of psychopy
   user:
-    name: zaci
+    name: vertigo
     append: true
     groups:
       - psychopy
@@ -81,18 +81,18 @@
   file:
     path: "{{item}}"
     state: directory
-    group: zaci
-    owner: zaci
+    group: vertigo
+    owner: vertigo
   with_items:
-    - /home/zaci/.local/bin
-    - /home/zaci/.config/systemd/user
+    - /home/vertigo/.local/bin
+    - /home/vertigo/.config/systemd/user
 
 - name: adds script file
   copy:
     src: psychopy-session-webserver.sh
-    dest: /home/zaci/.local/bin/psychopy-session-webserver.sh
-    owner: zaci
-    group: zaci
+    dest: /home/vertigo/.local/bin/psychopy-session-webserver.sh
+    owner: vertigo
+    group: vertigo
     mode: 0755
   notify:
     - restarts service
@@ -100,15 +100,15 @@
 - name: adds service file
   copy:
     src: psychopy-session-webserver.service
-    dest: /home/zaci/.config/systemd/user/psychopy-session-webserver.service
-    owner: zaci
-    group: zaci
+    dest: /home/vertigo/.config/systemd/user/psychopy-session-webserver.service
+    owner: vertigo
+    group: vertigo
   notify:
     - reloads service
 
-- name: enable systemd service for zaci
+- name: enable systemd service for vertigo
   become: true
-  become_user: zaci
+  become_user: vertigo
   systemd:
     scope: user
     name: psychopy-session-webserver

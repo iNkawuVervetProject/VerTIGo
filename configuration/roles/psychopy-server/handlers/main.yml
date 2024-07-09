@@ -1,7 +1,7 @@
 ---
 - name: reloads service
   become: yes
-  become_user: zaci
+  become_user: vertigo
   systemd:
     scope: user
     service: psychopy-session-webserver
@@ -11,7 +11,7 @@
 
 - name: restarts service
   become: yes
-  become_user: zaci
+  become_user: vertigo
   systemd:
     scope: user
     service: psychopy-session-webserver

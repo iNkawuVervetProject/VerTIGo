@@ -62,6 +62,6 @@
 
 - name: ensure powerbutton turns off
   lineinfile:
-    path: /home/zaci/.config/wayfire.ini
+    path: /home/vertigo/.config/wayfire.ini
     line: command_power = poweroff
     regexp: "^command_power ="
