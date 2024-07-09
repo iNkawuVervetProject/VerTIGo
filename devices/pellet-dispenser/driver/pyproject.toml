@@ -3,12 +3,12 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "unil-pellet-dispenser"
+name = "inkawuvp-pellet-dispenser"
 version = "0.0.1"
 authors = [
     { name = "Alexandre Tuleu", email = "alexandre.tuleu.2005@polytechnique.org"},
 ]
-description = "A Python package to contol University of Lausanne's pellet dispenser via USB"
+description = "A Python package to contol IVP's pellet dispenser via USB"
 readme = "README.md"
 license = { text = "GNU General Public License v3 (GPLv3)" }
 requires-python = ">=3.8"
@@ -30,6 +30,6 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/atuleu/zaci/tree/main/devices/pellet-dispenser/driver"
-Issues = 'https://github.com/atuleu/zaci/issues?q=is%3Aissue+is%3Aopen+label%3A"pellet dispenser"'
-Repository = "https://github.com/atuleu/zaci"
+Homepage = "https://github.com/iNkawuVervetProject/VerTIGo/tree/main/devices/pellet-dispenser/driver"
+Issues = 'https://github.com/iNkawuVervetProject/VerTIGo/issues?q=is%3Aissue+is%3Aopen+label%3A"pellet dispenser"'
+Repository = "https://github.com/iNkawuVervetProject/VerTIGo"

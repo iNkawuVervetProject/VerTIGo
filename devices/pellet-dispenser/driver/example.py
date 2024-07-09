@@ -1,4 +1,4 @@
-from unil_pellet_dispenser import Device, Error
+from inkawuvp_pellet_dispenser import Device, Error
 
 dev = Device()
 report = dev.dispense(1)

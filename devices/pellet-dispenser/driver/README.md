@@ -8,10 +8,10 @@ This is a python package to use the pellet dispenser with python.
 Install this package with the following shell command
 
 ```bash
-pip install unil-pellet-dispenser
+pip install inkawuvp-pellet-dispenser
 ```
 
-`unil-pellet-dispenser` is based on [hid](https://pypi.org/project/hid/) and
+`inkawuvp-pellet-dispenser` is based on [hid](https://pypi.org/project/hid/) and
 therefore require the [hidapi library](https://github.com/libusb/hidapi) to be
 installed separately.
 
@@ -41,7 +41,7 @@ brew install hidapi
 
 ```python
 
-from unil_pellet_dispenser import Device, DispenserError
+from inkawuvp_pellet_dispenser import Device, DispenserError
 
 dev = Device()
 
