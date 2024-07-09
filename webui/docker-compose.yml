@@ -18,7 +18,7 @@ services:
     ports:
       - "80:80"
     extra_hosts:
-      - "zaci-localhost:host-gateway"
+      - "vertigo-localhost:host-gateway"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./routes.yml:/routes.yml

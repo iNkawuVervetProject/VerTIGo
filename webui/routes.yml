@@ -14,4 +14,4 @@ http:
     svelte:
       loadBalancer:
         servers:
-          - url: "http://zaci-localhost:3000"
+          - url: "http://vertigo-localhost:3000"

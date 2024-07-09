@@ -98,12 +98,12 @@
 		<!-- App Bar -->
 		<AppBar>
 			<svelte:fragment slot="lead">
-				<strong class="text-xl uppercase">ZACI UI</strong>
+				<strong class="text-xl uppercase">VerTIGo</strong>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				<a
 					class="variant-ghost-surface btn btn-sm"
-					href="https://github.com/atuleu/zaci"
+					href="https://github.com/iNkawuVervetProject/VerTIGo"
 					target="_blank"
 					rel="noreferrer"
 				>

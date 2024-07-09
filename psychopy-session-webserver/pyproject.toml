@@ -38,8 +38,8 @@ dev = [
 
 
 [project.urls]
-Homepage = "https://github.com/atuleu/zaci/tree/main/psychopy-session-webserver"
-Issues = "https://github.com/atuleu/zaci/issues"
+Homepage = "https://github.com/iNkawuVervetProject/VerTIGo/tree/main/psychopy-session-webserver"
+Issues = "https://github.com/iNkawuVervetProject/VerTIGo/issues"
 
 [tool.black]
 line-length = 88
