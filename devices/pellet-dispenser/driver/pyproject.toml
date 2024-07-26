@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "inkawuvp-pellet-dispenser"
-version = "0.0.1"
+version = "0.0.2a1"
 authors = [
     { name = "Alexandre Tuleu", email = "alexandre.tuleu.2005@polytechnique.org"},
 ]
