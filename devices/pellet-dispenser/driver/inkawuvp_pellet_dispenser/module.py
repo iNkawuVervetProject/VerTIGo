@@ -92,10 +92,11 @@ class ReportType(IntEnum):
 class CommandCode(IntEnum):
     DISPENSE = 0x71
     CALIBRATE = 0x72
+    BOOTSEL = 0x7F
+
 
 class DispenserError(RuntimeError):
-
-    def __init__(self,description,dispensed):
+    def __init__(self, description, dispensed):
         super(DispenserError, self).__init__(description)
         self.dispensed = dispensed
 
@@ -146,6 +147,14 @@ class Device:
         report = self._execute_cmd(cmd)
         if report.error != 0:
             raise DispenserError(
-                f"could not calibrate: got error: {report.error_description}",
-                0
+                f"could not calibrate: got error: {report.error_description}", 0
             )
+
+    def reboot_to_bootsel(self):
+        cmd = Command(code=CommandCode.BOOTSEL, parameter=0)
+        report = self._execute_cmd(cmd)
+        if report.error != 0:
+            raise DispenserError(
+                f"could not reboot to bootsel: {report.error_description}", 0
+            )
+        del self._dev

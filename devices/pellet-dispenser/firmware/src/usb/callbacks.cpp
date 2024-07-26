@@ -4,12 +4,14 @@
 #include "ErrorReporter.hpp"
 #include "class/hid/hid.h"
 #include "class/hid/hid_device.h"
-#include "pico/time.h"
 #include "protocol.hpp"
 #include "tusb.h"
 #include <cstring>
 #include <sstream>
 
+#include "pico/bootrom.h"
+#include "pico/multicore.h"
+#include "pico/time.h"
 static DispenserController *dispenser = nullptr;
 
 void tud_register_dispenser(DispenserController *d) {
@@ -59,6 +61,11 @@ void tud_resume_cb(void) {
 	Infof("USB: resumed");
 }
 
+void reboot_to_bootsel() {
+	multicore_reset_core1();
+	reset_usb_boot(0, 0);
+}
+
 // Invoked when sent REPORT successfully to host
 // Application can use this to send the next report
 // Note: For composite reports, report[0] is report ID
@@ -71,6 +78,12 @@ void tud_hid_report_complete_cb(
 	    report[0],
 	    len
 	);
+
+	if (reinterpret_cast<const usb::CommandReport *>(report)->Code ==
+	    usb::Command::BOOTSEL) {
+		reboot_to_bootsel();
+	}
+
 	usb::CommandReport queued;
 	if (reportQueue.TryRemove(queued) == false) {
 		sending = false;
@@ -207,6 +220,8 @@ void calibrate(int16_t speed) {
 	});
 }
 
+void boot_to_bootsel() {}
+
 // Invoked when received SET_REPORT control request or
 // received data on OUT endpoint ( Report ID = 0, Type = 0 )
 void tud_hid_set_report_cb(
@@ -232,6 +247,14 @@ void tud_hid_set_report_cb(
 		break;
 	case usb::Command::CALIBRATE:
 		calibrate(command->Parameter);
+		break;
+
+	case usb::Command::BOOTSEL:
+		tud_hid_command_report(usb::CommandReport{
+		    .Code  = usb::Command::BOOTSEL,
+		    .Value = 0,
+		    .Error = 0,
+		});
 		break;
 	default:
 		Errorf("USB: invalid command %x", command->Code);

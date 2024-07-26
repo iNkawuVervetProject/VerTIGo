@@ -10,6 +10,7 @@ struct Command {
 	enum Code {
 		DISPENSE  = 0x71,
 		CALIBRATE = 0x72,
+		BOOTSEL   = 0x7f,
 	};
 
 	uint8_t  Code;
