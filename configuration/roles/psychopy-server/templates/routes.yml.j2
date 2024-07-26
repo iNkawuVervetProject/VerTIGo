@@ -3,7 +3,7 @@
 http:
   routers:
     svelte:
-      rule: Host(`{{inventory_hostname}}.local`) || Host(`{{inventory_hostname}}`)
+      rule: Host(`{{inventory_hostname}}.local`) || Host(`{{inventory_hostname}}`) || HostRegexp(`^{{inventory_hostname}}\..+\.ts\.net$`)
       service: svelte
       entrypoints:
         - web
