@@ -1,18 +1,9 @@
 ---
-- name: reloads service
-  become: yes
-  become_user: vertigo
-  systemd:
-    scope: user
-    service: psychopy-session-webserver
-    daemon_reload: yes
-    state: restart
-
-
 - name: restarts service
   become: yes
   become_user: vertigo
   systemd:
     scope: user
     service: psychopy-session-webserver
+    daemon_reload: yes
     state: restarted

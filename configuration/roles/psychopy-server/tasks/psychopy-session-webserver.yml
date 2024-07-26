@@ -104,7 +104,7 @@
     owner: vertigo
     group: vertigo
   notify:
-    - reloads service
+    - restarts service
 
 - name: enable systemd service for vertigo
   become: true
