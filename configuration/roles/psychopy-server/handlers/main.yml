@@ -7,3 +7,7 @@
     service: psychopy-session-webserver
     daemon_reload: yes
     state: restarted
+
+- name: trigger udev rules
+  shell: |
+    udevadm control --reload && udevadm trigger
