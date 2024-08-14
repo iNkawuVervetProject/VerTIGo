@@ -1,11 +1,13 @@
 from datetime import datetime, timezone
 from enum import Enum
+from typing import Any, Optional
 import gi
 
 gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst
 
-from pydantic import BaseModel
+from pydantic import BaseModel, functional_validators
+from functools import partial, partialmethod
 
 Gst.init(None)
 
@@ -76,11 +78,32 @@ class CameraParameter(BaseModel):
 
 
 class CameraStream:
+    _timestamp_unix = Gst.Caps.from_string("timestamp/x-unix")
+
     def __init__(self, params: CameraParameter = CameraParameter(), debug=False):
         self.now = datetime.now(timezone.utc).astimezone()
         self._debug = debug
         self._params = params
         self._create_pipeline()
+
+    def _on_sample(self, appsink: Gst.Element, *args, **kwargs) -> Gst.FlowReturn:
+        sample = appsink.emit("pull-sample")
+
+        if not sample:
+            return Gst.FlowReturn.OK
+
+        buffer: Optional[Gst.Buffer] = sample.get_buffer()
+        if not buffer or buffer.offset % 30 != 0:
+            return Gst.FlowReturn.OK
+
+        ts = buffer.get_reference_timestamp_meta(CameraStream._timestamp_unix)
+        if not ts:
+            return Gst.FlowReturn.OK
+
+        dt = datetime.fromtimestamp(ts.timestamp / 1_000_000_000).astimezone()
+        print(f"{buffer.offset},{buffer.pts},{dt.isoformat()}")
+
+        return Gst.FlowReturn.OK
 
     def _create_pipeline(self):
         if self._debug is False:
@@ -104,12 +127,16 @@ class CameraStream:
             " ! queue ! videoscale !"
             f" video/x-raw,width={self._params.StreamResolution.Width},height={self._params.StreamResolution.Height} !"
             f" openh264enc bitrate={self._params.StreamBitrate*1000} ! video/x-h264 !"
-            f" rtspclientsink location={self._params.RtspServerPath}"
+            f" rtspclientsink location={self._params.RtspServerPath} t. ! queue !"
+            " appsink name=ts_sink"
         )
 
         self.pipeline.set_name("pipeline_" + self.now.isoformat())
 
-        # TODO add appsink to timestamp every buffer
+        self.ts_sink: Gst.Element = self.pipeline.get_by_name("ts_sink")
+
+        self.ts_sink.set_property("emit-signals", True)
+        self.ts_sink.connect("new-sample", self._on_sample)
 
     def run(self):
         if self.pipeline is None:
