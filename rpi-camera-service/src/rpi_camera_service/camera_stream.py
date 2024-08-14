@@ -1,13 +1,13 @@
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 import gi
 
 gi.require_version("Gst", "1.0")
+
 from gi.repository import GLib, Gst
 
-from pydantic import BaseModel, functional_validators
-from functools import partial, partialmethod
+from pydantic import BaseModel
 
 Gst.init(None)
 
@@ -74,6 +74,7 @@ class CameraParameter(BaseModel):
     AwbMode: AwbModeEnum = AwbModeEnum.Auto
     AutoFocusMode: AutoFocusModeEnum = AutoFocusModeEnum.Auto
     AfRange: AfRangeEnum = AfRangeEnum.Normal
+
     LensPosition: float = 0.0
 
 
@@ -93,14 +94,23 @@ class CameraStream:
             return Gst.FlowReturn.OK
 
         buffer: Optional[Gst.Buffer] = sample.get_buffer()
-        if not buffer or buffer.offset % 30 != 0:
+        if not buffer:
             return Gst.FlowReturn.OK
 
-        ts = buffer.get_reference_timestamp_meta(CameraStream._timestamp_unix)
-        if not ts:
+        if buffer.offset % 30 != 0:
+            print(f"offset {buffer.offset}")
             return Gst.FlowReturn.OK
 
-        dt = datetime.fromtimestamp(ts.timestamp / 1_000_000_000).astimezone()
+        if self._debug is False:
+            ts = buffer.get_reference_timestamp_meta(CameraStream._timestamp_unix)
+            if not ts:
+                print("no timestamp")
+                return Gst.FlowReturn.OK
+
+            dt = datetime.fromtimestamp(ts.timestamp / 1_000_000_000).astimezone()
+        else:
+            dt = datetime.now().astimezone()
+
         print(f"{buffer.offset},{buffer.pts},{dt.isoformat()}")
 
         return Gst.FlowReturn.OK
