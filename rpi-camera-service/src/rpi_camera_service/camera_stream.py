@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
+from enum import Enum
 import gi
-import signal
 
 gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst
@@ -33,6 +33,29 @@ class Resolution(BaseModel):
     Height: int
 
 
+class AwbModeEnum(str, Enum):
+    Auto = "awb-auto"
+    Incandescent = "awb-incandescent"
+    Tungsten = "awb-tungsten"
+    Fluorescent = "awb-fluorescent"
+    Indoor = "awb-indoor"
+    Daylight = "awb-daylight"
+    Cloudy = "awb-cloudy"
+    Custom = "awb-custom"
+
+
+class AutoFocusModeEnum(str, Enum):
+    Manual = "manual-focus"
+    Auto = "automatic-auto-focus"
+    Continuous = "continuous-auto-focus"
+
+
+class AfRangeEnum(str, Enum):
+    Normal = "af-range-normal"
+    Macro = "af-range-macro"
+    Full = "af-range-full"
+
+
 class CameraParameter(BaseModel):
 
     Framerate: int = 30
@@ -46,6 +69,11 @@ class CameraParameter(BaseModel):
 
     RtspServerPath: str = "rtsp://localhost:8554/camera-live"
 
+    AwbMode: AwbModeEnum = AwbModeEnum.Auto
+    AutoFocusMode: AutoFocusModeEnum = AutoFocusModeEnum.Auto
+    AfRange: AfRangeEnum = AfRangeEnum.Normal
+    LensPosition: float = 0.0
+
 
 class CameraStream:
     def __init__(self, params: CameraParameter = CameraParameter(), debug=False):
@@ -56,7 +84,13 @@ class CameraStream:
 
     def _create_pipeline(self):
         if self._debug is False:
-            src = "libcamerasrc name=source"
+            src = (
+                "libcamerasrc name=source unix-timestamp=true"
+                f" lens-position={self._params.LensPosition:.3f} "
+                f"auto-focus-range={self._params.AfRange} "
+                f"awb-mode={self._params.AwbMode} "
+                f"auto-focus-mode={self._params.AutoFocusMode}"
+            )
 
         else:
             src = "videotestsrc is-live=true name=source"
