@@ -117,6 +117,44 @@ class CameraStream:
 
         return Gst.FlowReturn.OK
 
+    def _disconnect_stream(self):
+        def disconnect_probe(pad, info, *args):
+            Gst.Pad.remove_probe(pad, info.id)
+            self._tee.unlink(self._streamelements[0])
+            for e in reversed(self._streamelements):
+                e.set_state(Gst.State.NULL)
+            self.pipeline.remove(self._streamelements[-1])
+
+            self.pipeline.set_state(Gst.State.PLAYING)
+            GLib.timeout_add_seconds(2, self._reconnect_stream)
+            return Gst.PadProbeReturn.OK
+
+        pad = self._tee.get_static_pad("src_2")
+        if pad:
+            pad.add_probe(
+                Gst.PadProbeType.BLOCK_DOWNSTREAM,
+                disconnect_probe,
+                None,
+            )
+
+    def _reconnect_stream(self):
+        def connect_probe(pad: Gst.Pad, info, *args):
+            Gst.Pad.remove_probe(pad, info.id)
+            self.pipeline.add(self._streamelements[-1])
+            self._tee.link_pads(srcpadname="src_2", dest=self._streamelements[0])
+            for e in self._streamelements:
+                e.set_state(Gst.State.PLAYING)
+
+            return Gst.PadProbeReturn.OK
+
+        pad = self._tee.get_static_pad("src_2")
+        if pad:
+            pad.add_probe(
+                Gst.PadProbeType.BLOCK_DOWNSTREAM,
+                connect_probe,
+                None,
+            )
+
     def _create_pipeline(self):
         if self._debug is False:
             src = (
@@ -128,7 +166,7 @@ class CameraStream:
             )
 
         else:
-            src = "videotestsrc is-live=true name=source"
+            src = "videotestsrc is-live=true do-timestamp=1 name=source ! timeoverlay"
 
         self.pipeline = Gst.parse_launch(
             f"{src} !"
@@ -175,16 +213,6 @@ class CameraStream:
 
         loop = GLib.MainLoop()
 
-        def disconnect_probe(pad, info, *args):
-            Gst.Pad.remove_probe(pad, info.id)
-            self._tee.unlink(self._streamelements[0])
-            for e in reversed(self._streamelements):
-                e.set_state(Gst.State.NULL)
-            self.pipeline.remove(self._streamelements[-1])
-
-            self.pipeline.set_state(Gst.State.PLAYING)
-            return Gst.PadProbeReturn.OK
-
         def on_pipeline_message(msg: Gst.Message):
             if msg.type == Gst.MessageType.ERROR:
                 err, dbg = msg.parse_error()
@@ -195,13 +223,7 @@ class CameraStream:
 
         def on_streamsink_message(msg: Gst.Message):
             if msg.type == Gst.MessageType.ERROR:
-                pad = self._tee.get_static_pad("src_2")
-                if pad:
-                    pad.add_probe(
-                        Gst.PadProbeType.BLOCK_DOWNSTREAM,
-                        disconnect_probe,
-                        None,
-                    )
+                self._disconnect_stream()
 
         def on_message(_, msg: Gst.Message):
             if msg.src.name == self._streamelements[-1].name:
