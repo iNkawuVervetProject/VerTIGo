@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
 from enum import Enum
+import time
 from typing import Optional
+import pickle
+
 import gi
 
 gi.require_version("Gst", "1.0")
@@ -83,9 +86,13 @@ class CameraStream:
 
     def __init__(self, params: CameraParameter = CameraParameter(), debug=False):
         self.now = datetime.now(timezone.utc).astimezone()
+        self._file = open(self.basename() + ".pickle", "wb")
         self._debug = debug
         self._params = params
         self._create_pipeline()
+
+    def basename(self):
+        return self.now.isoformat()
 
     def _on_sample(self, appsink: Gst.Element, *args, **kwargs) -> Gst.FlowReturn:
         sample = appsink.emit("pull-sample")
@@ -97,21 +104,16 @@ class CameraStream:
         if not buffer:
             return Gst.FlowReturn.OK
 
-        if buffer.offset % 30 != 0:
-            print(f"offset {buffer.offset}")
-            return Gst.FlowReturn.OK
-
         if self._debug is False:
             ts = buffer.get_reference_timestamp_meta(CameraStream._timestamp_unix)
             if not ts:
                 print("no timestamp")
                 return Gst.FlowReturn.OK
-
-            dt = datetime.fromtimestamp(ts.timestamp / 1_000_000_000).astimezone()
+            ts = ts.timestamp
         else:
-            dt = datetime.now().astimezone()
+            ts = time.time_ns()
 
-        print(f"{buffer.offset},{buffer.pts},{dt.isoformat()}")
+        pickle.dump([buffer.offset, buffer.pts, ts], self._file)
 
         return Gst.FlowReturn.OK
 
@@ -133,8 +135,8 @@ class CameraStream:
             f" video/x-raw,width={self._params.FileResolution.Width},height={self._params.FileResolution.Height},framerate={self._params.Framerate}/1"
             " ! tee name=t ! queue ! x264enc"
             f" bitrate={self._params.FileBitrate} speed-preset={self._params.FileSpeedPreset} tune=zerolatency"
-            f" ! mp4mux ! filesink name=mp4sink location={self.now.isoformat()}.mp4 t."
-            " ! queue ! videoscale !"
+            f" ! mp4mux ! filesink name=mp4sink location={self.basename()}.mp4 t. !"
+            " queue ! videoscale !"
             f" video/x-raw,width={self._params.StreamResolution.Width},height={self._params.StreamResolution.Height} !"
             f" openh264enc bitrate={self._params.StreamBitrate*1000} ! video/x-h264 !"
             f" rtspclientsink location={self._params.RtspServerPath} t. ! queue !"
@@ -179,8 +181,11 @@ class CameraStream:
         finally:
             self.pipeline.set_state(Gst.State.NULL)
             del self.pipeline
+            self._file.close()
+            del self._file
 
     def stop(self):
+
         if self.pipeline is None:
             raise RuntimeError("pipeline is not set")
         print(f"stopping pipeline {self.pipeline.name}")
