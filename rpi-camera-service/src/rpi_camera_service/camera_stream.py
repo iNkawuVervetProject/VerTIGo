@@ -3,6 +3,7 @@ from enum import Enum
 import time
 from typing import List, Optional
 import pickle
+import random
 
 import gi
 
@@ -90,6 +91,7 @@ class CameraStream:
         self._debug = debug
         self._params = params
         self._create_pipeline()
+        self._reconnection_attempt = 0
 
     def basename(self):
         return self.now.isoformat()
@@ -117,6 +119,15 @@ class CameraStream:
 
         return Gst.FlowReturn.OK
 
+    def _reconnection_timeout(self):
+        """Return an exponential timeout starting at 2s. also adds a random +/- 1s
+        jitter to avoid reconnection storms."""
+        if self._debug:
+            return 2000
+        return (
+            2 ** min(6, max(1, self._reconnection_attempt))
+        ) * 1000 + random.randrange(-1000, 1000)
+
     def _disconnect_stream(self):
         def disconnect_probe(pad, info, *args):
             Gst.Pad.remove_probe(pad, info.id)
@@ -126,7 +137,8 @@ class CameraStream:
             self.pipeline.remove(self._streamelements[-1])
 
             self.pipeline.set_state(Gst.State.PLAYING)
-            GLib.timeout_add_seconds(2, self._reconnect_stream)
+            self._reconnection_attempt += 1
+            GLib.timeout_add(self._reconnection_timeout(), self._reconnect_stream)
             return Gst.PadProbeReturn.OK
 
         pad = self._tee.get_static_pad("src_2")
@@ -154,6 +166,7 @@ class CameraStream:
                 connect_probe,
                 None,
             )
+        return False
 
     def _create_pipeline(self):
         if self._debug is False:
