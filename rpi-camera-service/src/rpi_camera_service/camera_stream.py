@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from enum import Enum
 import time
-from typing import Optional
+from typing import List, Optional
 import pickle
 
 import gi
@@ -133,21 +133,34 @@ class CameraStream:
         self.pipeline = Gst.parse_launch(
             f"{src} !"
             f" video/x-raw,width={self._params.FileResolution.Width},height={self._params.FileResolution.Height},framerate={self._params.Framerate}/1"
-            " ! tee name=t ! queue ! x264enc"
+            " ! tee name=t t.src_0 ! queue ! x264enc"
             f" bitrate={self._params.FileBitrate} speed-preset={self._params.FileSpeedPreset} tune=zerolatency"
-            f" ! mp4mux ! filesink name=mp4sink location={self.basename()}.mp4 t. !"
-            " queue leaky=downstream flush-on-eos=true ! videoscale !"
+            f" ! mp4mux ! filesink name=mp4sink location={self.basename()}.mp4 t.src_1"
+            " ! queue ! appsink name=ts_sink t.src_2 ! queue name=streamqueue !"
+            " videoscale name=streamscale !"
             f" video/x-raw,width={self._params.StreamResolution.Width},height={self._params.StreamResolution.Height} !"
-            f" openh264enc bitrate={self._params.StreamBitrate*1000} ! video/x-h264 !"
-            " rtspclientsink"
-            f" location={self._params.RtspServerPath} async-handling=true"
-            " timeout=200000 tcp-timeout=200000 debug=true t. ! queue ! appsink"
-            " name=ts_sink"
+            f" openh264enc bitrate={self._params.StreamBitrate*1000} name=streamenc !"
+            " capsfilter caps=video/x-h264 name=streamcaps ! rtspclientsink"
+            f" name=streamsink location={self._params.RtspServerPath}"
         )
 
         self.pipeline.set_name("pipeline_" + self.now.isoformat())
 
         self.ts_sink: Gst.Element = self.pipeline.get_by_name("ts_sink")
+
+        self._streamelements: List[Gst.Element] = list([
+            self.pipeline.get_by_name(n)
+            for n in [
+                "streamqueue",
+                "streamscale",
+                "streamenc",
+                "streamcaps",
+                "streamsink",
+            ]
+        ])
+        self._streamsink = None
+
+        self._tee: Gst.Element = self.pipeline.get_by_name("t")
 
         self.ts_sink.set_property("emit-signals", True)
         self.ts_sink.connect("new-sample", self._on_sample)
@@ -162,17 +175,41 @@ class CameraStream:
 
         loop = GLib.MainLoop()
 
-        def on_message(_, msg: Gst.Message):
-            if self._debug:
-                print(msg)
-            if msg.src.name != self.pipeline.name:
-                return
+        def disconnect_probe(pad, info, *args):
+            Gst.Pad.remove_probe(pad, info.id)
+            self._tee.unlink(self._streamelements[0])
+            for e in reversed(self._streamelements):
+                e.set_state(Gst.State.NULL)
+            self.pipeline.remove(self._streamelements[-1])
+
+            self.pipeline.set_state(Gst.State.PLAYING)
+            return Gst.PadProbeReturn.OK
+
+        def on_pipeline_message(msg: Gst.Message):
             if msg.type == Gst.MessageType.ERROR:
                 err, dbg = msg.parse_error()
                 loop.quit()
                 raise RuntimeError(f"Gst Error ({msg.src.name}): {err}\n{dbg}")
             if msg.type == Gst.MessageType.EOS:
                 loop.quit()
+
+        def on_streamsink_message(msg: Gst.Message):
+            if msg.type == Gst.MessageType.ERROR:
+                pad = self._tee.get_static_pad("src_2")
+                if pad:
+                    pad.add_probe(
+                        Gst.PadProbeType.BLOCK_DOWNSTREAM,
+                        disconnect_probe,
+                        None,
+                    )
+
+        def on_message(_, msg: Gst.Message):
+            if msg.src.name == self._streamelements[-1].name:
+                on_streamsink_message(msg)
+                return
+            if msg.src.name == self.pipeline.name:
+                on_pipeline_message(msg)
+                return
 
         bus.add_signal_watch()
         bus.connect("message", on_message)
