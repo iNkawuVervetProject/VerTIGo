@@ -136,11 +136,13 @@ class CameraStream:
             " ! tee name=t ! queue ! x264enc"
             f" bitrate={self._params.FileBitrate} speed-preset={self._params.FileSpeedPreset} tune=zerolatency"
             f" ! mp4mux ! filesink name=mp4sink location={self.basename()}.mp4 t. !"
-            " queue ! videoscale !"
+            " queue leaky=downstream flush-on-eos=true ! videoscale !"
             f" video/x-raw,width={self._params.StreamResolution.Width},height={self._params.StreamResolution.Height} !"
             f" openh264enc bitrate={self._params.StreamBitrate*1000} ! video/x-h264 !"
-            f" rtspclientsink location={self._params.RtspServerPath} t. ! queue !"
-            " appsink name=ts_sink"
+            " rtspclientsink"
+            f" location={self._params.RtspServerPath} async-handling=true"
+            " timeout=200000 tcp-timeout=200000 debug=true t. ! queue ! appsink"
+            " name=ts_sink"
         )
 
         self.pipeline.set_name("pipeline_" + self.now.isoformat())
@@ -161,6 +163,8 @@ class CameraStream:
         loop = GLib.MainLoop()
 
         def on_message(_, msg: Gst.Message):
+            if self._debug:
+                print(msg)
             if msg.src.name != self.pipeline.name:
                 return
             if msg.type == Gst.MessageType.ERROR:
