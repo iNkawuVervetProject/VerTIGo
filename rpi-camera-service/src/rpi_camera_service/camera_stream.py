@@ -132,9 +132,12 @@ class CameraStream:
         def disconnect_probe(pad, info, *args):
             Gst.Pad.remove_probe(pad, info.id)
             self._tee.unlink(self._streamelements[0])
+            self._streamelements[-2].unlink(self._streamelements[-1])
+            self.pipeline.remove(self._streamelements[-1])
+
             for e in reversed(self._streamelements):
                 e.set_state(Gst.State.NULL)
-            self.pipeline.remove(self._streamelements[-1])
+            self._streamelements = self._streamelements[:-1]
 
             self.pipeline.set_state(Gst.State.PLAYING)
             self._reconnection_attempt += 1
@@ -152,7 +155,16 @@ class CameraStream:
     def _reconnect_stream(self):
         def connect_probe(pad: Gst.Pad, info, *args):
             Gst.Pad.remove_probe(pad, info.id)
+            self._streamelements.append(
+                Gst.ElementFactory.make_with_properties(
+                    "rtspclientsink",
+                    names=["name", "location"],
+                    values=["streamsink", self._params.RtspServerPath],
+                )
+            )
+
             self.pipeline.add(self._streamelements[-1])
+            self._streamelements[-2].link(self._streamelements[-1])
             self._tee.link_pads(srcpadname="src_2", dest=self._streamelements[0])
             for e in self._streamelements:
                 e.set_state(Gst.State.PLAYING)
