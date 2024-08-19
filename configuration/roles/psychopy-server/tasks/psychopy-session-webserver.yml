@@ -113,3 +113,11 @@
     scope: user
     name: psychopy-session-webserver
     enabled: yes
+
+- name:  installs tinyusb udev rules
+  copy:
+    src: 99-tinyusb.rules
+    dest: /etc/udev/rules.d/99-tinyusb.rules
+    mode: 0644
+  notify:
+    - trigger udev rules
