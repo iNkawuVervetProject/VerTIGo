@@ -4,6 +4,9 @@
   import_tasks: psychopy-session-webserver.yml
   tags: psychopy-session-webserver
 
+- name: setup vertigo-camera service
+  import_tasks: camera-service.yml
+  tags: camera-service
 
 - name: setup webui
   import_tasks: webui.yml

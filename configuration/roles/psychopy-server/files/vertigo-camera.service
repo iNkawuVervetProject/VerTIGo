@@ -1,0 +1,20 @@
+[Unit]
+Description=Runs on demand recording of the VerTIGo camera
+After=network-online.target
+Wants=network-online.target
+
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+
+[Service]
+StandardOutput=journal
+StandardError=journal
+Type=simple
+TimeoutStartSec=0
+WorkingDirectory=%h/psychopy/
+ExecStart=%h/.local/bin/vertigo-camera-webservice.sh
+Restart=always
+
+[Install]
+WantedBy=default.target

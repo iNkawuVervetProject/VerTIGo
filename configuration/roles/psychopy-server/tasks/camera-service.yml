@@ -1,0 +1,68 @@
+---
+- name: install required packages
+  apt:
+    name:
+      - libboost-dev
+      - libgnutls28-dev
+      - openssl
+      - libtiff-dev
+      - pybind11-dev
+      - qtbase5-dev
+      - libqt5core5a
+      - libqt5widgets5
+      - meson
+      - cmake
+      - python3-yaml
+      - python3-ply
+      - libglib2.0-dev
+      - libgstreamer-plugins-base1.0-dev
+
+- name: download patched libcamerasrc sources
+  git:
+    repo: https://github.com/iNkawuVervetProject/libcamera
+    dest: /usr/local/src/libcamera
+    version: dev/custom
+
+- name: build patched libcamera
+  shell:
+    chdir: /usr/local/src/libcamera
+    cmd: |
+      meson setup build --buildtype=release -Dpipelines=rpi/vc4,rpi/pisp -Dipas=rpi/vc4,rpi/pisp -Dv4l2=true -Dgstreamer=enabled -Dtest=false -Dlc-compliance=disabled -Dcam=disabled -Dqcam=disabled -Ddocumentation=disabled -Dpycamera=enabled
+      ninja -C build install
+
+
+- name: install inkawu_vertigo_camera package
+  pip:
+    extra_args: --upgrade -f /usr/local/wheels
+    name:
+      - pip
+      - inkawuvp-vertigo-camera
+    virtualenv: /usr/local/src/libcamera/venv
+    virtualenv_command: /usr/bin/python -m venv
+
+- name: sets user needed files
+  file:
+    path: "{{item}}"
+    state: directory
+    group: vertigo
+    owner: vertigo
+  with_items:
+    - /home/vertigo/.local/bin
+    - /home/vertigo/.config/systemd/user
+
+- name: install vertigo-camera-webservice.sh
+  copy:
+    src: vertigo-camera-webservice.sh
+    dest: /home/vertigo/.local/bin/vertigo-camera-webservice.sh
+    owner: vertigo
+    group: vertigo
+    mode: 0755
+  notify: restarts camera service
+
+- name: add service files
+  copy:
+    src: vertigo-camera.service
+    dest: /home/vertigo/.config/systemd/user/vertigo-camera.service
+    owner: vertigo
+    group: vertigo
+  notify: restarts camera service

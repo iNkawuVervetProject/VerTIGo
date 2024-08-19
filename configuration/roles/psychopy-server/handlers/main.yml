@@ -11,3 +11,13 @@
 - name: trigger udev rules
   shell: |
     udevadm control --reload && udevadm trigger
+
+- name: restarts camera service
+  become: yes
+  become_user: vertigo
+  systemd:
+    scope: user
+    service: vertigo-camera
+    daemon_reload: yes
+    state: restarted
+    enabled: yes
