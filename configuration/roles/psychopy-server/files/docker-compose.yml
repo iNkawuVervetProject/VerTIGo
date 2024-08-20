@@ -12,8 +12,8 @@ services:
   mediamtx:
     image: bluenviron/mediamtx:latest
     network_mode: host
-    environment:
-      - MTX_PATHS_camera_SOURCE=publisher
+    volumes:
+      - /usr/local/src/libcamera/mediamtx.yml:/mediamtx.yml:ro
 
   traefik:
     image: traefik:latest
