@@ -1,4 +1,4 @@
 [vertigo]
 
 vertigo1 ansible_host=vertigo1.gerbil-discus.ts.net
-vertigo2
+vertigo2 ansible_host=vertigo2.gerbil-discus.ts.net

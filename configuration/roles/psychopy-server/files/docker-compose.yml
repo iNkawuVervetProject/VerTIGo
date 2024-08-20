@@ -9,6 +9,11 @@ services:
       - HOST_HEADER=x-forwarded-host
     restart: 'unless-stopped'
 
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    network_mode: host
+    environment:
+      - MTX_PATHS_camera_SOURCE=publisher
 
   traefik:
     image: traefik:latest
