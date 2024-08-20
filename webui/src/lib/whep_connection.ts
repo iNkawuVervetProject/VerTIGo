@@ -1,3 +1,5 @@
+import { readonly, writable, type Readable, type Writable } from 'svelte/store';
+
 function supportsNonAdvertisedCodec(codec: string, fmtp?: string): Promise<boolean> {
 	return new Promise((resolve) => {
 		const pc = new RTCPeerConnection({ iceServers: [] });
@@ -295,33 +297,32 @@ type OnTrackClbk = (evt: RTCTrackEvent) => void;
 type OnErrorClbk = (err: Error) => void;
 
 export class WHEPConnection {
+	private _source: Writable<MediaProvider | undefined> = writable<MediaProvider | undefined>(
+		undefined
+	);
+	public source: Readable<MediaProvider | undefined> = readonly(this._source);
+	private _error: Writable<Error | undefined> = writable<Error | undefined>(undefined);
+	public error: Readable<Error | undefined> = readonly(this._error);
+
 	private static _nonAdvertisedCodecs?: string[] = undefined;
 
 	private _connection: RTCPeerConnection | null = null;
 	private _data?: SDPOffer = undefined;
 
-	private _timeout: Timeout | null = null;
 	private _queuedCandidates: RTCIceCandidate[] = [];
 	private _sessionURL: string = '';
 
 	private constructor(
 		private _url: string,
-		public ontrack: OnTrackClbk = () => {},
-		public onerror: OnErrorClbk = () => {},
 		public retryPause: number = 2000
 	) {}
 
-	public static async connect(
-		url: string,
-		ontrack: OnTrackClbk,
-		onerror: OnErrorClbk,
-		retryPause: number = 2000
-	): Promise<WHEPConnection> {
+	public static async connect(url: string, retryPause: number = 2000): Promise<WHEPConnection> {
 		if (WHEPConnection._nonAdvertisedCodecs === undefined) {
 			WHEPConnection._nonAdvertisedCodecs = await getNonAdvertisedCodecs();
 		}
 
-		const res = new WHEPConnection(url, ontrack, onerror, retryPause);
+		const res = new WHEPConnection(url, retryPause);
 		try {
 			await res._connect();
 		} catch (err: any) {
@@ -346,7 +347,10 @@ export class WHEPConnection {
 		this._connection.onicecandidate = (evt: RTCPeerConnectionIceEvent) =>
 			this._onLocalCandidate(evt);
 		this._connection.oniceconnectionstatechange = () => this._onConnectionState();
-		this._connection.ontrack = (evt: RTCTrackEvent) => this.ontrack(evt);
+		this._connection.ontrack = (evt: RTCTrackEvent) => {
+			this._error.set(undefined);
+			this._source.set(evt.streams[0]);
+		};
 
 		try {
 			const offer = await this._connection.createOffer();
@@ -357,6 +361,7 @@ export class WHEPConnection {
 			await this._sendOffer(offer);
 		} catch (err: any) {
 			this._onError(err);
+			throw err;
 		}
 	}
 
@@ -375,17 +380,8 @@ export class WHEPConnection {
 	}
 
 	private _onError(err: Error): void {
-		this.onerror(err);
-		if (this._timeout !== null) {
-			return;
-		}
-
+		this._error.set(err);
 		this.close();
-
-		this._timeout = setTimeout(() => {
-			this._timeout = null;
-			this._connect();
-		}, this.retryPause);
 	}
 
 	private static _editOffer(sdp: string): string {
@@ -436,17 +432,14 @@ export class WHEPConnection {
 
 			this._sessionURL = new URL(resp.headers.get('location') || '').toString();
 
-			this._onRemoteAnswer(await resp.text());
+			await this._onRemoteAnswer(await resp.text());
 		} catch (err: any) {
 			this._onError(err);
+			throw err;
 		}
 	}
 
 	private async _onRemoteAnswer(sdp: string) {
-		if (this._timeout !== null) {
-			return;
-		}
-
 		await this._connection?.setRemoteDescription(
 			new RTCSessionDescription({
 				type: 'answer',
@@ -461,10 +454,6 @@ export class WHEPConnection {
 	}
 
 	private async _onLocalCandidate(evt: RTCPeerConnectionIceEvent) {
-		if (this._timeout !== null) {
-			return;
-		}
-
 		if (evt.candidate === null) {
 			return;
 		}
@@ -499,10 +488,6 @@ export class WHEPConnection {
 	}
 
 	private _onConnectionState() {
-		if (this._timeout !== null) {
-			return;
-		}
-
 		if (this._connection?.iceConnectionState === 'disconnected') {
 			this._onError(new Error('peer connection closed'));
 		}
