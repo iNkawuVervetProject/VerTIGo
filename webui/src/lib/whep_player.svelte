@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { WHEPConnection } from '$lib/whep_connection';
 	import { onDestroy, onMount } from 'svelte';
+	import { readable } from 'svelte/store';
 
 	export let url: string;
 
@@ -10,7 +11,7 @@
 
 	let mounted = false;
 
-	let message: string = '';
+	let message: string = 'none';
 
 	let timeout: any = undefined;
 
@@ -22,12 +23,13 @@
 		}
 	}
 
-	$: {
-		const error = connection?.error;
-		showError($error);
+	$: error = connection?.error || readable(undefined);
 
+	$: {
+		showError($error);
 		if ($error !== undefined) {
 			if (connection !== undefined) {
+				connection.close(); // not required, but better be sure than sorry
 				connection = undefined;
 			}
 
@@ -36,7 +38,7 @@
 	}
 
 	async function connect(url: string) {
-		if ( timeout !== undefined ) {
+		if (timeout !== undefined) {
 			clearTimeout(timeout);
 			timeout = undefined;
 		}
@@ -56,15 +58,22 @@
 		if (timeout !== undefined) {
 			return;
 		}
-		timeout = setTimeout(()=>{
+
+		timeout = setTimeout(() => {
 			timeout = undefined;
 			connect(url);
-		}
+		}, retryTimeout());
 	}
 
+	function retryTimeout(): number {
+		return 2000;
+	}
+
+	$: source = connection?.source || readable(undefined);
 	$: {
-		const source = connection?.source;
-		video.srcObject = $source || null;
+		if (video !== undefined) {
+			video.srcObject = $source || null;
+		}
 	}
 
 	$: {

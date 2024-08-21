@@ -1,4 +1,4 @@
-import { readonly, writable, type Readable, type Writable } from 'svelte/store';
+import { readonly, writable, type Readable, type Unsubscriber, type Writable } from 'svelte/store';
 
 function supportsNonAdvertisedCodec(codec: string, fmtp?: string): Promise<boolean> {
 	return new Promise((resolve) => {
@@ -293,9 +293,6 @@ function generateSdpFragment(offer: SDPOffer, candidates: RTCIceCandidate[]) {
 	return frag;
 }
 
-type OnTrackClbk = (evt: RTCTrackEvent) => void;
-type OnErrorClbk = (err: Error) => void;
-
 export class WHEPConnection {
 	private _source: Writable<MediaProvider | undefined> = writable<MediaProvider | undefined>(
 		undefined
@@ -312,10 +309,34 @@ export class WHEPConnection {
 	private _queuedCandidates: RTCIceCandidate[] = [];
 	private _sessionURL: string = '';
 
+	private _unsubscribe: Unsubscriber;
+
 	private constructor(
 		private _url: string,
 		public retryPause: number = 2000
-	) {}
+	) {
+		this._unsubscribe = this._error.subscribe((err?: Error) => {
+			if (err !== undefined) {
+				close();
+			}
+		});
+	}
+
+	public close(): void {
+		this._unsubscribe();
+		this._source.set(undefined);
+		if (this._connection !== null) {
+			this._connection.close();
+			this._connection = null;
+		}
+
+		if (this._sessionURL) {
+			fetch(this._sessionURL, { method: 'DELETE' });
+			this._sessionURL = '';
+		}
+
+		this._queuedCandidates = [];
+	}
 
 	public static async connect(url: string, retryPause: number = 2000): Promise<WHEPConnection> {
 		if (WHEPConnection._nonAdvertisedCodecs === undefined) {
@@ -326,7 +347,7 @@ export class WHEPConnection {
 		try {
 			await res._connect();
 		} catch (err: any) {
-			res._onError(err);
+			res._error.set(err);
 		}
 		return res;
 	}
@@ -348,7 +369,6 @@ export class WHEPConnection {
 			this._onLocalCandidate(evt);
 		this._connection.oniceconnectionstatechange = () => this._onConnectionState();
 		this._connection.ontrack = (evt: RTCTrackEvent) => {
-			this._error.set(undefined);
 			this._source.set(evt.streams[0]);
 		};
 
@@ -360,28 +380,9 @@ export class WHEPConnection {
 			await this._connection.setLocalDescription(offer);
 			await this._sendOffer(offer);
 		} catch (err: any) {
-			this._onError(err);
+			this._error.set(err);
 			throw err;
 		}
-	}
-
-	public close(): void {
-		if (this._connection !== null) {
-			this._connection.close();
-			this._connection = null;
-		}
-
-		if (this._sessionURL) {
-			fetch(this._sessionURL, { method: 'DELETE' });
-			this._sessionURL = '';
-		}
-
-		this._queuedCandidates = [];
-	}
-
-	private _onError(err: Error): void {
-		this._error.set(err);
-		this.close();
 	}
 
 	private static _editOffer(sdp: string): string {
@@ -434,7 +435,7 @@ export class WHEPConnection {
 
 			await this._onRemoteAnswer(await resp.text());
 		} catch (err: any) {
-			this._onError(err);
+			this._error.set(err);
 			throw err;
 		}
 	}
@@ -461,7 +462,11 @@ export class WHEPConnection {
 		if (this._sessionURL === '') {
 			this._queuedCandidates.push(evt.candidate);
 		} else {
-			await this._sendLocalCandidates([evt.candidate]);
+			try {
+				await this._sendLocalCandidates([evt.candidate]);
+			} catch (err: any) {
+				this._error.set(err);
+			}
 		}
 	}
 
@@ -489,7 +494,7 @@ export class WHEPConnection {
 
 	private _onConnectionState() {
 		if (this._connection?.iceConnectionState === 'disconnected') {
-			this._onError(new Error('peer connection closed'));
+			this._error.set(new Error('peer connection closed'));
 		}
 	}
 }
