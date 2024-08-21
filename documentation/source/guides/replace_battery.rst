@@ -52,10 +52,16 @@ the four side.
 
 |break|
 
-.. _removing the feet:
 
-1. Removing the back feet
---------------------------
+0.5 Remove the top corner
+-------------------------
+
+1. Removing the feets
+---------------------
+
+..
+  removing the feet: should all.
+
 
 .. image:: feet_side.png
    :width: 50 %
@@ -66,9 +72,9 @@ the four side.
    :align: right
 
 1. Place VerTIGo upside down, on the edge of a table, the back side facing you.
-2. Remove the two M3 x 8mm countersunk screws on the side of the back feet ( facing you ).
-3. Remove the four M3 x 8mm pan head screws on the bottom of the back feet.
-4. You can now remove the back feet
+2. Remove the four M3 x 8mm countersunk screws on the side of the feet ( facing you ).
+3. Remove the height M3 x 8mm pan head screws on the bottom of the feet.
+4. You can now remove all the feet
 
 
 |break|
@@ -125,9 +131,16 @@ side panel, to ease the access to the battery module
    facing you**. Since the screen is facing down, it will be on your **left**.
 
 
-1. Remove the two side M3 x 8mm countersunk screw on the side.
-2. Remove the two M3 x 8mm Pan Head screw on the front.
 
+
+1. Remove the two side M3 x 8mm countersunk screw on the side.
+2. Remove the two M3 x 8mm Pan Head screw from the front side
+
+   .. important::
+
+     These are accessed from the **front side**. Do not remove the other screws
+     that are holding the front plate together.
+3. Remove the panel, two M3 nut may fall from
 |break|
 
 
@@ -155,6 +168,9 @@ side panel, to ease the access to the battery module
 .. image:: battery_module_screws.png
    :width: 50 %
    :align: right
+
+..
+  _todo: put glue on standoffs, vibration take them out too easily.
 
 
 2. Unscrew the two M3 x 6mm Pan Head screws holding the battery module to the
