@@ -23,7 +23,7 @@
 		}
 	}
 
-	$: error = connection?.$error || undefined;
+	$: error = connection?.error || undefined;
 
 	$: {
 		showError($error);
