@@ -1,4 +1,19 @@
+import { dev } from '$app/environment';
 import { readonly, writable, type Readable, type Unsubscriber, type Writable } from 'svelte/store';
+
+interface PartialLogger {
+	info: typeof console.info;
+	debug: typeof console.debug;
+	error: typeof console.error;
+}
+
+const logger: PartialLogger = dev
+	? console
+	: {
+			info: () => {},
+			debug: () => {},
+			error: () => {}
+		};
 
 function supportsNonAdvertisedCodec(codec: string, fmtp?: string): Promise<boolean> {
 	return new Promise((resolve) => {
@@ -293,17 +308,15 @@ function generateSdpFragment(offer: SDPOffer, candidates: RTCIceCandidate[]) {
 	return frag;
 }
 
-export class WHEPConnection {
-	private _source: Writable<MediaProvider | undefined> = writable<MediaProvider | undefined>(
+class Connection {
+	public _source: Writable<MediaProvider | undefined> = writable<MediaProvider | undefined>(
 		undefined
 	);
-	public source: Readable<MediaProvider | undefined> = readonly(this._source);
-	private _error: Writable<Error | undefined> = writable<Error | undefined>(undefined);
-	public error: Readable<Error | undefined> = readonly(this._error);
+	public _error: Writable<Error | undefined> = writable<Error | undefined>(undefined);
 
 	private static _nonAdvertisedCodecs?: string[] = undefined;
 
-	private _connection: RTCPeerConnection | null = null;
+	private _connection: RTCPeerConnection | undefined = undefined;
 	private _data?: SDPOffer = undefined;
 
 	private _queuedCandidates: RTCIceCandidate[] = [];
@@ -311,23 +324,22 @@ export class WHEPConnection {
 
 	private _unsubscribe: Unsubscriber;
 
-	private constructor(
-		private _url: string,
-		public retryPause: number = 2000
-	) {
+	private constructor(private _url: string) {
+		logger.info(`[WHEPConnection:${this._url}]: create`);
 		this._unsubscribe = this._error.subscribe((err?: Error) => {
 			if (err !== undefined) {
-				close();
+				this.close();
 			}
 		});
 	}
 
 	public close(): void {
+		logger.info(`[WHEPConnection:${this._url}]: closing`);
 		this._unsubscribe();
 		this._source.set(undefined);
-		if (this._connection !== null) {
+		if (this._connection !== undefined) {
 			this._connection.close();
-			this._connection = null;
+			this._connection = undefined;
 		}
 
 		if (this._sessionURL) {
@@ -338,25 +350,33 @@ export class WHEPConnection {
 		this._queuedCandidates = [];
 	}
 
-	public static async connect(url: string, retryPause: number = 2000): Promise<WHEPConnection> {
-		if (WHEPConnection._nonAdvertisedCodecs === undefined) {
-			WHEPConnection._nonAdvertisedCodecs = await getNonAdvertisedCodecs();
+	public static async connect(url: string): Promise<Connection> {
+		if (Connection._nonAdvertisedCodecs === undefined) {
+			Connection._nonAdvertisedCodecs = await getNonAdvertisedCodecs();
+			logger.info(`[WHEPConnection]: nonAdvertisedCodecs`, Connection._nonAdvertisedCodecs);
 		}
 
-		const res = new WHEPConnection(url, retryPause);
+		const res = new Connection(url);
 		try {
 			await res._connect();
 		} catch (err: any) {
-			res._error.set(err);
+			logger.info(`[WHEPConnection]: connection error: ${err}`);
+			res.close();
+			throw err;
 		}
 		return res;
 	}
 
 	private async _connect() {
+		logger.info(`[WHEPConnection:${this._url}]: connect`);
 		const resp = await fetch(this._url, { method: 'OPTIONS' });
 
+		const iceServer = linkToIceServers(resp.headers.get('Link') || '');
+
+		logger.debug(`[WHEPConnection:${this._url}]: iceServer`, iceServer);
+
 		this._connection = new RTCPeerConnection({
-			iceServers: linkToIceServers(resp.headers.get('Link') || ''),
+			iceServers: iceServer,
 			// https://webrtc.org/getting-started/unified-plan-transition-guide
 			sdpSemantics: 'unified-plan'
 		});
@@ -375,7 +395,7 @@ export class WHEPConnection {
 		try {
 			const offer = await this._connection.createOffer();
 
-			offer.sdp = WHEPConnection._editOffer(offer.sdp || '');
+			offer.sdp = Connection._editOffer(offer.sdp || '');
 			this._data = parseOffer(offer.sdp);
 			await this._connection.setLocalDescription(offer);
 			await this._sendOffer(offer);
@@ -394,15 +414,15 @@ export class WHEPConnection {
 				}
 				section = enableStereoOpus(section);
 
-				if (WHEPConnection._nonAdvertisedCodecs?.includes('pcma/8000/2')) {
+				if (Connection._nonAdvertisedCodecs?.includes('pcma/8000/2')) {
 					section = enableStereoPcmau(section);
 				}
 
-				if (WHEPConnection._nonAdvertisedCodecs?.includes('multiopus/48000/6')) {
+				if (Connection._nonAdvertisedCodecs?.includes('multiopus/48000/6')) {
 					section = enableMultichannelOpus(section);
 				}
 
-				if (WHEPConnection._nonAdvertisedCodecs?.includes('L16/48000/2')) {
+				if (Connection._nonAdvertisedCodecs?.includes('L16/48000/2')) {
 					section = enableL16(section);
 				}
 			})
@@ -410,6 +430,7 @@ export class WHEPConnection {
 	}
 
 	private async _sendOffer(offer: RTCSessionDescriptionInit) {
+		logger.debug(`[WHEPConnection:${this._url}]: sendOffer`, offer);
 		try {
 			const resp = await fetch(this._url, {
 				method: 'POST',
@@ -441,6 +462,7 @@ export class WHEPConnection {
 	}
 
 	private async _onRemoteAnswer(sdp: string) {
+		logger.debug(`[WHEPConnection:${this._url}]: onRemoteAnswer`, sdp);
 		await this._connection?.setRemoteDescription(
 			new RTCSessionDescription({
 				type: 'answer',
@@ -455,6 +477,7 @@ export class WHEPConnection {
 	}
 
 	private async _onLocalCandidate(evt: RTCPeerConnectionIceEvent) {
+		logger.debug(`[WHEPConnection:${this._url}]: onLocalCandidate`, evt);
 		if (evt.candidate === null) {
 			return;
 		}
@@ -471,6 +494,7 @@ export class WHEPConnection {
 	}
 
 	private async _sendLocalCandidates(candidates: RTCIceCandidate[]) {
+		logger.debug(`[WHEPConnection:${this._url}]: sendLocalCandidate`, candidates);
 		const resp = await fetch(this._sessionURL, {
 			method: 'PATCH',
 			headers: {
@@ -493,8 +517,27 @@ export class WHEPConnection {
 	}
 
 	private _onConnectionState() {
+		logger.debug(
+			`[WHEPConnection:${this._url}]: onConnectionState`,
+			this._connection?.iceConnectionState
+		);
 		if (this._connection?.iceConnectionState === 'disconnected') {
 			this._error.set(new Error('peer connection closed'));
 		}
 	}
+}
+
+export interface WHEPConnection {
+	close: () => void;
+	error: Readable<Error | undefined>;
+	media: Readable<MediaProvider | undefined>;
+}
+
+export async function read_whep(url: string): Promise<WHEPConnection> {
+	const conn = await Connection.connect(url);
+	return {
+		close: conn.close,
+		error: readonly(conn._error),
+		media: readonly(conn._source)
+	};
 }

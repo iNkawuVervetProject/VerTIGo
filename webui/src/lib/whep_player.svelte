@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { WHEPConnection } from '$lib/whep_connection';
+	import { read_whep, type WHEPConnection } from '$lib/whep_connection';
 	import { onDestroy, onMount } from 'svelte';
 	import { readable } from 'svelte/store';
 
@@ -23,7 +23,7 @@
 		}
 	}
 
-	$: error = connection?.error || readable(undefined);
+	$: error = connection?.$error || undefined;
 
 	$: {
 		showError($error);
@@ -47,7 +47,7 @@
 		connection = undefined;
 
 		try {
-			connection = await WHEPConnection.connect(url);
+			connection = await read_whep(url);
 		} catch (err: any) {
 			showError(err);
 			scheduleReconnect();
@@ -69,10 +69,10 @@
 		return 2000;
 	}
 
-	$: source = connection?.source || readable(undefined);
+	$: media = connection?.media || readable(undefined);
 	$: {
 		if (video !== undefined) {
-			video.srcObject = $source || null;
+			video.srcObject = $media || null;
 		}
 	}
 
