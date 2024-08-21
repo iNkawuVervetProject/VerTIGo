@@ -117,8 +117,13 @@ the four side.
 
 
 As the battery module is hard to get out, it is preferable to remove the right
-panel ( on your left if the screen is laying on the table), to ease the access
-to the battery module. For that purpose:
+side panel, to ease the access to the battery module
+
+.. important::
+
+   Here the right side denotes the side which is on the right **when the screen is
+   facing you**. Since the screen is facing down, it will be on your **left**.
+
 
 1. Remove the two side M3 x 8mm countersunk screw on the side.
 2. Remove the two M3 x 8mm Pan Head screw on the front.
