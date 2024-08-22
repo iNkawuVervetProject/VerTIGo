@@ -15,18 +15,21 @@
 
 	let timeout: any = undefined;
 
+	let nTrials: number = 0;
+
+	let delay: number = 0;
+
 	function showError(err?: Error) {
 		if (err === undefined) {
 			message = '';
 		} else {
-			message = err.toString() + ', will retry in an instant';
+			message = `${err.toString()}, will retry after ${Math.round(delay / 1000)}s`;
 		}
 	}
 
 	$: error = connection?.error || undefined;
 
 	$: {
-		showError($error);
 		if ($error !== undefined) {
 			if (connection !== undefined) {
 				connection.close(); // not required, but better be sure than sorry
@@ -35,6 +38,7 @@
 
 			scheduleReconnect();
 		}
+		showError($error);
 	}
 
 	async function connect(url: string) {
@@ -48,9 +52,11 @@
 
 		try {
 			connection = await read_whep(url);
+			nTrials = 0;
 		} catch (err: any) {
-			showError(err);
+			nTrials += 1;
 			scheduleReconnect();
+			showError(err);
 		}
 	}
 
@@ -58,15 +64,17 @@
 		if (timeout !== undefined) {
 			return;
 		}
+		delay = retryTimeout();
 
 		timeout = setTimeout(() => {
 			timeout = undefined;
 			connect(url);
-		}, retryTimeout());
+		}, delay);
 	}
 
 	function retryTimeout(): number {
-		return 2000;
+		const exp = Math.min(Math.max(nTrials, 1), 5);
+		return Math.round(1000 * (2 ** exp + (Math.random() * 2 - 1) / 20));
 	}
 
 	$: media = connection?.media || readable(undefined);
