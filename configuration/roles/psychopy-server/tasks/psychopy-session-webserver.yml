@@ -25,6 +25,7 @@
       - libavdevice-dev
       - libavformat-dev
       - libavfilter-dev
+      - libxcb-cursor0
     state: present
 
 - name: adds support for qt6 to qtchooser
@@ -53,10 +54,10 @@
     extra_args: --upgrade -f /usr/local/wheels
     name:
       - pip
-      - psychopy==2024.1.4
+      - psychopy
       - inkawuvp-pellet-dispenser
-      - psychopy-ivp
-      - psychopy-session-webserver==0.0.1a2
+      - psychopy-ivp==0.0.1a2
+      - psychopy-session-webserver==0.0.1a4
 
     virtualenv: /home/vertigo/psychopy/venv
     virtualenv_command: /home/vertigo/.pyenv/shims/python -m venv
