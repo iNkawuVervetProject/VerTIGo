@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "psychopy_session_webserver"
-version = "0.0.1a2"
+version = "0.0.1a4"
 authors = [
   { name="Alexandre Tuleu", email="alexandre.tuleu.2005@polytechnique.org" },
 ]
@@ -21,7 +21,7 @@ classifiers = [
 dependencies = [
    "hypercorn",
    "fastapi",
-   "psychopy",
+   "psychopy==2024.1.4",
    "watchdog",
    "structlog",
    "numpy<2",
