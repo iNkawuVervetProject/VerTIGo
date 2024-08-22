@@ -207,6 +207,10 @@ def validate_address(address):
 def main():
     global session
 
+    from psychopy import plugins
+
+    plugins.activatePlugins()
+
     opts = parse_options()
 
     loop = asyncio.new_event_loop()

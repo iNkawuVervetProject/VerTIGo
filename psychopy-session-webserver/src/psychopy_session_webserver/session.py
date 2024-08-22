@@ -32,6 +32,7 @@ class Session(AsyncTaskRunner):
         if session is None:
             from psychopy import session
 
+
             self._session = session.Session(root, dataDir=dataDir)
         else:
             self._session = session
