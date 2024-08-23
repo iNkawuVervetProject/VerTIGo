@@ -11,7 +11,7 @@
 
 	let mounted = false;
 
-	let message: string = 'none';
+	let message: string = 'Connecting...';
 
 	let timeout: any = undefined;
 
@@ -103,7 +103,22 @@
 	});
 </script>
 
-<video bind:this={video} autoplay="true" />
-{#if message.length > 0}
-	<p>{message}</p>
-{/if}
+<div
+	class="align-center relative flex aspect-video min-w-full flex-row justify-center bg-surface-800/20 dark:bg-surface-200/20"
+>
+	{#if message.length > 0}
+		<div
+			class="absolute bottom-0 left-0 right-0 top-0 z-20 flex items-center justify-center bg-surface-800/50"
+		>
+			<p class="h-min grow-0 text-2xl">{message}</p>
+		</div>
+	{:else}
+		<div class="absolute bottom-0 left-0 right-0 top-0 z-10 flex items-center justify-center">
+			<p class="h-min grow-0 text-2xl">
+				<i class="fa-solid fa-camera px-2" /> Connecting...
+			</p>
+		</div>
+	{/if}
+
+	<video bind:this={video} autoplay="true" class="z-10 aspect-video min-w-full" />
+</div>
