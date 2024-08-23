@@ -309,7 +309,7 @@ function generateSdpFragment(offer: SDPOffer, candidates: RTCIceCandidate[]) {
 }
 
 class Connection {
-	public _source: Writable<MediaProvider | undefined> = writable<MediaProvider | undefined>(
+	public _source: Writable<MediaStream | undefined> = writable<MediaStream | undefined>(
 		undefined
 	);
 	public _error: Writable<Error | undefined> = writable<Error | undefined>(undefined);
@@ -321,28 +321,23 @@ class Connection {
 
 	private _queuedCandidates: RTCIceCandidate[] = [];
 	private _sessionURL: string = '';
-
-	private _unsubscribe: Unsubscriber;
+	private _etag: string = '';
 
 	private constructor(private _url: string) {
 		logger.info(`[WHEPConnection:${this._url}]: create`);
-		this._unsubscribe = this._error.subscribe((err?: Error) => {
-			if (err !== undefined) {
-				this.close();
-			}
-		});
 	}
 
 	public close(): void {
 		logger.info(`[WHEPConnection:${this._url}]: closing`);
-		this._unsubscribe();
-		this._source.set(undefined);
+		if (this._source !== undefined) {
+			this._source.set(undefined);
+		}
 		if (this._connection !== undefined) {
 			this._connection.close();
 			this._connection = undefined;
 		}
 
-		if (this._sessionURL) {
+		if (this._sessionURL.length > 0) {
 			fetch(this._sessionURL, { method: 'DELETE' });
 			this._sessionURL = '';
 		}
@@ -369,10 +364,8 @@ class Connection {
 
 	private async _connect() {
 		logger.info(`[WHEPConnection:${this._url}]: connect`);
-		const resp = await fetch(this._url, { method: 'OPTIONS' });
-
+		const resp = await fetch(this._url + '/whep', { method: 'OPTIONS' });
 		const iceServer = linkToIceServers(resp.headers.get('Link') || '');
-
 		logger.debug(`[WHEPConnection:${this._url}]: iceServer`, iceServer);
 
 		this._connection = new RTCPeerConnection({
@@ -389,18 +382,22 @@ class Connection {
 			this._onLocalCandidate(evt);
 		this._connection.oniceconnectionstatechange = () => this._onConnectionState();
 		this._connection.ontrack = (evt: RTCTrackEvent) => {
+			logger.debug(`[WHEPConnection:${this._url}]: ontrack`, evt);
 			this._source.set(evt.streams[0]);
 		};
 
 		try {
 			const offer = await this._connection.createOffer();
-
+			logger.debug(`[WHEPConnection:${this._url}]: got offer`, offer);
 			offer.sdp = Connection._editOffer(offer.sdp || '');
+			logger.debug(`[WHEPConnection:${this._url}]: editted offer`, offer);
 			this._data = parseOffer(offer.sdp);
+			logger.debug(`[WHEPConnection:${this._url}]: editted offer data`, this._data);
 			await this._connection.setLocalDescription(offer);
 			await this._sendOffer(offer);
 		} catch (err: any) {
 			this._error.set(err);
+			this.close();
 			throw err;
 		}
 	}
@@ -425,6 +422,7 @@ class Connection {
 				if (Connection._nonAdvertisedCodecs?.includes('L16/48000/2')) {
 					section = enableL16(section);
 				}
+				return section;
 			})
 			.join('m=');
 	}
@@ -432,7 +430,7 @@ class Connection {
 	private async _sendOffer(offer: RTCSessionDescriptionInit) {
 		logger.debug(`[WHEPConnection:${this._url}]: sendOffer`, offer);
 		try {
-			const resp = await fetch(this._url, {
+			const resp = await fetch(this._url + '/whep', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/sdp'
@@ -452,17 +450,22 @@ class Connection {
 					throw new Error(`bad status code ${resp.status}`);
 			}
 
-			this._sessionURL = new URL(resp.headers.get('location') || '').toString();
+			this._sessionURL = new URL(
+				resp.headers.get('location') || '',
+				new URL(this._url).origin
+			).toString();
+			this._etag = resp.headers.get('E-Tag') || '*';
 
 			await this._onRemoteAnswer(await resp.text());
 		} catch (err: any) {
 			this._error.set(err);
+			this.close();
 			throw err;
 		}
 	}
 
 	private async _onRemoteAnswer(sdp: string) {
-		logger.debug(`[WHEPConnection:${this._url}]: onRemoteAnswer`, sdp);
+		logger.debug(`[WHEPConnection:${this._url}]: onRemoteAnswer`);
 		await this._connection?.setRemoteDescription(
 			new RTCSessionDescription({
 				type: 'answer',
@@ -471,8 +474,14 @@ class Connection {
 		);
 
 		if (this._queuedCandidates.length != 0) {
-			this._sendLocalCandidates(this._queuedCandidates);
-			this._queuedCandidates = [];
+			try {
+				await this._sendLocalCandidates(this._queuedCandidates);
+				this._queuedCandidates = [];
+			} catch (err: any) {
+				this._error.set(err);
+
+				this.close();
+			}
 		}
 	}
 
@@ -489,6 +498,7 @@ class Connection {
 				await this._sendLocalCandidates([evt.candidate]);
 			} catch (err: any) {
 				this._error.set(err);
+				this.close();
 			}
 		}
 	}
@@ -499,7 +509,7 @@ class Connection {
 			method: 'PATCH',
 			headers: {
 				'Content-Type': 'application/trickle-ice-sdpfrag',
-				'If-Match': '*'
+				'If-Match': this._etag
 			},
 			body: generateSdpFragment(
 				this._data || { iceUfrag: '', icePwd: '', medias: [] },
@@ -523,6 +533,7 @@ class Connection {
 		);
 		if (this._connection?.iceConnectionState === 'disconnected') {
 			this._error.set(new Error('peer connection closed'));
+			this.close();
 		}
 	}
 }
@@ -530,7 +541,7 @@ class Connection {
 export interface WHEPConnection {
 	close: () => void;
 	error: Readable<Error | undefined>;
-	media: Readable<MediaProvider | undefined>;
+	media: Readable<MediaStream | undefined>;
 }
 
 export async function read_whep(url: string): Promise<WHEPConnection> {

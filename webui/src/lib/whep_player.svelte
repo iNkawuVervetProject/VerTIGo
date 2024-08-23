@@ -74,7 +74,7 @@
 
 	function retryTimeout(): number {
 		const exp = Math.min(Math.max(nTrials, 1), 5);
-		return Math.round(1000 * (2 ** exp + (Math.random() * 2 - 1) / 20));
+		return 3600 * Math.round(1000 * (2 ** exp + (Math.random() * 2 - 1) / 20));
 	}
 
 	$: media = connection?.media || readable(undefined);
@@ -103,7 +103,7 @@
 	});
 </script>
 
-<video bind:this={video} />
+<video bind:this={video} autoplay="true" />
 {#if message.length > 0}
 	<p>{message}</p>
 {/if}

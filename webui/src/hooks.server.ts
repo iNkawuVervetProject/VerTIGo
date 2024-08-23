@@ -3,16 +3,39 @@ import { env } from '$env/dynamic/private';
 import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 import type { Handle } from '@sveltejs/kit';
 
-const BACKEND_ORIGIN = env.BACKEND_ORIGIN ?? 'localhost:5000';
+const BACKEND_HOST = env.BACKEND_HOST ?? 'localhost:5000';
+const MEDIAMTX_HOST = env.MEDIAMTX_HOST ?? 'localhost:8889';
 const DEBUG = (env.DEBUG ?? '0') != '0';
 
 if (PUBLIC_NO_LOCAL_DEV_ENDPOINT != '0' || !dev) {
-	console.log("Will redirect /psysw/api' to http://" + BACKEND_ORIGIN);
+	console.log("Will redirect /psysw/api' to http://" + BACKEND_HOST);
+}
+
+async function proxyRequest(
+	request: Request,
+	oldOrigin: string,
+	newHost: string,
+	protocol: string = 'http://'
+) {
+	const newOrigin = protocol + newHost;
+	const proxyRequest: Request = new Request(request.url.replace(oldOrigin, newOrigin), request);
+
+	proxyRequest.headers.set('host', newHost);
+	proxyRequest.headers.set('origin', newOrigin);
+	proxyRequest.headers.set(
+		'referer',
+		request.headers.get('referer')?.replace(oldOrigin, newOrigin) || newOrigin + '/'
+	);
+	return await fetch(proxyRequest);
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
 	if (DEBUG) {
 		console.log(event);
+	}
+
+	if (event.url.pathname.endsWith('whep')) {
+		return await proxyRequest(event.request, event.url.origin, MEDIAMTX_HOST);
 	}
 
 	if (PUBLIC_NO_LOCAL_DEV_ENDPOINT === '0' && dev) {
@@ -21,7 +44,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	// we intercept and proxy the text/event-stream
 	if (event.url.pathname === '/psysw/api/events') {
-		const proxy_url = 'http://' + BACKEND_ORIGIN + '/events';
+		const proxy_url = 'http://' + BACKEND_HOST + '/events';
 		// keepalive is needed as otherwise the connection is closed and updates are not received
 		// anymore. Will it leak? I dunno, lets see.
 		const response = await fetch(proxy_url, { keepalive: true, cache: 'no-cache' });
@@ -34,16 +57,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	if (event.url.pathname.startsWith('/psysw/api')) {
-		const request: Request = new Request(
-			event.request.url.replace(event.url.origin + '/psysw/api', 'http://' + BACKEND_ORIGIN),
-			event.request
-		);
-		request.headers.set('host', BACKEND_ORIGIN);
-		request.headers.set('origin', 'http://' + BACKEND_ORIGIN);
-		request.headers.set('referer', 'http://' + BACKEND_ORIGIN + '/');
-		request.headers.set('content-type', 'application/json;charset=UTF-8');
-		const response = await fetch(request);
-		return response;
+		return proxyRequest(event.request, event.url.origin + '/psysw/api', BACKEND_HOST);
 	}
 
 	return await resolve(event);

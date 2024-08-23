@@ -18,6 +18,7 @@
 
 	onMount(() => {
 		const frequency = PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev ? 300 : 10000;
+
 		const interval = setInterval(() => {
 			invalidate('/api/battery');
 		}, frequency);
