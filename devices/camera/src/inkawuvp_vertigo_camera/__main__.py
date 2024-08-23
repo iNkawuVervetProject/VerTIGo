@@ -1,12 +1,12 @@
 from contextlib import contextmanager
 import time
 from threading import Thread
-from rpi_camera_service import app
+from inkawuvp_vertigo_camera import app
 
 import uvicorn
 from argparse import ArgumentParser
 
-from rpi_camera_service.camera_stream import CameraParameter, CameraStream
+from inkawuvp_vertigo_camera.camera_stream import CameraParameter, CameraStream
 
 
 def stream(args):

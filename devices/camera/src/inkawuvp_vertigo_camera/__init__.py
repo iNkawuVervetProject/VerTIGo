@@ -3,7 +3,7 @@ from typing import Optional
 from threading import Thread
 from fastapi import FastAPI, HTTPException
 import os
-from rpi_camera_service.camera_stream import CameraParameter, CameraStream
+from inkawuvp_vertigo_camera.camera_stream import CameraParameter, CameraStream
 
 
 debug = os.getenv("DEBUG", "0") != "0"
