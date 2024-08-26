@@ -31,13 +31,28 @@
       ninja -C build install
 
 
-- name: install inkawu_vertigo_camera package
+- name: upload inkawuvp_vertigo_camera package
+  synchronize:
+    src: vertigo-camera/
+    dest: /usr/local/src/inkawuvp-vertigo-camera
+    rsync_opts:
+      - '--exclude=__pycache__/'
+      - '--exclude=*.egg-info/'
+      - '--exclude=dist'
+      - '--exclude=*.mp4'
+      - '--exclude=*.pickle'
+      - '--exclude=*~'
+      - '--exclude=.direnv'
+      - '--exclude=venv'
+
+- name: installs inkawuvp_vertigo_camera package
   pip:
     extra_args: --upgrade -f /usr/local/wheels
     name:
       - pip
-      - inkawuvp-vertigo-camera
-    virtualenv: /usr/local/src/libcamera/venv
+      - .
+    chdir: /usr/local/src/inkawuvp-vertigo-camera/
+    virtualenv: /usr/local/src/inkawuvp-vertigo-camera/venv
     virtualenv_command: /usr/bin/python -m venv
 
 - name: sets user needed files

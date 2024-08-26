@@ -4,8 +4,9 @@ set -e
 
 PSYCHOPY_ROOT=$HOME/psychopy
 LIBCAMERA_ROOT=/usr/local/src/libcamera
+VERTIGO_CAMERA_ROOT=/usr/local/src/inkawuvp-vertigo-camera
 
-source $LIBCAMERA_ROOT/venv/bin/activate
+source $VERTIGO_CAMERA_ROOT/venv/bin/activate
 
 mkdir -p $PSYCHOPY_ROOT/movies
 
