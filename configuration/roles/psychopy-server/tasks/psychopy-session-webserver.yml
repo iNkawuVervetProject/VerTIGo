@@ -47,6 +47,33 @@
       - '--include=*.whl'
       - '--exclude=*'
 
+- name: ensures local source file directory exists
+  file:
+    path: /home/vertigo/.local/src
+    state: directory
+    owner: vertigo
+    group: vertigo
+    mode: 0755
+
+
+- name: uploads sources
+  become_user: vertigo
+  become: yes
+  synchronize:
+    src: '{{ item }}/'
+    dest: '/home/vertigo/.local/src/{{ item }}'
+    rsync_opts:
+      - '--exclude=__pycache__/'
+      - '--exclude=*.egg-info/'
+      - '--exclude=dist'
+      - '--exclude=*~'
+      - '--exclude=.direnv'
+      - '--exclude=venv'
+  with_items:
+    - psychopy-session-webserver
+    - psychopy-ivp
+    - inkawuvp-pellet-dispenser
+
 - name: install psychopy_session_webserver
   become_user: vertigo
   become: yes
@@ -54,13 +81,15 @@
     extra_args: --upgrade -f /usr/local/wheels
     name:
       - pip
-      - psychopy
-      - inkawuvp-pellet-dispenser
-      - psychopy-ivp==0.0.1a2
-      - psychopy-session-webserver==0.0.1a4
+      - psychopy==2024.1.4
+
+      - /home/vertigo/.local/src/inkawuvp-pellet-dispenser
+      - /home/vertigo/.local/src/psychopy-ivp
+      - /home/vertigo/.local/src/psychopy-session-webserver
 
     virtualenv: /home/vertigo/psychopy/venv
     virtualenv_command: /home/vertigo/.pyenv/shims/python -m venv
+  notify: restarts psychopy-session-webserver service
 
 - name: ensures psychopy group exists
   group:
@@ -96,7 +125,7 @@
     group: vertigo
     mode: 0755
   notify:
-    - restarts service
+    - restarts psychopy-session-webserver service
 
 - name: adds service file
   copy:
@@ -105,15 +134,7 @@
     owner: vertigo
     group: vertigo
   notify:
-    - restarts service
-
-- name: enable systemd service for vertigo
-  become: true
-  become_user: vertigo
-  systemd:
-    scope: user
-    name: psychopy-session-webserver
-    enabled: yes
+    - restarts psychopy-session-webserver service
 
 - name:  installs tinyusb udev rules
   copy:
@@ -122,3 +143,4 @@
     mode: 0644
   notify:
     - trigger udev rules
+    - restarts psychopy-session-webserver service
