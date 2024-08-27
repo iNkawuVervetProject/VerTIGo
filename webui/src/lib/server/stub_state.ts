@@ -130,4 +130,4 @@ class Session {
 	}
 }
 
-export const session: Session = new Session();
+export const state: Session = new Session();

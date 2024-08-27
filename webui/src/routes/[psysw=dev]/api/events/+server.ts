@@ -1,12 +1,12 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { session } from '$lib/server/session';
+import { state } from '$lib/server/stub_state';
 import type { Unsubscriber } from 'svelte/store';
 
 export const GET: RequestHandler = async ({}) => {
 	let unsubscribe: Unsubscriber = () => {};
 	const stream = new ReadableStream({
 		start(controller) {
-			unsubscribe = session.subscribeEvents((name: string, data: any) => {
+			unsubscribe = state.subscribeEvents((name: string, data: any) => {
 				controller.enqueue(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`);
 			});
 		},

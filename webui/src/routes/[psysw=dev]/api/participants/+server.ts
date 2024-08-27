@@ -1,6 +1,6 @@
-import { session } from '$lib/server/session';
+import { state } from '$lib/server/stub_state';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = ({}) => {
-	return json(session.getParticipants());
+	return json(state.getParticipants());
 };
