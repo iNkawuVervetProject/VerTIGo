@@ -1,5 +1,5 @@
 import { readonly, writable, type Writable, type Readable, type Unsubscriber } from 'svelte/store';
-import type { Catalog, Experiment, Participant, ParticipantByName } from './types';
+import type { BatteryState, Catalog, Experiment, Participant, ParticipantByName } from './types';
 import { browser } from '$app/environment';
 
 function dictDiff<Value, Dict extends { [key: string]: Value }>(a: Dict, b: Dict): Dict {
@@ -62,11 +62,13 @@ const _catalog = dictStore<Experiment, Catalog>({});
 const _window: Writable<boolean> = writable<boolean>(false);
 const _experiment: Writable<string> = writable<string>('');
 const _participants = dictStore<Participant, ParticipantByName>({});
+const _battery: Writable<Partial<BatteryState>> = writable<Partial<BatteryState>>({});
 
 export const window: Readable<boolean> = readonly<boolean>(_window);
 export const catalog: Readable<Catalog> = readonly<Catalog>(_catalog);
 export const experiment: Readable<string> = readonly<string>(_experiment);
 export const participants: Readable<ParticipantByName> = readonly<ParticipantByName>(_participants);
+export const battery: Readable<Partial<BatteryState>> = readonly(_battery);
 
 const _eventListeners = {
 	catalogUpdate: (event: MessageEvent): void => {
@@ -84,6 +86,10 @@ const _eventListeners = {
 	participantsUpdate: (event: MessageEvent): void => {
 		const data = JSON.parse(event.data) as ParticipantByName;
 		_participants.mergeDiffs(data);
+	},
+	batteryUpdate: (event: MessageEvent): void => {
+		const data = JSON.parse(event.data) as Partial<BatteryState>;
+		_battery.set(data);
 	}
 };
 
@@ -91,7 +97,8 @@ const _eventSubscriptions = {
 	catalogUpdate: _catalog.subscribeToDiff,
 	experimentUpdate: _experiment.subscribe,
 	windowUpdate: _window.subscribe,
-	participantsUpdate: _participants.subscribeToDiff
+	participantsUpdate: _participants.subscribeToDiff,
+	batteryUpdate: _battery.subscribe
 };
 
 let _source: EventSource | undefined = undefined;
@@ -108,13 +115,13 @@ export function clearEventSource(): void {
 
 export function setEventSource(source: EventSource): void {
 	clearEventSource();
-
-	source.onerror = () => {
-		clearEventSource();
+	source.onmessage = console.log;
+	source.onopen = () => {
+		_source = source;
+		for (const [type, listener] of Object.entries(_eventListeners)) {
+			_source.addEventListener(type, listener);
+		}
 	};
-	for (const [type, listener] of Object.entries(_eventListeners)) {
-		_source?.addEventListener(type, listener);
-	}
 }
 
 export type EventSubscription = (type: string, data: any) => void;
@@ -146,5 +153,6 @@ export const server = {
 	experiment: browser ? undefined : _experiment,
 	window: browser ? undefined : _window,
 	participants: browser ? undefined : _participants,
-	catalog: browser ? undefined : _catalog
+	catalog: browser ? undefined : _catalog,
+	battery: browser ? undefined : _battery
 };

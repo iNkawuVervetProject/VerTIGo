@@ -4,12 +4,12 @@ import type { BatteryState } from '$lib/types';
 import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 import { env } from '$env/dynamic/private';
 import { Socket } from 'net';
+import { server } from '$lib/application_state';
 
 let state: BatteryState | undefined = undefined;
 export function getBatteryState(): BatteryState | undefined {
 	return state;
 }
-
 const FAKE_SERVICE: boolean = PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev;
 const NUT_HOSTNAME = env.NUT_HOSTNAME || 'localhost';
 
@@ -105,6 +105,8 @@ async function readBatteryState(): Promise<void> {
 		console.error('could not get battery state: ' + e);
 		state = undefined;
 	}
+
+	server.battery?.set(state || {});
 }
 
 if (FAKE_SERVICE) {
@@ -133,6 +135,7 @@ if (FAKE_SERVICE) {
 				state.onBattery = true;
 			}
 		}
+		server.battery?.set(state || {});
 	}, 300);
 } else {
 	setInterval(async () => {

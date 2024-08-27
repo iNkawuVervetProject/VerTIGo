@@ -4,28 +4,25 @@
 
 	import { AppShell, AppBar, LightSwitch } from '@skeletonlabs/skeleton';
 
-	import { setEventSource, clearEventSource } from '$lib/application_state';
+	import { setEventSource, clearEventSource, battery } from '$lib/application_state';
 	import { initializeStores, Modal, Toast, getToastStore } from '@skeletonlabs/skeleton';
-	import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 	import { onMount } from 'svelte';
 	import type { LayoutData } from './$types';
 	import BatteryIndicator from '$lib/battery_indicator.svelte';
-	import { dev } from '$app/environment';
-	import { invalidate } from '$app/navigation';
 
 	initializeStores();
 
 	let timeout: ReturnType<typeof setInterval> | undefined = undefined;
-
 	function connect() {
 		if (timeout !== undefined) {
 			clearTimeout(timeout);
 			timeout = undefined;
 		}
 		console.log('connect to /api/events');
-		const source = new EventSource('/api/events');
+		const source = new EventSource('api/events');
 		setEventSource(source);
-		source.onerror = () => {
+		source.onerror = (evt) => {
+			console.log('/api/events: got error', evt);
 			clearEventSource();
 			if (timeout === undefined) {
 				timeout = setTimeout(() => {
@@ -37,16 +34,9 @@
 	}
 
 	onMount(() => {
-		const frequency = PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev ? 300 : 10000;
-
-		const interval = setInterval(() => {
-			invalidate('/api/battery');
-		}, frequency);
-
 		connect();
 
 		return () => {
-			clearInterval(interval);
 			if (timeout !== undefined) {
 				clearTimeout(timeout);
 				timeout = undefined;
@@ -56,8 +46,6 @@
 	});
 
 	const toasts = getToastStore();
-
-	export let data: LayoutData;
 
 	let previous: number | undefined = 100;
 	let alertToast: string | undefined = undefined;
@@ -117,7 +105,7 @@
 		}
 	}
 
-	$: onNewBatteryValue(data.battery.level, data.battery.charging ?? false);
+	$: onNewBatteryValue($battery.level, $battery.charging ?? false);
 </script>
 
 <Modal />
@@ -139,7 +127,7 @@
 				>
 					GitHub
 				</a>
-				<BatteryIndicator state={data.battery} />
+				<BatteryIndicator state={$battery} />
 				<LightSwitch />
 			</svelte:fragment>
 		</AppBar>
