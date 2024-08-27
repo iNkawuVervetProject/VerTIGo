@@ -15,21 +15,22 @@
 
 	initializeStores();
 
-	let timeout: any = undefined;
+	let timeout: ReturnType<typeof setInterval> | undefined = undefined;
 
-	function connectToEventSource() {
+	function connect() {
 		if (timeout !== undefined) {
 			clearTimeout(timeout);
 			timeout = undefined;
 		}
-		const source = new EventSource('/psysw/api/events');
+		console.log('connect to /api/events');
+		const source = new EventSource('/api/events');
 		setEventSource(source);
 		source.onerror = () => {
 			clearEventSource();
 			if (timeout === undefined) {
 				timeout = setTimeout(() => {
 					timeout = undefined;
-					connectToEventSource();
+					connect();
 				}, 2000);
 			}
 		};
@@ -42,7 +43,7 @@
 			invalidate('/api/battery');
 		}, frequency);
 
-		connectToEventSource();
+		connect();
 
 		return () => {
 			clearInterval(interval);

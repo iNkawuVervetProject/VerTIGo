@@ -1,29 +1,6 @@
-import { readonly, writable, type Writable, type Readable } from 'svelte/store';
+import { readonly, writable, type Writable, type Readable, type Unsubscriber } from 'svelte/store';
 import type { Catalog, Experiment, Participant, ParticipantByName } from './types';
-import { onMount } from 'svelte';
-
-let subscribed = false;
-
-// a custom store that incrementally merge a dict. If a key points to a null object it is
-// removed. the backend can the incrementally sends diff to the frontend.
-function dictStore<Value, Dict extends { [key: string]: Value }>(obj: Dict) {
-	const { subscribe, set } = writable<Dict>(obj);
-
-	return {
-		subscribe,
-		data: obj,
-		set,
-		mergeDiffs: (other: Dict): void => {
-			obj = { ...obj, ...other } as Dict;
-			for (const [key, value] of Object.entries(other)) {
-				if (value == null) {
-					delete obj[key];
-				}
-			}
-			set(obj);
-		}
-	};
-}
+import { browser } from '$app/environment';
 
 function dictDiff<Value, Dict extends { [key: string]: Value }>(a: Dict, b: Dict): Dict {
 	const diff: any = {};
@@ -47,6 +24,38 @@ function dictDiff<Value, Dict extends { [key: string]: Value }>(a: Dict, b: Dict
 	}
 
 	return diff;
+}
+
+// a custom store that incrementally merge a dict. If a key points to a null object it is
+// removed. the backend can the incrementally sends diff to the frontend.
+function dictStore<Value, Dict extends { [key: string]: Value }>(obj: Dict) {
+	const { subscribe, set } = writable<Dict>(obj);
+
+	return {
+		subscribe,
+		data: obj,
+		set,
+		mergeDiffs: (other: Dict): void => {
+			obj = { ...obj, ...other } as Dict;
+			for (const [key, value] of Object.entries(other)) {
+				if (value == null) {
+					delete obj[key];
+				}
+			}
+			set(obj);
+		},
+		subscribeToDiff: (onDiff: (diff: Dict) => void): Unsubscriber => {
+			let current: Dict | undefined = undefined;
+			return subscribe((value: Dict) => {
+				if (current === undefined) {
+					onDiff(value);
+				} else {
+					onDiff(dictDiff(current, value));
+				}
+				current = value;
+			});
+		}
+	};
 }
 
 const _catalog = dictStore<Experiment, Catalog>({});
@@ -78,6 +87,13 @@ const _eventListeners = {
 	}
 };
 
+const _eventSubscriptions = {
+	catalogUpdate: _catalog.subscribeToDiff,
+	experimentUpdate: _experiment.subscribe,
+	windowUpdate: _window.subscribe,
+	participantsUpdate: _participants.subscribeToDiff
+};
+
 let _source: EventSource | undefined = undefined;
 
 export function clearEventSource(): void {
@@ -101,7 +117,34 @@ export function setEventSource(source: EventSource): void {
 	}
 }
 
+export type EventSubscription = (type: string, data: any) => void;
+
+export function subscribeToEvents(onEvent: EventSubscription): Unsubscriber {
+	const unsubscribers: Unsubscriber[] = [];
+
+	for (const [type, subscribe] of Object.entries(_eventSubscriptions)) {
+		unsubscribers.push(
+			subscribe((value: any) => {
+				onEvent(type, value);
+			})
+		);
+	}
+
+	return () => {
+		for (const unsubscribe of unsubscribers) {
+			unsubscribe();
+		}
+	};
+}
+
 export const testing = {
 	dictStore,
 	dictDiff
+};
+
+export const server = {
+	experiment: browser ? undefined : _experiment,
+	window: browser ? undefined : _window,
+	participants: browser ? undefined : _participants,
+	catalog: browser ? undefined : _catalog
 };

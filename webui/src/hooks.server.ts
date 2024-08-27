@@ -1,14 +1,45 @@
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
+import { clearEventSource, setEventSource } from '$lib/application_state';
+import { initFakeData } from '$lib/server/stub_state';
 import type { Handle } from '@sveltejs/kit';
 
 const BACKEND_HOST = env.BACKEND_HOST ?? 'localhost:5000';
 const MEDIAMTX_HOST = env.MEDIAMTX_HOST ?? 'localhost:8889';
 const DEBUG = (env.DEBUG ?? '0') != '0';
+const FAKE_BACKEND = PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev;
 
-if (PUBLIC_NO_LOCAL_DEV_ENDPOINT != '0' || !dev) {
+let _timeout: ReturnType<typeof setTimeout> | undefined = undefined;
+
+function _connect() {
+	if (_timeout !== undefined) {
+		clearTimeout(_timeout);
+		_timeout = undefined;
+	}
+
+	const eventURL = `http://${BACKEND_HOST}/events`;
+	console.log('reading events from ', eventURL);
+	const source = new EventSource(eventURL);
+	setEventSource(source);
+	source.onerror = (evt) => {
+		console.log(`${eventURL} error: `, evt);
+		clearEventSource();
+		if (_timeout === undefined) {
+			_timeout = setTimeout(() => {
+				_timeout = undefined;
+				_connect();
+			}, 2000);
+		}
+	};
+}
+
+if (FAKE_BACKEND) {
+	initFakeData();
+	console.log('Will use stub backend server');
+} else {
 	console.log("Will redirect /psysw/api' to http://" + BACKEND_HOST);
+	_connect();
 }
 
 async function proxyRequest(
@@ -40,20 +71,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	if (PUBLIC_NO_LOCAL_DEV_ENDPOINT === '0' && dev) {
 		return await resolve(event);
-	}
-
-	// we intercept and proxy the text/event-stream
-	if (event.url.pathname === '/psysw/api/events') {
-		const proxy_url = 'http://' + BACKEND_HOST + '/events';
-		// keepalive is needed as otherwise the connection is closed and updates are not received
-		// anymore. Will it leak? I dunno, lets see.
-		const response = await fetch(proxy_url, { keepalive: true, cache: 'no-cache' });
-		return new Response(response.body, {
-			headers: {
-				'Content-Type': 'text/event-stream',
-				'Cache-Control': 'no-cache'
-			}
-		});
 	}
 
 	if (event.url.pathname.startsWith('/psysw/api')) {
