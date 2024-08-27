@@ -7,7 +7,7 @@ import { clearFakeData, initFakeData } from '$lib/server/stub_state';
 import type { Handle } from '@sveltejs/kit';
 
 const BACKEND_HOST = env.BACKEND_HOST ?? 'localhost:5000';
-const CAMERA_HOST = env.CAMERA_HOST ?? 'localhost:5042';
+
 const MEDIAMTX_HOST = env.MEDIAMTX_HOST ?? 'localhost:8889';
 const DEBUG = (env.DEBUG ?? '0') != '0';
 

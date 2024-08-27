@@ -30,3 +30,26 @@ export interface BatteryState {
 	onBattery: boolean;
 	charging: boolean;
 }
+
+export interface CameraResolution {
+	Width: number;
+	Height: number;
+}
+
+export interface CameraParameter {
+	Framerate: number;
+
+	FileResolution: CameraResolution;
+	FileBitrate: number;
+	FileSpeedPreset: string;
+
+	StreamResolution: CameraResolution;
+	StreamBitrate: number;
+	RtspServerPath: string;
+
+	AwbMode: string;
+	AutoFocusMode: string;
+	AfRange: string;
+
+	LensPosition: number;
+}

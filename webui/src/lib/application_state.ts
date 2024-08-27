@@ -63,12 +63,14 @@ const _window: Writable<boolean> = writable<boolean>(false);
 const _experiment: Writable<string> = writable<string>('');
 const _participants = dictStore<Participant, ParticipantByName>({});
 const _battery: Writable<Partial<BatteryState>> = writable<Partial<BatteryState>>({});
+const _stream: Writable<string> = writable<string>('');
 
 export const window: Readable<boolean> = readonly<boolean>(_window);
 export const catalog: Readable<Catalog> = readonly<Catalog>(_catalog);
 export const experiment: Readable<string> = readonly<string>(_experiment);
 export const participants: Readable<ParticipantByName> = readonly<ParticipantByName>(_participants);
 export const battery: Readable<Partial<BatteryState>> = readonly(_battery);
+export const stream: Readable<string> = readonly(_stream);
 
 const _eventListeners = {
 	catalogUpdate: (event: MessageEvent): void => {
@@ -90,6 +92,10 @@ const _eventListeners = {
 	batteryUpdate: (event: MessageEvent): void => {
 		const data = JSON.parse(event.data) as Partial<BatteryState>;
 		_battery.set(data);
+	},
+	streamUpdate: (event: MessageEvent): void => {
+		const data = JSON.parse(event.data) as string;
+		_stream.set(data);
 	}
 };
 
@@ -98,7 +104,8 @@ const _eventSubscriptions = {
 	experimentUpdate: _experiment.subscribe,
 	windowUpdate: _window.subscribe,
 	participantsUpdate: _participants.subscribeToDiff,
-	batteryUpdate: _battery.subscribe
+	batteryUpdate: _battery.subscribe,
+	streamUpdate: _stream.subscribe
 };
 
 let _source: EventSource | undefined = undefined;
@@ -157,5 +164,6 @@ export const server = {
 	window: browser ? undefined : _window,
 	participants: browser ? undefined : _participants,
 	catalog: browser ? undefined : _catalog,
-	battery: browser ? undefined : _battery
+	battery: browser ? undefined : _battery,
+	stream: browser ? undefined : _stream
 };

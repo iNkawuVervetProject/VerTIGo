@@ -34,7 +34,7 @@ async def get_camera_settings() -> CameraParameter:
 
 
 @app.post("/camera")
-async def start_camera(params: CameraParameter):
+async def start_camera(params: CameraParameter)-> CameraParameter:
     global stream
     global streamThread
     if stream is not None:
@@ -44,6 +44,7 @@ async def start_camera(params: CameraParameter):
         stream = CameraStream(params, debug=debug)
         streamThread = Thread(target=stream.run)
         streamThread.start()
+        return stream._params
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -77,10 +77,12 @@ export function initFakeData(): void {
 		charging: false
 	};
 
-	_batteryInterval = setInterval(() => {
-		state = _incrementStubBatteryState(state);
-		server.battery?.set(state);
-	}, 300);
+	if (_batteryInterval === undefined) {
+		_batteryInterval = setInterval(() => {
+			state = _incrementStubBatteryState(state);
+			server.battery?.set(state);
+		}, 300);
+	}
 }
 
 export function clearFakeData(): void {
