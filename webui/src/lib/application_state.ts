@@ -107,6 +107,7 @@ export function clearEventSource(): void {
 	if (_source === undefined) {
 		return;
 	}
+	console.log('stopping source of events from ', _source.url);
 	for (const [type, listener] of Object.entries(_eventListeners)) {
 		_source.removeEventListener(type, listener);
 	}
@@ -117,6 +118,7 @@ export function setEventSource(source: EventSource): void {
 	clearEventSource();
 	source.onmessage = console.log;
 	source.onopen = () => {
+		console.log('setting source of event from ', source.url);
 		_source = source;
 		for (const [type, listener] of Object.entries(_eventListeners)) {
 			_source.addEventListener(type, listener);

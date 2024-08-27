@@ -7,12 +7,12 @@
 	import { setEventSource, clearEventSource, battery } from '$lib/application_state';
 	import { initializeStores, Modal, Toast, getToastStore } from '@skeletonlabs/skeleton';
 	import { onMount } from 'svelte';
-	import type { LayoutData } from './$types';
 	import BatteryIndicator from '$lib/battery_indicator.svelte';
 
 	initializeStores();
 
 	let timeout: ReturnType<typeof setInterval> | undefined = undefined;
+
 	function connect() {
 		if (timeout !== undefined) {
 			clearTimeout(timeout);

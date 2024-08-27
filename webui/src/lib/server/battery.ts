@@ -4,7 +4,6 @@ import type { BatteryState } from '$lib/types';
 import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 import { env } from '$env/dynamic/private';
 import { Socket } from 'net';
-import { server } from '$lib/application_state';
 
 let state: BatteryState | undefined = undefined;
 export function getBatteryState(): BatteryState | undefined {
@@ -75,13 +74,12 @@ class NUTConnect {
 
 let nut: NUTConnect | undefined = undefined;
 
-async function readBatteryState(): Promise<void> {
+export async function readBatteryState(url: string = NUT_HOSTNAME): Promise<BatteryState> {
 	if (nut == undefined) {
 		try {
-			nut = await NUTConnect.connect(NUT_HOSTNAME, 3493);
+			nut = await NUTConnect.connect(url, 3493);
 		} catch (e) {
-			console.error('could not connect to nut: ' + e);
-			return;
+			throw new Error('could not connect to nut: ' + e);
 		}
 	}
 
@@ -98,48 +96,12 @@ async function readBatteryState(): Promise<void> {
 			state.onBattery = false;
 			state.charging = status.includes('CHRG');
 		}
+
+		return state;
 	} catch (e) {
 		if (e instanceof Error && e.message == 'closed connection') {
 			nut = undefined;
 		}
-		console.error('could not get battery state: ' + e);
-		state = undefined;
+		throw new Error('could not get battery state: ' + e);
 	}
-
-	server.battery?.set(state || {});
-}
-
-if (FAKE_SERVICE) {
-	state = {
-		level: 90,
-		onBattery: true,
-		charging: false
-	};
-
-	let onChargerCount = 0;
-	setInterval(() => {
-		if (state?.onBattery) {
-			state.level -= 1;
-			if (state.level == 1) {
-				state.onBattery = false;
-				state.charging = true;
-			}
-		} else if (state?.charging) {
-			state.level += 1;
-			if (state.level == 98) {
-				state.charging = false;
-				onChargerCount = 0;
-			}
-		} else if (state != undefined) {
-			if (onChargerCount++ == 10) {
-				state.onBattery = true;
-			}
-		}
-		server.battery?.set(state || {});
-	}, 300);
-} else {
-	setInterval(async () => {
-		await readBatteryState();
-	}, 15000);
-	await readBatteryState();
 }

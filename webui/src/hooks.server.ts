@@ -1,8 +1,9 @@
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
-import { clearEventSource, setEventSource } from '$lib/application_state';
-import { initFakeData } from '$lib/server/stub_state';
+import { clearEventSource, server, setEventSource } from '$lib/application_state';
+import { readBatteryState } from '$lib/server/battery';
+import { clearFakeData, initFakeData } from '$lib/server/stub_state';
 import type { Handle } from '@sveltejs/kit';
 
 const BACKEND_HOST = env.BACKEND_HOST ?? 'localhost:5000';
@@ -36,10 +37,27 @@ function _connect() {
 
 if (FAKE_BACKEND) {
 	initFakeData();
-	console.log('Will use stub backend server');
 } else {
 	console.log("Will redirect /psysw/api' to http://" + BACKEND_HOST);
 	_connect();
+	setInterval(async () => {
+		try {
+			server.battery?.set(await readBatteryState());
+		} catch (err) {
+			console.error('could not read battery state: ' + err);
+			server.battery?.set({});
+		}
+	}, 5000);
+}
+
+if (import.meta && import.meta.hot) {
+	import.meta.hot.dispose(() => {
+		clearFakeData();
+		if (_timeout !== undefined) {
+			clearTimeout(_timeout);
+			clearEventSource();
+		}
+	});
 }
 
 async function proxyRequest(

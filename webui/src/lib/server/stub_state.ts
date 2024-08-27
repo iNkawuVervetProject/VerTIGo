@@ -1,4 +1,10 @@
-import { Participant, type Catalog, type Parameters, type ParticipantByName } from '$lib/types';
+import {
+	Participant,
+	type BatteryState,
+	type Catalog,
+	type Parameters,
+	type ParticipantByName
+} from '$lib/types';
 import { server } from '$lib/application_state';
 import { get, readable } from 'svelte/store';
 
@@ -35,10 +41,53 @@ export function openWindow(): void {
 	server.window?.set(true);
 }
 
+let _onChargerCount = 0;
+function _incrementStubBatteryState(state: BatteryState): BatteryState {
+	if (state.onBattery) {
+		state.level -= 1;
+		if (state.level == 1) {
+			state.onBattery = false;
+			state.charging = true;
+		}
+	} else if (state?.charging) {
+		state.level += 1;
+		if (state.level == 98) {
+			state.charging = false;
+			_onChargerCount = 0;
+		}
+	} else if (state != undefined) {
+		if (_onChargerCount++ == 10) {
+			state.onBattery = true;
+		}
+	}
+	return { level: state.level, charging: state.charging, onBattery: state.onBattery };
+}
+
+let _batteryInterval: ReturnType<typeof setInterval> | undefined;
+
 export function initFakeData(): void {
+	console.log('Will use stub backend data');
 	server.experiment?.set('');
 	server.catalog?.set(catalog);
 	server.participants?.set(participants);
+
+	let state: BatteryState = {
+		level: 90,
+		onBattery: true,
+		charging: false
+	};
+
+	_batteryInterval = setInterval(() => {
+		state = _incrementStubBatteryState(state);
+		server.battery?.set(state);
+	}, 300);
+}
+
+export function clearFakeData(): void {
+	if (_batteryInterval !== undefined) {
+		clearInterval(_batteryInterval);
+		_batteryInterval = undefined;
+	}
 }
 
 export function runExperiment(key: string, parameters: Parameters): void {
