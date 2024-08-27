@@ -25,6 +25,30 @@ function dictStore<Value, Dict extends { [key: string]: Value }>(obj: Dict) {
 	};
 }
 
+function dictDiff<Value, Dict extends { [key: string]: Value }>(a: Dict, b: Dict): Dict {
+	const diff: any = {};
+
+	for (const [key, value] of Object.entries(a)) {
+		const bValue = b[key];
+		if (bValue === undefined) {
+			diff[key] = null;
+			continue;
+		}
+		if (JSON.stringify(bValue) != JSON.stringify(value)) {
+			diff[key] = bValue;
+		}
+	}
+
+	const aKeys = Object.keys(a);
+	for (const [key, value] of Object.entries(b)) {
+		if (aKeys.includes(key) === false) {
+			diff[key] = value;
+		}
+	}
+
+	return diff;
+}
+
 const _catalog = dictStore<Experiment, Catalog>({});
 const _window: Writable<boolean> = writable<boolean>(false);
 const _experiment: Writable<string> = writable<string>('');
@@ -64,3 +88,8 @@ export function synchronizeState(): void {
 		});
 	});
 }
+
+export const testing = {
+	dictStore,
+	dictDiff
+};
