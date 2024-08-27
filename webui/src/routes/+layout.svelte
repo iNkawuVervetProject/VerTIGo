@@ -4,7 +4,7 @@
 
 	import { AppShell, AppBar, LightSwitch } from '@skeletonlabs/skeleton';
 
-	import { synchronizeState } from '$lib/session_state';
+	import { synchronizeState } from '$lib/application_state';
 	import { initializeStores, Modal, Toast, getToastStore } from '@skeletonlabs/skeleton';
 	import { invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';

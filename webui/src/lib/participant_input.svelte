@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { parameters } from '$lib/parameters';
-	import { participants } from './session_state';
+	import { participants } from '$lib/application_state';
 	import { Autocomplete } from '@skeletonlabs/skeleton';
 	import type { AutocompleteOption } from '@skeletonlabs/skeleton';
 

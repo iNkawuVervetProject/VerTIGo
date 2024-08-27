@@ -1,6 +1,6 @@
 import { derived, writable, type Readable, type Writable } from 'svelte/store';
 import type { Parameters, Catalog } from './types';
-import { catalog } from './session_state';
+import { catalog } from './application_state';
 
 export const parameters: Writable<Partial<Parameters>> = writable<Partial<Parameters>>({});
 

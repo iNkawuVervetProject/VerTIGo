@@ -1,4 +1,4 @@
-import { readonly, writable, type Writable, type Readable, get } from 'svelte/store';
+import { readonly, writable, type Writable, type Readable } from 'svelte/store';
 import type { Catalog, Experiment, Participant, ParticipantByName } from './types';
 import { onMount } from 'svelte';
 

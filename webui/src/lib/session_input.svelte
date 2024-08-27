@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { parameters } from './parameters';
-	import { participants } from './session_state';
+	import { participants } from './application_state';
 	import type { ParticipantByName } from './types';
 
 	let inputValue: number = 1;

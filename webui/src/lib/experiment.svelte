@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Experiment, Participant } from '$lib/types';
 	import { parameters } from './parameters';
-	import { experiment as currentExperiment, participants } from './session_state';
+	import { experiment as currentExperiment, participants } from '$lib/application_state';
 	import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton';
 
 	export let experiment: Experiment;
