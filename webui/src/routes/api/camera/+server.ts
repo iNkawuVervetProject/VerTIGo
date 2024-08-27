@@ -1,7 +1,11 @@
+import { dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
-import { server } from '$lib/application_state';
+import { server, stream } from '$lib/application_state';
+import { camera, startCamera, stopCamera } from '$lib/server/stub_state';
 import type { CameraParameter } from '$lib/types';
 import { error, json, type RequestHandler } from '@sveltejs/kit';
+import { get } from 'svelte/store';
 
 const FAKE_BACKEND = PUBLIC_NO_LOCAL_DEV_ENDPOINT === '0' && dev;
 const CAMERA_HOST = env.CAMERA_HOST ?? 'localhost:5042';
@@ -9,7 +13,12 @@ const CAMERA_URL = `http://${CAMERA_HOST}/camera`;
 
 export const DELETE: RequestHandler = async ({ fetch }) => {
 	if (FAKE_BACKEND) {
-		return error(404, 'not yet implemented');
+		try {
+			stopCamera();
+			return json(null);
+		} catch (err: any) {
+			return error(404, err.toString());
+		}
 	} else {
 		try {
 			const resp = await fetch(CAMERA_URL, { method: 'DELETE' });
@@ -32,7 +41,11 @@ function streamPath(params: Partial<CameraParameter>): string {
 
 export const GET: RequestHandler = async ({ fetch }) => {
 	if (FAKE_BACKEND) {
-		return error(404, 'not yet implemented');
+		if (get(stream) == '') {
+			return error(404, 'camera is not started');
+		} else {
+			return json(camera);
+		}
 	} else {
 		try {
 			const resp = await fetch(CAMERA_URL);
@@ -57,7 +70,11 @@ export const POST: RequestHandler = async ({ fetch, request }) => {
 	}
 
 	if (FAKE_BACKEND) {
-		return error(404, 'not yet implemented');
+		try {
+			return json(startCamera(params));
+		} catch (err: any) {
+			return error(400, err.toString());
+		}
 	} else {
 		try {
 			const resp = await fetch(CAMERA_URL, {

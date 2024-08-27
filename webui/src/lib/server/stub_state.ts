@@ -1,11 +1,12 @@
 import {
 	Participant,
 	type BatteryState,
+	type CameraParameter,
 	type Catalog,
 	type Parameters,
 	type ParticipantByName
 } from '$lib/types';
-import { server } from '$lib/application_state';
+import { server, stream } from '$lib/application_state';
 import { get, readable } from 'svelte/store';
 
 export const catalog: Catalog = {
@@ -24,6 +25,23 @@ export const catalog: Catalog = {
 		resources: { 'somepic.png': true },
 		parameters: ['participant', 'session', 'age']
 	}
+};
+
+export const camera: CameraParameter = {
+	Framerate: 30,
+	FileResolution: { Width: 1920, Height: 1080 },
+	FileBitrate: 1500,
+	FileSpeedPreset: 'ultrafast',
+
+	StreamResolution: { Width: 854, Height: 480 },
+	StreamBitrate: 400,
+	RtspServerPath: 'http://localhost:8554/camera-live',
+
+	AwbMode: 'awb-auto',
+	AutoFocusMode: 'manual-focus',
+	AfRange: 'af-range-normal',
+
+	LensPosition: 0.0
 };
 
 export const participants: ParticipantByName = Object.assign(
@@ -139,4 +157,21 @@ export function closeWindow(): void {
 		throw new Error('window is not opened');
 	}
 	server.window?.set(false);
+}
+
+export function startCamera(params: Partial<CameraParameter>): CameraParameter {
+	if (get(stream) != '') {
+		throw Error('camera is already started');
+	}
+	Object.assign(camera, params);
+
+	server.stream?.set(new URL(camera.RtspServerPath).pathname);
+	return camera;
+}
+
+export function stopCamera(): void {
+	if (get(stream) == '') {
+		throw Error('camera is not started');
+	}
+	server.stream?.set('');
 }
