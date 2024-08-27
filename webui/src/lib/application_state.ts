@@ -58,34 +58,59 @@ export const window: Readable<boolean> = readonly<boolean>(_window);
 export const catalog: Readable<Catalog> = readonly<Catalog>(_catalog);
 export const experiment: Readable<string> = readonly<string>(_experiment);
 export const participants: Readable<ParticipantByName> = readonly<ParticipantByName>(_participants);
-export const messages: Writable<any[]> = writable<any[]>([]);
 
-export function synchronizeState(): void {
-	onMount(() => {
-		if (subscribed) {
-			return;
-		}
-		subscribed = true;
-		const eventSource = new EventSource('/psysw/api/events');
-		eventSource.onmessage = (event) => {
-			const data = JSON.parse(event.data);
-			messages.update((arr: any[]) => arr.concat(data));
-		};
-		eventSource.addEventListener('windowUpdate', (event) => {
-			const data = JSON.parse(event.data);
-			_window.set(data);
-		});
-		eventSource.addEventListener('experimentUpdate', (event) => {
-			_experiment.set(JSON.parse(event.data));
-		});
-		eventSource.addEventListener('catalogUpdate', (event) => {
-			const updates = JSON.parse(event.data) as Catalog;
-			_catalog.mergeDiffs(updates);
-		});
-		eventSource.addEventListener('participantsUpdate', (event) => {
-			const updates = JSON.parse(event.data) as ParticipantByName;
-			_participants.mergeDiffs(updates);
-		});
+const _eventListener = {
+	catalogUpdate: (event: MessageEvent): void => {
+		const updates = JSON.parse(event.data) as Catalog;
+		_catalog.mergeDiffs(updates);
+	},
+	windowUpdate: (event: MessageEvent): void => {
+		const data = JSON.parse(event.data) as boolean;
+		_window.set(data);
+	},
+	experimentUpdate: (event: MessageEvent): void => {
+		const data = JSON.parse(event.data) as string;
+		_experiment.set(data);
+	},
+	participantsUpdate: (event: MessageEvent): void => {
+		const data = JSON.parse(event.data) as ParticipantByName;
+		_participants.mergeDiffs(data);
+	}
+};
+
+type _EventListener = (event: MessageEvent): void;
+
+let _source: EventSource | undefined = undefined;
+
+export function clearEventSource(): void {
+	if (_source === undefined) {
+		return;
+	}
+	for ( const [type: string, listener: _EventListener] of Object.entries(_eventListener) ) {
+		_source.removeEventListener(type, listener);
+
+	}
+
+
+export function setEventSource(source: EventSource): void {
+	source.onmessage = (event) => {
+		const data = JSON.parse(event.data);
+		messages.update((arr: any[]) => arr.concat(data));
+	};
+	source.addEventListener('windowUpdate', (event) => {
+		const data = JSON.parse(event.data);
+		_window.set(data);
+	});
+	source.addEventListener('experimentUpdate', (event) => {
+		_experiment.set(JSON.parse(event.data));
+	});
+	source.addEventListener('catalogUpdate', (event) => {
+		const updates = JSON.parse(event.data) as Catalog;
+		_catalog.mergeDiffs(updates);
+	});
+	source.addEventListener('participantsUpdate', (event) => {
+		const updates = JSON.parse(event.data) as ParticipantByName;
+		_participants.mergeDiffs(updates);
 	});
 }
 
