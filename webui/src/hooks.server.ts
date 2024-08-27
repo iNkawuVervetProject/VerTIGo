@@ -7,8 +7,10 @@ import { clearFakeData, initFakeData } from '$lib/server/stub_state';
 import type { Handle } from '@sveltejs/kit';
 
 const BACKEND_HOST = env.BACKEND_HOST ?? 'localhost:5000';
+const CAMERA_HOST = env.CAMERA_HOST ?? 'localhost:5042';
 const MEDIAMTX_HOST = env.MEDIAMTX_HOST ?? 'localhost:8889';
 const DEBUG = (env.DEBUG ?? '0') != '0';
+
 const FAKE_BACKEND = PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev;
 
 let _timeout: ReturnType<typeof setTimeout> | undefined = undefined;
@@ -39,6 +41,7 @@ if (FAKE_BACKEND) {
 	initFakeData();
 } else {
 	console.log("Will redirect /psysw/api' to http://" + BACKEND_HOST);
+	console.log("Will redirect /vertigo-camera/api' to http://" + CAMERA_HOST);
 	_connect();
 	setInterval(async () => {
 		try {
@@ -87,12 +90,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return await proxyRequest(event.request, event.url.origin, MEDIAMTX_HOST);
 	}
 
-	if (PUBLIC_NO_LOCAL_DEV_ENDPOINT === '0' && dev) {
+	if (FAKE_BACKEND === false) {
 		return await resolve(event);
 	}
 
 	if (event.url.pathname.startsWith('/psysw/api')) {
 		return proxyRequest(event.request, event.url.origin + '/psysw/api', BACKEND_HOST);
+	}
+
+	if (event.url.pathname.startsWith('/vertigo-camera/api/camera')) {
+		return proxyRequest(event.request, event.url.origin + '/vertigo-camera/api', CAMERA_HOST);
 	}
 
 	return await resolve(event);

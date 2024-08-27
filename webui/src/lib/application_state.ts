@@ -107,7 +107,8 @@ export function clearEventSource(): void {
 	if (_source === undefined) {
 		return;
 	}
-	console.log('stopping source of events from ', _source.url);
+	console.log('stopping source of events from', _source.url);
+	_source.close();
 	for (const [type, listener] of Object.entries(_eventListeners)) {
 		_source.removeEventListener(type, listener);
 	}

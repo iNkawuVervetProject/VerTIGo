@@ -21,8 +21,8 @@
 		console.log('connect to /api/events');
 		const source = new EventSource('api/events');
 		setEventSource(source);
-		source.onerror = (evt) => {
-			console.log('/api/events: got error', evt);
+		source.onerror = () => {
+			console.log('/api/events: got error while reading events');
 			clearEventSource();
 			if (timeout === undefined) {
 				timeout = setTimeout(() => {
