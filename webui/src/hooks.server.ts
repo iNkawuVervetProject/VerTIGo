@@ -42,20 +42,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return await resolve(event);
 	}
 
-	// we intercept and proxy the text/event-stream
-	if (event.url.pathname === '/psysw/api/events') {
-		const proxy_url = 'http://' + BACKEND_HOST + '/events';
-		// keepalive is needed as otherwise the connection is closed and updates are not received
-		// anymore. Will it leak? I dunno, lets see.
-		const response = await fetch(proxy_url, { keepalive: true, cache: 'no-cache' });
-		return new Response(response.body, {
-			headers: {
-				'Content-Type': 'text/event-stream',
-				'Cache-Control': 'no-cache'
-			}
-		});
-	}
-
 	if (event.url.pathname.startsWith('/psysw/api')) {
 		return proxyRequest(event.request, event.url.origin + '/psysw/api', BACKEND_HOST);
 	}

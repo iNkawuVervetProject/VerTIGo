@@ -3,7 +3,7 @@ import { env } from '$env/dynamic/private';
 
 import * as fs from 'fs';
 
-type ParticipantByName = { [key: string]: Participant };
+export type ParticipantByName = { [key: string]: Participant };
 
 class ParticipantService {
 	public constructor(public participants: ParticipantByName) {}

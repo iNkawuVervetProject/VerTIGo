@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Experiment from '$lib/experiment.svelte';
-	import { catalog, window, experiment } from '$lib/session_state';
+	import { catalog, window, experiment } from '$lib/vertigo_state';
 	import ParticipantInput from '$lib/participant_input.svelte';
 	import SessionInput from '$lib/session_input.svelte';
 	import { slide } from 'svelte/transition';

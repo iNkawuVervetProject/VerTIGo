@@ -1,16 +1,7 @@
-import { dev } from '$app/environment';
 import type { BatteryState } from '$lib/types';
-
-import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 import { env } from '$env/dynamic/private';
 import { Socket } from 'net';
 
-let state: BatteryState | undefined = undefined;
-export function getBatteryState(): BatteryState | undefined {
-	return state;
-}
-
-const FAKE_SERVICE: boolean = PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev;
 const NUT_HOSTNAME = env.NUT_HOSTNAME || 'localhost';
 
 class NUTConnect {
@@ -75,13 +66,12 @@ class NUTConnect {
 
 let nut: NUTConnect | undefined = undefined;
 
-async function readBatteryState(): Promise<void> {
+export async function readBatteryState(): Promise<BatteryState | Error> {
 	if (nut == undefined) {
 		try {
 			nut = await NUTConnect.connect(NUT_HOSTNAME, 3493);
 		} catch (e) {
-			console.error('could not connect to nut: ' + e);
-			return;
+			return new Error('could not connect to nut: ' + e);
 		}
 	}
 
@@ -90,7 +80,7 @@ async function readBatteryState(): Promise<void> {
 
 		const status: string = await nut.getVariable('openups', 'ups.status');
 
-		state = { level: parseInt(charge), onBattery: false, charging: false };
+		const state = { level: parseInt(charge), onBattery: false, charging: false };
 		if (status.includes('OB') || status.includes('LB')) {
 			state.onBattery = true;
 			state.charging = false;
@@ -98,45 +88,11 @@ async function readBatteryState(): Promise<void> {
 			state.onBattery = false;
 			state.charging = status.includes('CHRG');
 		}
+		return state;
 	} catch (e) {
 		if (e instanceof Error && e.message == 'closed connection') {
 			nut = undefined;
 		}
-		console.error('could not get battery state: ' + e);
-		state = undefined;
+		return new Error('could not get battery state: ' + e);
 	}
-}
-
-if (FAKE_SERVICE) {
-	state = {
-		level: 90,
-		onBattery: true,
-		charging: false
-	};
-
-	let onChargerCount = 0;
-	setInterval(() => {
-		if (state?.onBattery) {
-			state.level -= 1;
-			if (state.level == 1) {
-				state.onBattery = false;
-				state.charging = true;
-			}
-		} else if (state?.charging) {
-			state.level += 1;
-			if (state.level == 98) {
-				state.charging = false;
-				onChargerCount = 0;
-			}
-		} else if (state != undefined) {
-			if (onChargerCount++ == 10) {
-				state.onBattery = true;
-			}
-		}
-	}, 300);
-} else {
-	setInterval(async () => {
-		await readBatteryState();
-	}, 15000);
-	await readBatteryState();
 }
