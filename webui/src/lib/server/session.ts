@@ -124,6 +124,10 @@ class Session {
 		}
 		this.window.set(false);
 	}
+
+	public getParticipants(): ParticipantByName {
+		return this._participants;
+	}
 }
 
 export const session: Session = new Session();
