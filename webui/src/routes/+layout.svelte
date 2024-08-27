@@ -4,17 +4,36 @@
 
 	import { AppShell, AppBar, LightSwitch } from '@skeletonlabs/skeleton';
 
-	import { synchronizeState } from '$lib/application_state';
+	import { setEventSource, clearEventSource } from '$lib/application_state';
 	import { initializeStores, Modal, Toast, getToastStore } from '@skeletonlabs/skeleton';
-	import { invalidate } from '$app/navigation';
+	import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 	import { onMount } from 'svelte';
 	import type { LayoutData } from './$types';
-	import { dev } from '$app/environment';
 	import BatteryIndicator from '$lib/battery_indicator.svelte';
-	import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
+	import { dev } from '$app/environment';
+	import { invalidate } from '$app/navigation';
 
 	initializeStores();
-	synchronizeState();
+
+	let timeout: any = undefined;
+
+	function connectToEventSource() {
+		if (timeout !== undefined) {
+			clearTimeout(timeout);
+			timeout = undefined;
+		}
+		const source = new EventSource('/psysw/api/events');
+		setEventSource(source);
+		source.onerror = () => {
+			clearEventSource();
+			if (timeout === undefined) {
+				timeout = setTimeout(() => {
+					timeout = undefined;
+					connectToEventSource();
+				}, 2000);
+			}
+		};
+	}
 
 	onMount(() => {
 		const frequency = PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev ? 300 : 10000;
@@ -23,7 +42,16 @@
 			invalidate('/api/battery');
 		}, frequency);
 
-		return () => clearInterval(interval);
+		connectToEventSource();
+
+		return () => {
+			clearInterval(interval);
+			if (timeout !== undefined) {
+				clearTimeout(timeout);
+				timeout = undefined;
+			}
+			clearEventSource();
+		};
 	});
 
 	const toasts = getToastStore();

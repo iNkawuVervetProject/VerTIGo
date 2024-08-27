@@ -59,7 +59,7 @@ export const catalog: Readable<Catalog> = readonly<Catalog>(_catalog);
 export const experiment: Readable<string> = readonly<string>(_experiment);
 export const participants: Readable<ParticipantByName> = readonly<ParticipantByName>(_participants);
 
-const _eventListener = {
+const _eventListeners = {
 	catalogUpdate: (event: MessageEvent): void => {
 		const updates = JSON.parse(event.data) as Catalog;
 		_catalog.mergeDiffs(updates);
@@ -78,40 +78,27 @@ const _eventListener = {
 	}
 };
 
-type _EventListener = (event: MessageEvent): void;
-
 let _source: EventSource | undefined = undefined;
 
 export function clearEventSource(): void {
 	if (_source === undefined) {
 		return;
 	}
-	for ( const [type: string, listener: _EventListener] of Object.entries(_eventListener) ) {
+	for (const [type, listener] of Object.entries(_eventListeners)) {
 		_source.removeEventListener(type, listener);
-
 	}
-
+	_source = undefined;
+}
 
 export function setEventSource(source: EventSource): void {
-	source.onmessage = (event) => {
-		const data = JSON.parse(event.data);
-		messages.update((arr: any[]) => arr.concat(data));
+	clearEventSource();
+
+	source.onerror = () => {
+		clearEventSource();
 	};
-	source.addEventListener('windowUpdate', (event) => {
-		const data = JSON.parse(event.data);
-		_window.set(data);
-	});
-	source.addEventListener('experimentUpdate', (event) => {
-		_experiment.set(JSON.parse(event.data));
-	});
-	source.addEventListener('catalogUpdate', (event) => {
-		const updates = JSON.parse(event.data) as Catalog;
-		_catalog.mergeDiffs(updates);
-	});
-	source.addEventListener('participantsUpdate', (event) => {
-		const updates = JSON.parse(event.data) as ParticipantByName;
-		_participants.mergeDiffs(updates);
-	});
+	for (const [type, listener] of Object.entries(_eventListeners)) {
+		_source?.addEventListener(type, listener);
+	}
 }
 
 export const testing = {
