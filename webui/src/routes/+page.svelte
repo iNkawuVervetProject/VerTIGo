@@ -1,12 +1,16 @@
 <script lang="ts">
 	import Experiment from '$lib/experiment.svelte';
 	import { catalog, window, experiment, stream } from '$lib/application_state';
+	import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton';
+
 	import ParticipantInput from '$lib/participant_input.svelte';
 	import SessionInput from '$lib/session_input.svelte';
 	import { fade, slide } from 'svelte/transition';
 	import WhepPlayer from '$lib/whep_player.svelte';
 	import { flip } from 'svelte/animate';
 	import { page } from '$app/stores';
+
+	const modalStore = getModalStore();
 
 	async function closeWindow(): Promise<void> {
 		await fetch('/psysw/api/window', { method: 'DELETE' });
@@ -18,6 +22,23 @@
 		await fetch('/api/camera', { method: 'POST', body: '{}' });
 	}
 
+	async function confirmStopCamera(key: string): Promise<boolean> {
+		if (key == '') {
+			return true;
+		}
+		return new Promise<boolean>((resolve) => {
+			const modal: ModalSettings = {
+				type: 'confirm',
+				title: 'Confirm end of Recording',
+				body: `Experiment ${key} is running, do you want to stop the camera?`,
+				response: (r: boolean) => {
+					resolve(r);
+				}
+			};
+			modalStore.trigger(modal);
+		});
+	}
+
 	async function stopCamera(): Promise<void> {
 		await fetch('/api/camera', { method: 'DELETE' });
 	}
@@ -26,7 +47,9 @@
 
 	async function toggleCamera(): Promise<void> {
 		if (streaming) {
-			await stopCamera();
+			if (await confirmStopCamera($experiment)) {
+				await stopCamera();
+			}
 		} else {
 			await startCamera();
 		}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Experiment, Participant } from '$lib/types';
 	import { parameters } from './parameters';
-	import { experiment as currentExperiment, participants } from '$lib/application_state';
+	import { experiment as currentExperiment, participants, stream } from '$lib/application_state';
 	import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton';
 	import { flip } from 'svelte/animate';
 	import { slide } from 'svelte/transition';
@@ -16,6 +16,23 @@
 				type: 'confirm',
 				title: 'Please Confirm',
 				body: `Do you wish to stop ${key}?`,
+				response: (r: boolean) => {
+					resolve(r);
+				}
+			};
+			modalStore.trigger(modal);
+		});
+	}
+
+	async function mayStartCamera(): Promise<boolean> {
+		if ($stream != '') {
+			return false;
+		}
+		return new Promise<boolean>((resolve) => {
+			const modal: ModalSettings = {
+				type: 'confirm',
+				title: 'Would you like to start the camera?',
+				body: 'Camera recording is not started. Do you want to start it now?',
 				response: (r: boolean) => {
 					resolve(r);
 				}
@@ -53,6 +70,14 @@
 				if (confirm == false) {
 					return;
 				}
+			}
+		}
+
+		if ((await mayStartCamera()) === true) {
+			try {
+				await fetch('/api/camera', { method: 'POST', body: '{}' });
+			} catch (err) {
+				console.log(err);
 			}
 		}
 
