@@ -3,6 +3,8 @@
 	import { parameters } from './parameters';
 	import { experiment as currentExperiment, participants } from '$lib/application_state';
 	import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton';
+	import { flip } from 'svelte/animate';
+	import { slide } from 'svelte/transition';
 
 	export let experiment: Experiment;
 
@@ -80,6 +82,8 @@
 		missingParameters.length === 0 &&
 		missingResources.length === 0;
 	$: isRunning = $currentExperiment === experiment.key;
+
+	$: listHeight = 4 * (missingParameters.length + missingResources.length);
 </script>
 
 <section
@@ -105,9 +109,13 @@
 			<i class="fa-solid" class:fa-play={!isRunning} class:fa-stop={isRunning} />
 		</button>
 	</div>
-	<dl class="list-dl">
-		{#each missingResources as r}
-			<div>
+	<dl class="list-dl" style="height:{listHeight}em;">
+		{#each missingResources as r (r)}
+			<div
+				animate:flip={{ duration: 250 }}
+				transition:slide|global={{ duration: 300, delay: 250 }}
+				class="h-16"
+			>
 				<span class="variant-soft-error badge-icon p-4"
 					><i class="fa-solid fa-file-circle-question" /></span
 				>
@@ -117,8 +125,12 @@
 				</span>
 			</div>
 		{/each}
-		{#each missingParameters as p}
-			<div>
+		{#each missingParameters as p (p)}
+			<div
+				animate:flip={{ duration: 250 }}
+				transition:slide={{ duration: 300, delay: 250 }}
+				class="h-16"
+			>
 				<span class="variant-soft-warning badge-icon p-4"
 					><i class="fa-solid fa-triangle-exclamation" /></span
 				>
@@ -130,3 +142,9 @@
 		{/each}
 	</dl>
 </section>
+
+<style>
+	.list-dl {
+		transition: height 300ms 250ms;
+	}
+</style>

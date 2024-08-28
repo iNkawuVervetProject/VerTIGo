@@ -5,12 +5,13 @@
 	import SessionInput from '$lib/session_input.svelte';
 	import { fade, slide } from 'svelte/transition';
 	import WhepPlayer from '$lib/whep_player.svelte';
+	import { flip } from 'svelte/animate';
 
 	async function closeWindow(): Promise<void> {
 		await fetch('/psysw/api/window', { method: 'DELETE' });
 	}
 
-	const fadeOptions = { delay: 250, duration: 300 };
+	const fadeOptions = { delay: 0, duration: 300 };
 
 	async function startCamera(): Promise<void> {
 		await fetch('/api/camera', { method: 'POST', body: '{}' });
@@ -31,7 +32,12 @@
 	}
 </script>
 
-<div class="grid lg:grid-cols-2" class:gap-8={$stream} class:gap-0={$stream.length === 0}>
+<div
+	class="grid lg:grid-cols-2"
+	class:gap-8={$stream}
+	class:gap-0={$stream.length === 0}
+	style="transition: gap {fadeOptions.delay}ms;"
+>
 	<section
 		class="card variant-ghost-primary order-2 flex w-full flex-col space-y-4 p-4 lg:order-1"
 	>
@@ -72,18 +78,11 @@
 	{/if}
 </div>
 
-{#each Object.entries($catalog) as [key, experiment]}
-	<Experiment {experiment} />
+{#each Object.entries($catalog) as [key, experiment] (key)}
+	<div animate:flip transition:slide|global={fadeOptions}>
+		<Experiment {experiment} />
+	</div>
 {/each}
 
 <style>
-	.gap-8 {
-		transition: gap 250ms;
-	}
-	.gap-0 {
-		transition: gap 250ms;
-	}
-	.fa-solid {
-		transition: all 2s allow-discrete;
-	}
 </style>
