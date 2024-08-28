@@ -4,7 +4,7 @@ import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 import { clearEventSource, server, setEventSource } from '$lib/application_state';
 import { readBatteryState } from '$lib/server/battery';
 import { clearFakeData, initFakeData } from '$lib/server/stub_state';
-import type { Handle } from '@sveltejs/kit';
+import { error, type Handle } from '@sveltejs/kit';
 
 const BACKEND_HOST = env.BACKEND_HOST ?? 'localhost:5000';
 
@@ -78,7 +78,11 @@ async function proxyRequest(
 		'referer',
 		request.headers.get('referer')?.replace(oldOrigin, newOrigin) || newOrigin + '/'
 	);
-	return await fetch(proxyRequest);
+	try {
+		return await fetch(proxyRequest);
+	} catch (err) {
+		return error(502, `bad gateway: ${err}`);
+	}
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
