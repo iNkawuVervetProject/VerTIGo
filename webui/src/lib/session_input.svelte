@@ -23,7 +23,7 @@
 	}
 </script>
 
-<div class="flex items-center gap-2 md:max-w-sm">
+<div class="flex items-center gap-2 xl:max-w-sm">
 	<input class="checkbox" type="checkbox" name="manual" bind:checked={manual} />
 	<div class="input-group input-group-divider w-full grow grid-cols-[auto_1fr_auto]">
 		<div class="input-group-shim">session</div>

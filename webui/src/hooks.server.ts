@@ -11,7 +11,7 @@ const BACKEND_HOST = env.BACKEND_HOST ?? 'localhost:5000';
 const MEDIAMTX_HOST = env.MEDIAMTX_HOST ?? 'localhost:8889';
 const DEBUG = (env.DEBUG ?? '0') != '0';
 
-const FAKE_BACKEND = PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev;
+const FAKE_BACKEND = PUBLIC_NO_LOCAL_DEV_ENDPOINT === '0' && dev;
 
 let _timeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
@@ -94,16 +94,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return await proxyRequest(event.request, event.url.origin, MEDIAMTX_HOST);
 	}
 
-	if (FAKE_BACKEND === false) {
+	if (FAKE_BACKEND === true) {
 		return await resolve(event);
 	}
 
 	if (event.url.pathname.startsWith('/psysw/api')) {
 		return proxyRequest(event.request, event.url.origin + '/psysw/api', BACKEND_HOST);
-	}
-
-	if (event.url.pathname.startsWith('/vertigo-camera/api/camera')) {
-		return proxyRequest(event.request, event.url.origin + '/vertigo-camera/api', CAMERA_HOST);
 	}
 
 	return await resolve(event);

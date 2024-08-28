@@ -3,7 +3,7 @@
 	import { catalog, window, experiment, stream } from '$lib/application_state';
 	import ParticipantInput from '$lib/participant_input.svelte';
 	import SessionInput from '$lib/session_input.svelte';
-	import { slide } from 'svelte/transition';
+	import { fade, slide } from 'svelte/transition';
 	import WhepPlayer from '$lib/whep_player.svelte';
 
 	async function closeWindow(): Promise<void> {
@@ -19,13 +19,38 @@
 	async function stopCamera(): Promise<void> {
 		await fetch('/api/camera', { method: 'DELETE' });
 	}
+
+	$: streaming = $stream != '';
+
+	async function toggleCamera(): Promise<void> {
+		if (streaming) {
+			await stopCamera();
+		} else {
+			await startCamera();
+		}
+	}
 </script>
 
-<div class="grid gap-8 lg:grid-cols-2">
-	<section class="card variant-ghost-primary order-2 w-full space-y-4 p-4 lg:order-1">
-		<div class="grid gap-4 lg:grid-cols-2">
+<div class="grid lg:grid-cols-2" class:gap-8={$stream} class:gap-0={$stream.length === 0}>
+	<section
+		class="card variant-ghost-primary order-2 flex w-full flex-col space-y-4 p-4 lg:order-1"
+	>
+		<div class="grid gap-4 xl:grid-cols-2">
 			<ParticipantInput />
 			<SessionInput />
+		</div>
+		<div class="hidden grow lg:flex" />
+		<div class="flex flex-row flex-wrap gap-2">
+			<button class="variant-filled-secondary btn" on:click={toggleCamera}>
+				<div class="relative mr-2 flex h-4 w-4">
+					{#if streaming}
+						<i class="fa-solid fa-stop absolute left-0 top-0" transition:fade />
+					{:else}
+						<i class="fa-solid fa-camera absolute left-0 top-0" transition:fade />
+					{/if}
+				</div>
+				<span class="min-w-24">{streaming ? 'Stop Camera' : 'Record'}</span>
+			</button>
 			{#if $window}
 				<div transition:slide={fadeOptions}>
 					<button
@@ -33,23 +58,11 @@
 						disabled={$experiment != ''}
 						on:click={closeWindow}
 					>
+						<i class="fa-solid fa-desktop mr-4" />
 						Show Desktop
 					</button>
 				</div>
 			{/if}
-			<div>
-				{#if $stream == ''}
-					<button class="variant-filled-secondary btn" on:click={startCamera}>
-						<i class="fa-solid fa-camera mr-4" />
-						Record
-					</button>
-				{:else}
-					<button class="variant-filled-secondary btn" on:click={stopCamera}>
-						<i class="fa-solid fa-stop mr-4" />
-						Stop
-					</button>
-				{/if}
-			</div>
 		</div>
 	</section>
 	{#if $stream}
@@ -62,3 +75,15 @@
 {#each Object.entries($catalog) as [key, experiment]}
 	<Experiment {experiment} />
 {/each}
+
+<style>
+	.gap-8 {
+		transition: gap 250ms;
+	}
+	.gap-0 {
+		transition: gap 250ms;
+	}
+	.fa-solid {
+		transition: all 2s allow-discrete;
+	}
+</style>

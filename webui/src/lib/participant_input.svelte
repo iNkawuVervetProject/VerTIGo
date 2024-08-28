@@ -23,7 +23,7 @@
 
 <div class="relative">
 	<input
-		class="input md:max-w-sm"
+		class="input xl:max-w-sm"
 		type="search"
 		name="participant"
 		bind:value={$parameters.participant}
