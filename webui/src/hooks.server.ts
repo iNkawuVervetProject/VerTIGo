@@ -41,7 +41,6 @@ if (FAKE_BACKEND) {
 	initFakeData();
 } else {
 	console.log("Will redirect /psysw/api' to http://" + BACKEND_HOST);
-	console.log("Will redirect /vertigo-camera/api' to http://" + CAMERA_HOST);
 	_connect();
 	setInterval(async () => {
 		try {
