@@ -3,7 +3,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { readable } from 'svelte/store';
 
-	export let url: string;
+	export let url: string = '';
 
 	let video: HTMLMediaElement;
 
@@ -25,6 +25,11 @@
 		} else {
 			message = `${err.toString()}, will retry after ${Math.round(delay / 1000)}s`;
 		}
+	}
+
+	function disconnect() {
+		connection?.close();
+		connection = undefined;
 	}
 
 	$: error = connection?.error || undefined;
@@ -74,7 +79,7 @@
 
 	function retryTimeout(): number {
 		const exp = Math.min(Math.max(nTrials, 1), 5);
-		return 3600 * Math.round(1000 * (2 ** exp + (Math.random() * 2 - 1) / 20));
+		return Math.round(1000 * (2 ** exp + (Math.random() * 2 - 1) / 20));
 	}
 
 	$: media = connection?.media || readable(undefined);
@@ -86,7 +91,12 @@
 
 	$: {
 		if (mounted) {
-			connect(url);
+			if (url != '') {
+				connect(url);
+			} else {
+				disconnect();
+				message = 'waiting for URL';
+			}
 		}
 	}
 
@@ -108,13 +118,13 @@
 >
 	{#if message.length > 0}
 		<div
-			class="absolute bottom-0 left-0 right-0 top-0 z-20 flex items-center justify-center bg-surface-800/50"
+			class="absolute bottom-0 left-0 right-0 top-0 z-20 flex items-center justify-center bg-surface-800/50 p-8"
 		>
 			<p class="h-min grow-0 text-2xl">{message}</p>
 		</div>
 	{:else}
 		<div class="absolute bottom-0 left-0 right-0 top-0 z-10 flex items-center justify-center">
-			<p class="h-min grow-0 text-2xl">
+			<p class="h-min grow-0 p-8 text-2xl">
 				<i class="fa-solid fa-camera px-2" /> Connecting...
 			</p>
 		</div>

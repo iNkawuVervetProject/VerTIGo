@@ -6,6 +6,7 @@
 	import { fade, slide } from 'svelte/transition';
 	import WhepPlayer from '$lib/whep_player.svelte';
 	import { flip } from 'svelte/animate';
+	import { page } from '$app/stores';
 
 	async function closeWindow(): Promise<void> {
 		await fetch('/psysw/api/window', { method: 'DELETE' });
@@ -33,7 +34,7 @@
 </script>
 
 <div
-	class="grid lg:grid-cols-2"
+	class="grid {streaming ? 'lg:grid-cols-2' : ''}"
 	class:gap-8={$stream}
 	class:gap-0={$stream.length === 0}
 	style="transition: gap {fadeOptions.delay}ms;"
@@ -41,7 +42,7 @@
 	<section
 		class="card variant-ghost-primary order-2 flex w-full flex-col space-y-4 p-4 lg:order-1"
 	>
-		<div class="grid gap-4 xl:grid-cols-2">
+		<div class="grid gap-4 {streaming ? 'xl:grid-cols-2' : 'lg:grid-cols-2'}">
 			<ParticipantInput />
 			<SessionInput />
 		</div>
@@ -73,7 +74,7 @@
 	</section>
 	{#if $stream}
 		<div class="order-1 lg:order-2" transition:slide={fadeOptions}>
-			<WhepPlayer url={$stream} />
+			<WhepPlayer url={$page.url.origin + $stream} />
 		</div>
 	{/if}
 </div>

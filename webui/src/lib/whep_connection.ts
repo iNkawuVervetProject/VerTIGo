@@ -337,7 +337,7 @@ class Connection {
 			this._connection = undefined;
 		}
 
-		if (this._sessionURL.length > 0) {
+		if (this._sessionURL?.length > 0) {
 			fetch(this._sessionURL, { method: 'DELETE' });
 			this._sessionURL = '';
 		}
@@ -491,7 +491,7 @@ class Connection {
 			return;
 		}
 
-		if (this._sessionURL === '') {
+		if (this._sessionURL || '' == '') {
 			this._queuedCandidates.push(evt.candidate);
 		} else {
 			try {
