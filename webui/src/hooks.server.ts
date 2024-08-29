@@ -20,6 +20,9 @@ function _connect() {
 	const source = new EventSource(eventURL);
 	console.log('Reading events from ', eventURL);
 	setEventSource(source);
+	source.onmessage = (msg) => {
+		logger.info(msg);
+	};
 	source.onerror = (evt: any) => {
 		if (evt.message === '') {
 			return;

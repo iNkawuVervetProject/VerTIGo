@@ -83,7 +83,10 @@
 
 		await fetch('/psysw/api/experiment', {
 			method: 'POST',
-			body: JSON.stringify({ key: experiment.key, parameters: params })
+			body: JSON.stringify({ key: experiment.key, parameters: params }),
+			headers: {
+				'Content-Type': 'application/json'
+			}
 		});
 	}
 
