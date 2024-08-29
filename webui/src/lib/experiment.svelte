@@ -35,7 +35,9 @@
 				body: 'Camera recording is not started. Do you want to start it now?',
 				response: (r: boolean) => {
 					resolve(r);
-				}
+				},
+				buttonTextCancel: 'No',
+				buttonTextConfirm: 'Yes'
 			};
 			modalStore.trigger(modal);
 		});
