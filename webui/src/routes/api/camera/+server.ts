@@ -27,7 +27,7 @@ export const DELETE: RequestHandler = async ({ fetch }) => {
 			}
 			return json(await resp.json());
 		} catch (err) {
-			return error(502, `bad gateway: ${err}`);
+			return error(502, `bad gateway: ${err.message}`);
 		}
 	}
 };
@@ -56,7 +56,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
 			server.stream?.set(streamPath(params));
 			return json(params);
 		} catch (err) {
-			return error(502, `bad gateway: ${err}`);
+			return error(502, `bad gateway: ${err.message}`);
 		}
 	}
 };
@@ -87,7 +87,7 @@ export const POST: RequestHandler = async ({ fetch, request }) => {
 			params = (await resp.json()) as CameraParameter;
 			server.stream?.set(streamPath(params));
 			return json(params);
-		} catch (err) {
+		} catch (err: any) {
 			return error(502, `bad gateway: ${err}`);
 		}
 	}
