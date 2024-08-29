@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { read_whep, type WHEPConnection } from '$lib/whep_connection';
 	import { onDestroy, onMount } from 'svelte';
 	import { readable } from 'svelte/store';
+	import { fade } from 'svelte/transition';
 
 	export let url: string = '';
 
@@ -78,7 +80,7 @@
 	}
 
 	function retryTimeout(): number {
-		const exp = Math.min(Math.max(nTrials, 1), 5);
+		const exp = Math.min(Math.max(nTrials, 1), dev ? 1 : 5);
 		return Math.round(1000 * (2 ** exp + (Math.random() * 2 - 1) / 20));
 	}
 
@@ -119,11 +121,15 @@
 	{#if message.length > 0}
 		<div
 			class="absolute bottom-0 left-0 right-0 top-0 z-20 flex items-center justify-center bg-surface-800/50 p-8"
+			transition:fade
 		>
 			<p class="h-min grow-0 text-2xl">{message}</p>
 		</div>
 	{:else}
-		<div class="absolute bottom-0 left-0 right-0 top-0 z-10 flex items-center justify-center">
+		<div
+			class="absolute bottom-0 left-0 right-0 top-0 z-10 flex items-center justify-center"
+			transition:fade
+		>
 			<p class="h-min grow-0 p-8 text-2xl">
 				<i class="fa-solid fa-camera px-2" /> Connecting...
 			</p>

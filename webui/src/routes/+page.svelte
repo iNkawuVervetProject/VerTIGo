@@ -44,7 +44,6 @@
 	}
 
 	$: streaming = $stream != '';
-
 	async function toggleCamera(): Promise<void> {
 		if (streaming) {
 			if (await confirmStopCamera($experiment)) {
