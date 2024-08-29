@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 import os
 from functools import partial
 from gettext import Catalog
@@ -31,7 +32,6 @@ class Session(AsyncTaskRunner):
         self._experiments = {}
         if session is None:
             from psychopy import session
-
 
             self._session = session.Session(root, dataDir=dataDir)
         else:
@@ -93,6 +93,16 @@ class Session(AsyncTaskRunner):
             key = str(Path(file).relative_to(self._session.root))
 
         self._session.addExperiment(file, key)
+
+        # Fixing a very bug because of how psychopy is built. If the experiment has
+        # runned already, the expInfo object in the module has many value set, which
+        # should be not. So we need to invalidate the cache to get the value actually in
+        # the experiment. Yes we compile the python module twice. But correctness >
+        # efficiency.
+        try:
+            importlib.reload(self._session.experiments[key])
+        except:
+            pass
         resources = self._session.experimentObjects[key].getResourceFiles()
 
         self._resourceChecker.addDependencies(
@@ -107,7 +117,7 @@ class Session(AsyncTaskRunner):
         self._updates.broadcastDict("catalog", key, self._experiments[key])
 
     def _buildExperimentInfo(self, key):
-        expInfo = self._session.getExpInfoFromExperiment(key)
+        expInfo = self._session.getExpInfoFromExperiment(key, sessionParams=False)
 
         return Experiment(
             key=key,
@@ -152,7 +162,7 @@ class Session(AsyncTaskRunner):
                 f"{self._resourceChecker.collections[key].missing}"
             )
 
-        expInfo = self._session.getExpInfoFromExperiment(key)
+        expInfo = self._session.getExpInfoFromExperiment(key, sessionParams=False)
         expInfo.update(kwargs)
 
         if int(expInfo.get("session", 1)) < 1:
