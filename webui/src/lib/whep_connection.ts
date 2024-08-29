@@ -1,19 +1,5 @@
-import { dev } from '$app/environment';
-import { readonly, writable, type Readable, type Unsubscriber, type Writable } from 'svelte/store';
-
-interface PartialLogger {
-	info: typeof console.info;
-	debug: typeof console.debug;
-	error: typeof console.error;
-}
-
-const logger: PartialLogger = dev
-	? console
-	: {
-			info: () => {},
-			debug: () => {},
-			error: () => {}
-		};
+import { readonly, writable, type Readable, type Writable } from 'svelte/store';
+import { logger } from './logger';
 
 function supportsNonAdvertisedCodec(codec: string, fmtp?: string): Promise<boolean> {
 	return new Promise((resolve) => {
@@ -99,8 +85,8 @@ function unquoteCredential(v: string) {
 	return JSON.parse(`"${v}"`);
 }
 
-function linkToIceServers(links: string): ICEServer[] {
-	if (links === null) {
+function linkToIceServers(links: string | null | undefined): ICEServer[] {
+	if (links === null || links === undefined) {
 		return [];
 	}
 
@@ -109,7 +95,7 @@ function linkToIceServers(links: string): ICEServer[] {
 			/^<(.+?)>; rel="ice-server"(; username="(.*?)"; credential="(.*?)"; credential-type="password")?/i
 		);
 		if (m === null) {
-			throw Error('no match found');
+			throw new Error('no match found in stun server list');
 		}
 		const ret: ICEServer = {
 			urls: [m[1]]
@@ -364,9 +350,10 @@ class Connection {
 
 	private async _connect() {
 		logger.info(`[WHEPConnection:${this._url}]: connect`);
+
 		const resp = await fetch(this._url + '/whep', { method: 'OPTIONS' });
-		const iceServer = linkToIceServers(resp.headers.get('Link') || '');
-		logger.debug(`[WHEPConnection:${this._url}]: iceServer`, iceServer);
+		const iceServer = linkToIceServers(resp.headers.get('Link'));
+		logger.info(`[WHEPConnection:${this._url}]: iceServer`, iceServer);
 
 		this._connection = new RTCPeerConnection({
 			iceServers: iceServer,

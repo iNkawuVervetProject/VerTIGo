@@ -6,6 +6,7 @@ import { clearFakeData, initFakeData } from '$lib/server/stub_state';
 import type { CameraParameter } from '$lib/types';
 import { error, type Handle } from '@sveltejs/kit';
 import EventSource from 'eventsource';
+import { logger } from '$lib/logger';
 
 let _timeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
@@ -89,9 +90,10 @@ async function proxyRequest(
 	newHost: string,
 	protocol: string = 'http://'
 ) {
-	console.log(`redirecting ${request.url} to ${protocol}${newHost}`);
 	const newOrigin = protocol + newHost;
-	const proxyRequest: Request = new Request(request.url.replace(oldOrigin, newOrigin), request);
+	const newURL = request.url.replace(oldOrigin, newOrigin);
+	logger.info(`redirecting ${request.url} to ${newURL}`);
+	const proxyRequest: Request = new Request(newURL, request);
 
 	proxyRequest.headers.set('host', newHost);
 	proxyRequest.headers.set('origin', newOrigin);
@@ -99,8 +101,11 @@ async function proxyRequest(
 		'referer',
 		request.headers.get('referer')?.replace(oldOrigin, newOrigin) || newOrigin + '/'
 	);
+
 	try {
-		return await fetch(proxyRequest);
+		const resp = await fetch(proxyRequest);
+		logger.info(resp);
+		return resp;
 	} catch (err) {
 		error(502, `bad gateway: ${err}`);
 	}
