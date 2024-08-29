@@ -1,16 +1,12 @@
-import { dev } from '$app/environment';
+import { NUT_HOSTNAME } from '$lib/server/env';
 import type { BatteryState } from '$lib/types';
 
-import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
-import { env } from '$env/dynamic/private';
 import { Socket } from 'net';
 
 let state: BatteryState | undefined = undefined;
 export function getBatteryState(): BatteryState | undefined {
 	return state;
 }
-const FAKE_SERVICE: boolean = PUBLIC_NO_LOCAL_DEV_ENDPOINT == '0' && dev;
-const NUT_HOSTNAME = env.NUT_HOSTNAME || 'localhost';
 
 class NUTConnect {
 	private constructor(private socket: Socket | undefined) {

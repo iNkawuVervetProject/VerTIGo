@@ -1,18 +1,11 @@
-import { dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
-import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 import { clearEventSource, server, setEventSource } from '$lib/application_state';
+import { FAKE_BACKEND } from '$lib/env';
+import { BACKEND_HOST, CAMERA_URL, DEBUG, MEDIAMTX_HOST } from '$lib/server/env';
 import { readBatteryState } from '$lib/server/battery';
 import { clearFakeData, initFakeData } from '$lib/server/stub_state';
+import type { CameraParameter } from '$lib/types';
 import { error, type Handle } from '@sveltejs/kit';
 import EventSource from 'eventsource';
-
-const BACKEND_HOST = env.BACKEND_HOST ?? 'localhost:5000';
-
-const MEDIAMTX_HOST = env.MEDIAMTX_HOST ?? 'localhost:8889';
-const DEBUG = (env.DEBUG ?? '0') != '0';
-
-const FAKE_BACKEND = PUBLIC_NO_LOCAL_DEV_ENDPOINT === '0' && dev;
 
 let _timeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
@@ -41,19 +34,43 @@ function _connect() {
 	};
 }
 
+async function updateBattery(): Promise<void> {
+	try {
+		server.battery?.set(await readBatteryState());
+	} catch (err) {
+		console.error('could not read battery state: ' + err);
+		server.battery?.set({});
+	}
+}
+
+async function updateStream(): Promise<void> {
+	try {
+		const resp = await fetch(CAMERA_URL);
+		if (resp.status !== 200) {
+			server.stream?.set('');
+		} else {
+			const params = (await resp.json()) as Partial<CameraParameter>;
+			if (params.RtspServerPath) {
+				server.stream?.set(new URL(params.RtspServerPath).pathname || '');
+			} else {
+				server.stream?.set('');
+			}
+		}
+	} catch (err) {
+		console.error('could not read camera parameters: ' + err);
+		server.stream?.set('');
+	}
+}
+
 if (FAKE_BACKEND) {
 	initFakeData();
 } else {
 	console.log("Will redirect /psysw/api' to http://" + BACKEND_HOST);
 	_connect();
-	setInterval(async () => {
-		try {
-			server.battery?.set(await readBatteryState());
-		} catch (err) {
-			console.error('could not read battery state: ' + err);
-			server.battery?.set({});
-		}
-	}, 5000);
+	updateBattery();
+	updateStream();
+	setInterval(updateBattery, 5000);
+	setInterval(updateStream, 5000);
 }
 
 if (import.meta && import.meta.hot) {
@@ -72,6 +89,7 @@ async function proxyRequest(
 	newHost: string,
 	protocol: string = 'http://'
 ) {
+	console.log(`redirecting ${request.url} to ${protocol}${newHost}`);
 	const newOrigin = protocol + newHost;
 	const proxyRequest: Request = new Request(request.url.replace(oldOrigin, newOrigin), request);
 

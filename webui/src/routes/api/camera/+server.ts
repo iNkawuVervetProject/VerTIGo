@@ -1,15 +1,10 @@
-import { dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
-import { PUBLIC_NO_LOCAL_DEV_ENDPOINT } from '$env/static/public';
 import { server, stream } from '$lib/application_state';
+import { FAKE_BACKEND } from '$lib/env';
+import { CAMERA_URL } from '$lib/server/env';
 import { camera, startCamera, stopCamera } from '$lib/server/stub_state';
 import type { CameraParameter } from '$lib/types';
-import { error, HttpError_1, isHttpError, json, type RequestHandler } from '@sveltejs/kit';
+import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { get } from 'svelte/store';
-
-const FAKE_BACKEND = PUBLIC_NO_LOCAL_DEV_ENDPOINT === '0' && dev;
-const CAMERA_HOST = env.CAMERA_HOST ?? 'localhost:5042';
-const CAMERA_URL = `http://${CAMERA_HOST}/camera`;
 
 export const DELETE: RequestHandler = async ({ fetch }) => {
 	if (FAKE_BACKEND) {
@@ -80,6 +75,9 @@ export const POST: RequestHandler = async ({ fetch, request }) => {
 		try {
 			const resp = await fetch(CAMERA_URL, {
 				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
 				body: JSON.stringify(params)
 			});
 			if (resp.status !== 200) {
