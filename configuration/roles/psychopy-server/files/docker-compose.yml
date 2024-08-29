@@ -11,12 +11,15 @@ services:
 
   mediamtx:
     image: bluenviron/mediamtx:latest
+    container_name: mediamtx
     network_mode: host
     volumes:
       - /usr/local/src/libcamera/mediamtx.yml:/mediamtx.yml:ro
+    restart: 'unless-stopped'
 
   traefik:
     image: traefik:latest
+    container_name: traefik
     command:
       - --entrypoints.web.address=:80
       - --providers.file.filename=/routes.yml
