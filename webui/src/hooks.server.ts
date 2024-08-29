@@ -35,18 +35,26 @@ function _connect() {
 	};
 }
 
+let batteryError = 0;
 async function updateBattery(): Promise<void> {
+	logger.info('updating battery');
 	try {
 		server.battery?.set(await readBatteryState());
+		batteryError = 0;
 	} catch (err) {
 		console.error('could not read battery state: ' + err);
-		server.battery?.set({});
+		if (++batteryError >= 5) {
+			server.battery?.set({});
+		}
 	}
 }
 
+let streamError = 0;
 async function updateStream(): Promise<void> {
+	logger.info('updating camera');
 	try {
 		const resp = await fetch(CAMERA_URL);
+		streamError = 0;
 		if (resp.status !== 200) {
 			server.stream?.set('');
 		} else {
@@ -59,7 +67,9 @@ async function updateStream(): Promise<void> {
 		}
 	} catch (err) {
 		console.error('could not read camera parameters: ' + err);
-		server.stream?.set('');
+		if (++streamError >= 5) {
+			server.stream?.set('');
+		}
 	}
 }
 
@@ -116,7 +126,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		console.log(event);
 	}
 
-	if (event.url.pathname.endsWith('whep')) {
+	if (event.url.pathname.match(/\/whep(\/[0-9a-f\-]+)?$/)) {
 		return await proxyRequest(event.request, event.url.origin, MEDIAMTX_HOST);
 	}
 
