@@ -57,7 +57,7 @@ async def log_access(request: Request, call_next):
         method=request.method,
         URI=request.url.path,
         client=request.client.host,
-        userAgent=request.headers["user-agent"] or "<missing>",
+        userAgent=request.headers.get("user-agent", "<missing>"),
     )
     request.state.slog = slog
     request.state.start = time.time_ns()

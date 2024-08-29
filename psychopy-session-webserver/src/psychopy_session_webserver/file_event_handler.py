@@ -55,17 +55,33 @@ class FileEventHandler(events.FileSystemEventHandler):
 
         for p in deletedPaths:
             if Path(p).suffix == ".psyexp":
-                self.session.removeExperiment(key=str(Path(p).relative_to(self.root)))
+                try:
+                    key = str(Path(p).relative_to(self.root))
+                    self.session.removeExperiment(key=key)
+                except Exception as err:
+                    self.logger.error(
+                        "could not remove experiment:", error=err, key=key
+                    )
+
             else:
                 toValidate.append(p)
 
         for p in modifiedPaths:
             if Path(p).suffix == ".psyexp":
-                self.session.addExperiment(file=str(Path(p).relative_to(self.root)))
+                try:
+                    key = str(Path(p).relative_to(self.root))
+                    self.session.addExperiment(file=str(Path(p).relative_to(self.root)))
+                except Exception as err:
+                    self.logger.error(
+                        "could not remove experiment:", error=err, key=key
+                    )
             else:
                 toValidate.append(p)
 
         if len(toValidate) > 0:
-            self.session.validateResources(
-                paths=[str(Path(p).relative_to(self.root)) for p in toValidate]
-            )
+            try:
+                self.session.validateResources(
+                    paths=[str(Path(p).relative_to(self.root)) for p in toValidate]
+                )
+            except Exception as err:
+                self.logger.error("could not validate resources", error=err)
