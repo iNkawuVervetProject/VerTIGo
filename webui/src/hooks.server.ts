@@ -5,6 +5,7 @@ import { clearEventSource, server, setEventSource } from '$lib/application_state
 import { readBatteryState } from '$lib/server/battery';
 import { clearFakeData, initFakeData } from '$lib/server/stub_state';
 import { error, type Handle } from '@sveltejs/kit';
+import EventSource from 'eventsource';
 
 const BACKEND_HOST = env.BACKEND_HOST ?? 'localhost:5000';
 
@@ -25,7 +26,10 @@ function _connect() {
 	console.log('reading events from ', eventURL);
 	const source = new EventSource(eventURL);
 	setEventSource(source);
-	source.onerror = (evt) => {
+	source.onerror = (evt: any) => {
+		if (evt.message === '') {
+			return;
+		}
 		console.log(`${eventURL} error: `, evt);
 		clearEventSource();
 		if (_timeout === undefined) {
