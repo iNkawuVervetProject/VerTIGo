@@ -10,7 +10,7 @@ authors = [
 ]
 description = "A small example package"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 license = {text = "GNU General Public License v3 (GPLv3)"}
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -33,7 +33,7 @@ dev = [
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py310', 'py311']
+target-version = ['py311']
 preview = true
 unstable = true
 

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from enum import Enum
+from enum import StrEnum
 import time
 from typing import List, Optional
 import pickle
@@ -39,7 +39,7 @@ class Resolution(BaseModel):
     Height: int
 
 
-class AwbModeEnum(str, Enum):
+class AwbModeEnum(StrEnum):
     Auto = "awb-auto"
     Incandescent = "awb-incandescent"
     Tungsten = "awb-tungsten"
@@ -50,13 +50,13 @@ class AwbModeEnum(str, Enum):
     Custom = "awb-custom"
 
 
-class AutoFocusModeEnum(str, Enum):
+class AutoFocusModeEnum(StrEnum):
     Manual = "manual-focus"
     Auto = "automatic-auto-focus"
     Continuous = "continuous-auto-focus"
 
 
-class AfRangeEnum(str, Enum):
+class AfRangeEnum(StrEnum):
     Normal = "af-range-normal"
     Macro = "af-range-macro"
     Full = "af-range-full"
@@ -80,6 +80,32 @@ class CameraParameter(BaseModel):
     AfRange: AfRangeEnum = AfRangeEnum.Normal
 
     LensPosition: float = 0.0
+
+
+def format_gstreamer_libcamerasrc(params: CameraParameter) -> str:
+    return (
+        "libcamerasrc name=source unix-timestamp=true"
+        f" lens-position={params.LensPosition:.3f} "
+        f"auto-focus-range={params.AfRange} "
+        f"awb-mode={params.AwbMode} "
+        f"auto-focus-mode={params.AutoFocusMode}"
+    )
+
+
+def format_gstreamer_pipeline(src: str, params: CameraParameter, *, basename) -> str:
+    return (
+        f"{src} !"
+        f" video/x-raw,width={params.FileResolution.Width},height={params.FileResolution.Height},framerate={params.Framerate}/1"
+        " ! tee name=t t.src_0 ! queue ! x264enc"
+        f" bitrate={params.FileBitrate} speed-preset={params.FileSpeedPreset} tune=zerolatency"
+        f" ! mp4mux ! filesink name=mp4sink location={basename}.mp4 t.src_1 ! queue !"
+        " appsink name=ts_sink t.src_2 ! queue name=streamqueue ! videoscale"
+        " name=streamscale !"
+        f" video/x-raw,width={params.StreamResolution.Width},height={params.StreamResolution.Height} !"
+        f" openh264enc bitrate={params.StreamBitrate*1000} name=streamenc ! capsfilter"
+        " caps=video/x-h264 name=streamcaps ! rtspclientsink name=streamsink"
+        f" location={params.RtspServerPath}"
+    )
 
 
 class CameraStream:
@@ -182,29 +208,12 @@ class CameraStream:
 
     def _create_pipeline(self):
         if self._debug is False:
-            src = (
-                "libcamerasrc name=source unix-timestamp=true"
-                f" lens-position={self._params.LensPosition:.3f} "
-                f"auto-focus-range={self._params.AfRange} "
-                f"awb-mode={self._params.AwbMode} "
-                f"auto-focus-mode={self._params.AutoFocusMode}"
-            )
-
+            src = format_gstreamer_libcamerasrc(self._params)
         else:
             src = "videotestsrc is-live=true do-timestamp=1 name=source ! timeoverlay"
 
         self.pipeline = Gst.parse_launch(
-            f"{src} !"
-            f" video/x-raw,width={self._params.FileResolution.Width},height={self._params.FileResolution.Height},framerate={self._params.Framerate}/1"
-            " ! tee name=t t.src_0 ! queue ! x264enc"
-            f" bitrate={self._params.FileBitrate} speed-preset={self._params.FileSpeedPreset} tune=zerolatency"
-            f" ! mp4mux ! filesink name=mp4sink location={self.basename()}.mp4 t.src_1"
-            " ! queue ! appsink name=ts_sink t.src_2 ! queue name=streamqueue !"
-            " videoscale name=streamscale !"
-            f" video/x-raw,width={self._params.StreamResolution.Width},height={self._params.StreamResolution.Height} !"
-            f" openh264enc bitrate={self._params.StreamBitrate*1000} name=streamenc !"
-            " capsfilter caps=video/x-h264 name=streamcaps ! rtspclientsink"
-            f" name=streamsink location={self._params.RtspServerPath}"
+            format_gstreamer_pipeline(src, self._params, basename=self.basename())
         )
 
         self.pipeline.set_name("pipeline_" + self.now.isoformat())
