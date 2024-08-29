@@ -47,13 +47,16 @@
       - '--include=*.whl'
       - '--exclude=*'
 
-- name: ensures local source file directory exists
+- name: ensure local directories exist
   file:
-    path: /home/vertigo/.local/src
+    path: "{{item}}"
     state: directory
-    owner: vertigo
     group: vertigo
-    mode: 0755
+    owner: vertigo
+  with_items:
+    - /home/vertigo/.local/bin
+    - /home/vertigo/.config/systemd/user
+    - /home/vertigo/.local/src
 
 
 - name: uploads sources
@@ -107,15 +110,6 @@
     src: 99-psychopylimits.conf
     dest: /etc/security/limits.d/99-psychopylimits.conf
 
-- name: sets user needed files
-  file:
-    path: "{{item}}"
-    state: directory
-    group: vertigo
-    owner: vertigo
-  with_items:
-    - /home/vertigo/.local/bin
-    - /home/vertigo/.config/systemd/user
 
 - name: adds script file
   copy:

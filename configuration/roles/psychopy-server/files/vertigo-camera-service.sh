@@ -4,7 +4,7 @@ set -e
 
 PSYCHOPY_ROOT=$HOME/psychopy
 LIBCAMERA_ROOT=/usr/local/src/libcamera
-VERTIGO_CAMERA_ROOT=/usr/local/src/inkawuvp-vertigo-camera
+VERTIGO_CAMERA_ROOT=$HOME/.local/src/inkawuvp-vertigo-camera
 
 source $VERTIGO_CAMERA_ROOT/venv/bin/activate
 

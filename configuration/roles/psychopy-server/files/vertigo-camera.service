@@ -12,7 +12,8 @@ StandardOutput=journal
 StandardError=journal
 Type=simple
 TimeoutStartSec=0
-ExecStart=/usr/local/bin/vertigo-camera-service.sh
+WorkingDirectory=%h/psychopy
+ExecStart=%h/.local/bin/vertigo-camera-service.sh
 Restart=always
 
 [Install]

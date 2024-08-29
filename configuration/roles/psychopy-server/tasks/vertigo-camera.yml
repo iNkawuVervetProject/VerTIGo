@@ -34,11 +34,24 @@
       meson setup build --buildtype=release -Dpipelines=rpi/vc4,rpi/pisp -Dipas=rpi/vc4,rpi/pisp -Dv4l2=true -Dgstreamer=enabled -Dtest=false -Dlc-compliance=disabled -Dcam=disabled -Dqcam=disabled -Ddocumentation=disabled -Dpycamera=enabled
       ninja -C build install
 
+- name: ensure local directories exist
+  file:
+    path: "{{item}}"
+    state: directory
+    group: vertigo
+    owner: vertigo
+  with_items:
+    - /home/vertigo/.local/bin
+    - /home/vertigo/.config/systemd/user
+    - /home/vertigo/.local/src
+
 
 - name: upload inkawuvp_vertigo_camera package
+  become_user: vertigo
+  become: yes
   synchronize:
     src: vertigo-camera/
-    dest: /usr/local/src/inkawuvp-vertigo-camera
+    dest: /home/vertigo/.local/src/inkawuvp-vertigo-camera
     rsync_opts:
       - '--exclude=__pycache__/'
       - '--exclude=*.egg-info/'
@@ -54,27 +67,27 @@
     extra_args: --upgrade -f /usr/local/wheels
     name:
       - pip
-      - /usr/local/src/inkawuvp-vertigo-camera
-    virtualenv: /usr/local/src/inkawuvp-vertigo-camera/venv
+      - /home/vertigo/.local/src/inkawuvp-vertigo-camera
+    virtualenv: /home/vertigo/.local/src/inkawuvp-vertigo-camera/venv
     virtualenv_command: /usr/bin/python -m venv
   notify: restarts vertigo-camera service
-
-- name: ensure local bin exists
-  file:
-    path: /usr/local/bin
-    state: directory
 
 - name: install vertigo-camera-webservice.sh
   copy:
     src: vertigo-camera-service.sh
-    dest: /usr/local/bin/vertigo-camera-service.sh
+    dest: /home/vertigo/.local/bin/vertigo-camera-service.sh
+    owner: vertigo
+    group: vertigo
     mode: 0755
   notify: restarts vertigo-camera service
+
 
 - name: add service files
   copy:
     src: vertigo-camera.service
-    dest: /etc/systemd/system/vertigo-camera.service
+    dest: /home/vertigo/.config/systemd/user/vertigo-camera.service
+    owner: vertigo
+    group: vertigo
   notify: restarts vertigo-camera service
 
 - name: add mediamtx configuration file
