@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import time
 from threading import Thread
-from inkawuvp_vertigo_camera import app, debug
+from inkawuvp_vertigo_camera import app
 
 import uvicorn
 from argparse import ArgumentParser
@@ -23,10 +23,8 @@ def stream(args):
 
 
 def serve(args):
-    global debug
+    app.debug = args.testvideo
     try:
-        if args.testvideo == True:
-            debug = True
         uvicorn.run(app, port=int(args.port), log_level="info", host=args.host)
     except KeyboardInterrupt:
         pass

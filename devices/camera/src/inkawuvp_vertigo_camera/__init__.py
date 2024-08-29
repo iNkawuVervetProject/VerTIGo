@@ -6,8 +6,6 @@ import os
 from inkawuvp_vertigo_camera.camera_stream import CameraParameter, CameraStream
 
 
-debug = os.getenv("DEBUG", "0") != "0"
-
 stream: Optional[CameraStream] = None
 streamThread: Optional[Thread] = None
 
@@ -23,15 +21,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-
-
-@app.middleware("http")
-async def log_request(request: Request, call_next):
-    if debug == False:
-        return await call_next(request)
-    req = await request.body()
-    print(req)
-    return await call_next(req)
+app.debug = os.getenv("DEBUG", "0") != "0"
 
 
 @app.get("/camera")
@@ -50,7 +40,7 @@ async def start_camera(params: CameraParameter) -> CameraParameter:
         raise HTTPException(status_code=412, detail="stream is already started")
 
     try:
-        stream = CameraStream(params, debug=debug)
+        stream = CameraStream(params, debug=app.debug)
         streamThread = Thread(target=stream.run)
         streamThread.start()
         return stream._params
