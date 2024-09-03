@@ -1,22 +1,34 @@
 import asyncio
 import os
+import shutil
 import tempfile
 import threading
 import time
+import pytest
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
 
 from pydantic import ValidationError
-from structlog import get_logger
+import structlog
 from xdg import BaseDirectory
 
 from psychopy_session_webserver.participants_registry import ParticipantRegistry
 from psychopy_session_webserver.session import Session
-from psychopy_session_webserver.types import Experiment, Participant
+from psychopy_session_webserver.types import Error, Experiment, Participant
 from psychopy_session_webserver.update_broadcaster import UpdateEvent
 
 from tests.mock_session import build_mock_session
+
+
+# @pytest.fixture(name="log_output")
+# def fixture_log_output():
+#     return structlog.testing.LogCapture()
+
+
+# @pytest.fixture(autouse=True)
+# def fixture_configure_structlog(log_output):
+#     structlog.configure(processors=[log_output])
 
 
 class SessionTest(unittest.TestCase):
@@ -296,3 +308,73 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
                     session=3,
                 )
         self.assertEqual(str(e.exception), "experiment 'foo.psyexp' is already running")
+
+
+class PsychopySessionWorkaroundTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.dirs = {
+            "experiments": Path(self.tempdir.name).joinpath("experiments"),
+            "data": Path(self.tempdir.name).joinpath("experiments"),
+            "samples": Path(__file__).parent.joinpath("../samples").resolve(),
+            "root": Path(__file__).parent.joinpath("../../").resolve(),
+        }
+        for dir in self.dirs.values():
+            os.makedirs(str(dir), exist_ok=True)
+        self.session = Session(root=self.dirs["experiments"], dataDir=self.dirs["data"])
+        self.session._observer.stop()
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    def test_test_valid_filename(self):
+        files = ["blue.psyexp", "green.psyexp"]
+
+        for f in files:
+            shutil.copy(
+                self.dirs["samples"].joinpath(f), self.dirs["experiments"].joinpath(f)
+            )
+            self.session.addExperiment(f)
+
+    def test_invalid_psyexp_file(self):
+        with open(self.dirs["experiments"].joinpath("broken.psyexp"), "w") as f:
+            f.write("""
+            <?xml version="1.0" ?>
+            <PsychoPy2experiment encoding="utf-8" version="2024.1.4">
+            """)
+
+        exp: Experiment = self.session.addExperiment("broken.psyexp")
+        self.assertListEqual(
+            exp.errors,
+            [
+                Error(
+                    title="invalid psyexp file",
+                    details=(
+                        "Invalid file 'broken.psyexp': XML or text declaration not at"
+                        " start of entity: line 2, column 12"
+                    ),
+                )
+            ],
+        )
+
+    def test_invalid_filename(self):
+        shutil.copy(
+            self.dirs["samples"].joinpath("blue.psyexp"),
+            self.dirs["experiments"].joinpath("blue.0.1.psyexp"),
+        )
+
+        exp: Experiment = self.session.addExperiment("blue.0.1.psyexp")
+        self.assertListEqual(
+            exp.errors,
+            [
+                Error(
+                    title="invalid experiment filename",
+                    details=(
+                        "Invalid filename 'blue.0.1.psyexp'. Filename should only"
+                        " contain characters [a-zA-Z0-9_] (i.e. be a valid python"
+                        " module name)."
+                    ),
+                )
+            ],
+        )

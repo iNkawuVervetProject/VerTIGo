@@ -85,7 +85,6 @@
     name:
       - pip
       - psychopy==2024.1.4
-
       - /home/vertigo/.local/src/inkawuvp-pellet-dispenser
       - /home/vertigo/.local/src/psychopy-ivp
       - /home/vertigo/.local/src/psychopy-session-webserver

@@ -6,6 +6,14 @@ ParameterDeclaration: TypeAlias = List[str]
 Parameter: TypeAlias = Dict[str, Any]
 
 
+class Error(BaseModel):
+    title: str
+    details: str
+
+
+ErrorList: TypeAlias = List[Error]
+
+
 class Experiment(BaseModel):
     key: str = Field(examples=["blue.psyexp", "green.psyexp"])
     resources: Dict[str, bool] = Field(
@@ -14,6 +22,7 @@ class Experiment(BaseModel):
     parameters: ParameterDeclaration = Field(
         examples=[["participant", "session"], ["participant", "session", "reward"]]
     )
+    errors: ErrorList = Field(default_factory=lambda: [])
 
 
 class Participant(BaseModel):

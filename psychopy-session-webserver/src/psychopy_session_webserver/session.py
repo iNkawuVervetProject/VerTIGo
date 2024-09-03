@@ -6,6 +6,7 @@ from gettext import Catalog
 from glob import glob
 from pathlib import Path
 from queue import Queue
+import re
 from typing import Dict, Optional
 
 import structlog
@@ -15,8 +16,10 @@ from psychopy_session_webserver.async_task_runner import AsyncTaskRunner
 from psychopy_session_webserver.dependency_checker import DependencyChecker
 from psychopy_session_webserver.file_event_handler import FileEventHandler
 from psychopy_session_webserver.participants_registry import ParticipantRegistry
-from psychopy_session_webserver.types import Catalog, Experiment, Participant
+from psychopy_session_webserver.types import Catalog, Error, Experiment, Participant
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
+
+_validPsyexpFileRe = re.compile("^[a-zA-Z_][a-zA-Z0-9]*\\.psyexp$")
 
 
 class Session(AsyncTaskRunner):
@@ -85,14 +88,30 @@ class Session(AsyncTaskRunner):
     def asyncCloseWindow(self, logger=None):
         self.closeWindow(logger)
 
-    def addExperiment(self, file, key=None):
-        if Path(file).is_absolute() is False:
+    def addExperiment(self, file, key=None) -> Experiment:
+        file = Path(file)
+        if file.is_absolute() is False:
             file = Path(self._session.root).joinpath(file)
 
         if key is None:
-            key = str(Path(file).relative_to(self._session.root))
+            key = str(file.relative_to(self._session.root))
 
-        self._session.addExperiment(file, key)
+        if _validPsyexpFileRe.match(file.name) is None:
+            return self._addFailedExperiment(
+                key,
+                Error(
+                    title="invalid experiment filename",
+                    details=(
+                        f"Invalid filename '{file.name}'. Filename should only contain"
+                        " characters [a-zA-Z0-9_] (i.e. be a valid python module name)."
+                    ),
+                ),
+            )
+
+        try:
+            self._session.addExperiment(file, key)
+        except Exception as e:
+            return self._addFailedExperiment(key, e)
 
         # Fixing a very bug because of how psychopy is built. If the experiment has
         # runned already, the expInfo object in the module has many value set, which
@@ -115,6 +134,27 @@ class Session(AsyncTaskRunner):
         self._experiments[key] = self._buildExperimentInfo(key)
         self._bind_logger().info("added experiment", key=key)
         self._updates.broadcastDict("catalog", key, self._experiments[key])
+        return self._experiments[key]
+
+    def _addFailedExperiment(self, key: str, err: Exception | Error):
+        if isinstance(err, Error):
+            errors = [err]
+        else:
+            errors = [
+                Error(
+                    title="invalid psyexp file", details=f"Invalid file '{key}': {err}"
+                )
+            ]
+
+        self._experiments[key] = Experiment(
+            key=key,
+            resources={},
+            parameters=[],
+            errors=errors,
+        )
+        self._bind_logger().error("invalid experiment file", key=key, error=err)
+        self._updates.broadcastDict("catalog", key, self._experiments[key])
+        return self._experiments[key]
 
     def _buildExperimentInfo(self, key):
         expInfo = self._session.getExpInfoFromExperiment(key, sessionParams=False)
