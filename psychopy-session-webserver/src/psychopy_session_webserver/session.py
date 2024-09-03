@@ -204,10 +204,14 @@ class Session(AsyncTaskRunner):
         if "" in byName:
             del byName[""]
 
+        updated = {}
         # replace all duplicate errors, they are outdated.
         title = "duplicate expName property"
         for exp in self._experiments.values():
+            if title not in [e.title for e in exp.errors]:
+                continue
             exp.errors = list([e for e in exp.errors if e.title != title])
+            updated[exp.key] = True
 
         for name, keys in byName.items():
             if len(keys) == 1:
@@ -225,6 +229,10 @@ class Session(AsyncTaskRunner):
             for k in keys:
                 exp = self._experiments[k]
                 exp.errors.append(err)
+                updated[k] = True
+
+        for key in updated.keys():
+            self._updates.broadcastDict("catalog", key, self._experiments[key])
 
     def _prepareExperiment(self, key: str, *, logger, **kwargs):
         logger.debug("preparing", current=self._currentExperiment)
