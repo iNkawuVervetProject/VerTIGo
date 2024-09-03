@@ -128,7 +128,8 @@
 		<button
 			class="btn-icon justify-self-end"
 			class:variant-filled-error={isRunning}
-			class:variant-filled-success={!isRunning}
+			class:variant-filled-success={!isRunning && canRun}
+			class:variant-filled={!isRunning && !canRun}
 			disabled={!canRun && !isRunning}
 			on:click={() => {
 				if (isRunning) {
