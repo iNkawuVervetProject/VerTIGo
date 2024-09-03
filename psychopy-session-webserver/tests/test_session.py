@@ -334,13 +334,18 @@ class PsychopySessionWorkaroundTest(unittest.TestCase):
         self.tempdir.cleanup()
 
     def test_test_valid_filename(self):
-        files = ["blue.psyexp", "green.psyexp"]
+        files = [
+            ("blue.psyexp", "blue_valid.psyexp"),
+            ("green.psyexp", "_green_valid.psyexp"),
+        ]
 
         for f in files:
             shutil.copy(
-                self.dirs["samples"].joinpath(f), self.dirs["experiments"].joinpath(f)
+                self.dirs["samples"].joinpath(f[0]),
+                self.dirs["experiments"].joinpath(f[1]),
             )
-            self.session.addExperiment(f)
+            e = self.session.addExperiment(f[1])
+            self.assertListEqual(e.errors, [])
 
     def test_invalid_psyexp_file(self):
         with open(self.dirs["experiments"].joinpath("broken.psyexp"), "w") as f:

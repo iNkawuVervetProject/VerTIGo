@@ -19,7 +19,7 @@ from psychopy_session_webserver.participants_registry import ParticipantRegistry
 from psychopy_session_webserver.types import Catalog, Error, Experiment, Participant
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 
-_validPsyexpFileRe = re.compile("^[a-zA-Z_][a-zA-Z0-9]*\\.psyexp$")
+_validPsyexpFileRe = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*\\.psyexp$")
 
 
 class Session(AsyncTaskRunner):
