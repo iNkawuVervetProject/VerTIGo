@@ -12,4 +12,5 @@ VerTIGo documentation
    :maxdepth: 2
    :caption: Contents:
 
-   guides/index
+   sfguides/index
+   hwguides/index
