@@ -59,7 +59,7 @@ def build_mock_session(root):
         },
     }
 
-    def getExpInfos(key):
+    def getExpInfos(key, sessionParams=False):
         return expInfos[key]
 
     mock.getExpInfoFromExperiment.side_effect = getExpInfos
