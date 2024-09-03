@@ -182,8 +182,15 @@ class Session(AsyncTaskRunner):
             raise KeyError(key)
         self._resourceChecker.removeDependencies(key)
         del self._experiments[key]
-        del self._session.experimentObjects[key]
-        del self._session.experiments[key]
+        try:
+            del self._session.experimentObjects[key]
+        except KeyError:
+            pass
+        try:
+            del self._session.experiments[key]
+        except KeyError:
+            pass
+
         self._checkForDuplicateExpName()
         self._updates.broadcastDict("catalog", key, None)
 

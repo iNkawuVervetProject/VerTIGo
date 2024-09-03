@@ -369,10 +369,8 @@ class PsychopySessionWorkaroundTest(unittest.TestCase):
         )
 
     def test_invalid_filename(self):
-        shutil.copy(
-            self.dirs["samples"].joinpath("blue.psyexp"),
-            self.dirs["experiments"].joinpath("blue.0.1.psyexp"),
-        )
+        invalid = self.dirs["experiments"].joinpath("blue.0.1.psyexp")
+        shutil.copy(self.dirs["samples"].joinpath("blue.psyexp"), invalid)
 
         exp: Experiment = self.session.addExperiment("blue.0.1.psyexp")
         self.assertListEqual(
@@ -388,6 +386,8 @@ class PsychopySessionWorkaroundTest(unittest.TestCase):
                 )
             ],
         )
+        os.remove(invalid)
+        self.session.removeExperiment("blue.0.1.psyexp")
 
     def test_should_report_experiment_with_same_expName(self):
         shutil.copy(
