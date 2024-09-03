@@ -131,7 +131,13 @@ class Session(AsyncTaskRunner):
                 for r in resources
             ],
         )
-        self._experiments[key] = self._buildExperimentInfo(key)
+        try:
+            infos = self._buildExperimentInfo(key)
+        except Exception as e:
+            return self._addFailedExperiment(key, e)
+
+        self._experiments[key] = infos
+        self._checkForDuplicateExpName()
         self._bind_logger().info("added experiment", key=key)
         self._updates.broadcastDict("catalog", key, self._experiments[key])
         return self._experiments[key]
@@ -148,6 +154,7 @@ class Session(AsyncTaskRunner):
 
         self._experiments[key] = Experiment(
             key=key,
+            name="",
             resources={},
             parameters=[],
             errors=errors,
@@ -159,8 +166,13 @@ class Session(AsyncTaskRunner):
     def _buildExperimentInfo(self, key):
         expInfo = self._session.getExpInfoFromExperiment(key, sessionParams=False)
 
+        name = expInfo.get("expName|hid", None) or expInfo.get("expName", None)
+        if name is None:
+            raise RuntimeError(f"could not get 'expName' in '{key}'")
+
         return Experiment(
             key=key,
+            name=name,
             resources=self._resourceChecker.collections[key].resources,
             parameters=[p for p in expInfo if str(p).endswith("|hid") is False],
         )
@@ -172,7 +184,40 @@ class Session(AsyncTaskRunner):
         del self._experiments[key]
         del self._session.experimentObjects[key]
         del self._session.experiments[key]
+        self._checkForDuplicateExpName()
         self._updates.broadcastDict("catalog", key, None)
+
+    def _checkForDuplicateExpName(self):
+        byName = {}
+        for exp in self._experiments.values():
+            if exp.name not in byName:
+                byName[exp.name] = []
+            byName[exp.name].append(exp.key)
+
+        if "" in byName:
+            del byName[""]
+
+        # replace all duplicate errors, they are outdated.
+        title = "duplicate expName property"
+        for exp in self._experiments.values():
+            exp.errors = list([e for e in exp.errors if e.title != title])
+
+        for name, keys in byName.items():
+            if len(keys) == 1:
+                continue
+            keys = sorted(keys)
+            err = Error(
+                title=title,
+                details=(
+                    f"{keys} have the same 'expName' value '{name}', which will produce"
+                    " conflicting result files. Modify the value in Psychopy >"
+                    " Experiment Settings > Basic > Experiment Name to be unique for"
+                    " each files."
+                ),
+            )
+            for k in keys:
+                exp = self._experiments[k]
+                exp.errors.append(err)
 
     def _prepareExperiment(self, key: str, *, logger, **kwargs):
         logger.debug("preparing", current=self._currentExperiment)
@@ -182,6 +227,13 @@ class Session(AsyncTaskRunner):
         if self._currentExperiment is not None:
             raise RuntimeError(
                 f"experiment '{self._currentExperiment}' is already running"
+            )
+
+        errors = self._experiments[key].errors
+        if len(errors) > 0:
+            raise RuntimeError(
+                f"experiment '{key}' has the following errors:"
+                f" {[ e.title for e in errors]}"
             )
 
         missingParameters = [

@@ -68,6 +68,7 @@ class SessionTest(unittest.TestCase):
             self.session.experiments["foo.psyexp"],
             Experiment(
                 key="foo.psyexp",
+                name="foo",
                 resources={"foo.png": False},
                 parameters=["participant", "session"],
             ),
@@ -79,6 +80,7 @@ class SessionTest(unittest.TestCase):
         self.assertIn("bar.psyexp", self.session.experiments)
         expected = Experiment(
             key="bar.psyexp",
+            name="bar",
             resources={
                 "baz/bar.png": False,
                 str(Path(self.tempdir.name).joinpath("absolute.png")): False,
@@ -160,6 +162,7 @@ class SessionTest(unittest.TestCase):
             {
                 "participant": "Lolo",
                 "session": 2,
+                "expName|hid": "foo",
                 "date|hid": "foo",
                 "psychopy_version|hid": "1.1.1",
             },
@@ -198,6 +201,7 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
             {
                 "foo.psyexp": Experiment(
                     key="foo.psyexp",
+                    name="foo",
                     parameters=["participant", "session"],
                     resources={"foo.png": False},
                 )
@@ -232,6 +236,7 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
             {
                 "foo.psyexp": Experiment(
                     key="foo.psyexp",
+                    name="foo",
                     parameters=["participant", "session"],
                     resources={"foo.png": True},
                 )
@@ -378,3 +383,38 @@ class PsychopySessionWorkaroundTest(unittest.TestCase):
                 )
             ],
         )
+
+    def test_should_report_experiment_with_same_expName(self):
+        shutil.copy(
+            self.dirs["samples"].joinpath("blue.psyexp"),
+            self.dirs["experiments"].joinpath("blue.psyexp"),
+        )
+        shutil.copy(
+            self.dirs["samples"].joinpath("blue.psyexp"),
+            self.dirs["experiments"].joinpath("green.psyexp"),
+        )
+
+        expected = Error(
+            title="duplicate expName property",
+            details=(
+                "['blue.psyexp', 'green.psyexp'] have the same 'expName' value"
+                " 'blue', which will produce conflicting result files. Modify"
+                " the value in Psychopy > Experiment Settings > Basic > Experiment"
+                " Name to be unique for each files."
+            ),
+        )
+
+        blue: Experiment = self.session.addExperiment("blue.psyexp")
+        self.assertListEqual(blue.errors, [])
+
+        green: Experiment = self.session.addExperiment("green.psyexp")
+        self.assertListEqual(green.errors, [expected])
+        self.assertListEqual(blue.errors, [expected])
+
+        shutil.copy(
+            self.dirs["samples"].joinpath("green.psyexp"),
+            self.dirs["experiments"].joinpath("green.psyexp"),
+        )
+        green: Experiment = self.session.addExperiment("green.psyexp")
+        self.assertListEqual(green.errors, [])
+        self.assertListEqual(blue.errors, [])

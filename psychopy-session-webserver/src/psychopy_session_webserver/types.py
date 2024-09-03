@@ -16,13 +16,14 @@ ErrorList: TypeAlias = List[Error]
 
 class Experiment(BaseModel):
     key: str = Field(examples=["blue.psyexp", "green.psyexp"])
+    name: str = Field(examples=["blue", "green"])
     resources: Dict[str, bool] = Field(
         examples=[{}, {"image.png": True, "missing.png": False}]
     )
     parameters: ParameterDeclaration = Field(
         examples=[["participant", "session"], ["participant", "session", "reward"]]
     )
-    errors: ErrorList = Field(default_factory=lambda: [])
+    errors: ErrorList = Field(default_factory=lambda: [], examples=[[], []])
 
 
 class Participant(BaseModel):

@@ -47,11 +47,13 @@ def build_mock_session(root):
         "foo.psyexp": {
             "participant": 123,
             "session": 1,
+            "expName|hid": "foo",
             "date|hid": "foo",
             "psychopy_version|hid": "1.1.1",
         },
         "bar.psyexp": {
             "participant": 123,
+            "expName|hid": "bar",
             "session": 1,
             "rewards": 3,
             "date|hid": "foo",
