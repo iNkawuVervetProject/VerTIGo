@@ -8,10 +8,16 @@ export interface Parameters {
 	[key: string]: string | number;
 }
 
+export interface PsychopyError {
+	title: string;
+	details: string;
+}
 export interface Experiment {
 	key: string;
+	name: string;
 	resources: { [key: string]: boolean };
 	parameters: string[];
+	errors: PsychopyError[];
 }
 
 export class Participant {

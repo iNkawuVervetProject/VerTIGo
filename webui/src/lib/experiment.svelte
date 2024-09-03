@@ -107,13 +107,15 @@
 	$: missingParameters = experiment.parameters?.filter(
 		(p) => !(p in $parameters) || (p == 'participant' && $parameters.participant?.length === 0)
 	);
+	$: errors = experiment.errors;
 	$: canRun =
 		$currentExperiment === '' &&
 		missingParameters.length === 0 &&
-		missingResources.length === 0;
+		missingResources.length === 0 &&
+		errors.length === 0;
 	$: isRunning = $currentExperiment === experiment.key;
 
-	$: listHeight = 4 * (missingParameters.length + missingResources.length);
+	$: listHeight = 4 * (missingParameters.length + missingResources.length + errors.length);
 </script>
 
 <section
@@ -140,6 +142,17 @@
 		</button>
 	</div>
 	<dl class="list-dl" style="height:{listHeight}em;">
+		{#each errors as e}
+			<div transition:slide={{ duration: 300, delay: 250 }} class="h-16">
+				<span class="variant-soft-error badge-icon p-4"
+					><i class="fa-solid fa-circle-exclamation" /></span
+				>
+				<span class="flex-auto">
+					<dt class="font-bold">Error: {e.title}</dt>
+					<dd class="text-sm opacity-50">{e.details}</dd>
+				</span>
+			</div>
+		{/each}
 		{#each missingResources as r (r)}
 			<div
 				animate:flip={{ duration: 250 }}

@@ -12,18 +12,33 @@ import { get, readable } from 'svelte/store';
 export const catalog: Catalog = {
 	'valid.psyexp': {
 		key: 'valid.psyexp',
+		name: 'valid',
 		resources: { 'somepic.png': true },
-		parameters: ['participant', 'session']
+		parameters: ['participant', 'session'],
+		errors: []
 	},
 	'unvalid.psyexp': {
 		key: 'unvalid.psyexp',
+		name: 'unvalid',
 		resources: { 'missing.png': false, 'missing_again.png': false },
-		parameters: ['participant', 'session']
+		parameters: ['participant', 'session'],
+		errors: []
 	},
 	'more.psyexp': {
 		key: 'more.psyexp',
+		name: 'something very long',
 		resources: { 'somepic.png': true },
-		parameters: ['participant', 'session', 'age']
+		parameters: ['participant', 'session', 'age'],
+		errors: []
+	},
+	'with_error.0.1.psyexp': {
+		key: 'with_error.0.1.psyexp',
+		name: '',
+		resources: {},
+		parameters: [],
+		errors: [
+			{ title: 'invalid filename', details: "'with_error.0.1.psyexp' is an invalid filename" }
+		]
 	}
 };
 
