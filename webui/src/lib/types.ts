@@ -45,13 +45,8 @@ export interface CameraResolution {
 export interface CameraParameter {
 	Framerate: number;
 
-	FileResolution: CameraResolution;
 	FileBitrate: number;
 	FileSpeedPreset: string;
-
-	StreamResolution: CameraResolution;
-	StreamBitrate: number;
-	RtspServerPath: string;
 
 	AwbMode: string;
 	AutoFocusMode: string;
@@ -59,3 +54,22 @@ export interface CameraParameter {
 
 	LensPosition: number;
 }
+
+export interface Settings {
+	Camera: CameraParameter;
+
+	BackgroundColor: string;
+}
+
+export const default_settings: Settings = {
+	Camera: {
+		Framerate: 30.0,
+		FileBitrate: 2000,
+		FileSpeedPreset: 'fast',
+		AwbMode: 'awb-auto',
+		AutoFocusMode: 'automatic-auto-focus',
+		AfRange: 'af-range-normal',
+		LensPosition: 0.0
+	},
+	BackgroundColor: '#000000'
+};
