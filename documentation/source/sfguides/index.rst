@@ -9,3 +9,4 @@ Software Guides
    :caption: Guides:
 
    connecting_to_vertigo.rst
+   accessing_vertigo_file.rst

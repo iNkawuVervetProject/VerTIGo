@@ -1,6 +1,3 @@
-.. VerTIGo - connecting to vertigo
-
-
 *********************
 Connecting to VerTIGo
 *********************
@@ -36,7 +33,7 @@ automatically join this WiFi router network if it is reachable.
 .. _adhoc_wifi:
 
 Method 2: Via the Ad-Hoc WiFi Network
-====================================
+=====================================
 
 If the Router network is not found, VerTIGo will automatically starts an AdHoc
 (routerless) WiFi Network called ``VerTIGo X`` where X is the number of the unit.
