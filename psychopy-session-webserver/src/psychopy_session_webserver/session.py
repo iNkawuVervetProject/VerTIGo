@@ -24,6 +24,7 @@ from psychopy_session_webserver.types import (
     WindowParameters,
 )
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
+from psychopy_session_webserver.utils import convertToPsychopy
 
 _validPsyexpFileRe = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*\\.psyexp$")
 
@@ -302,6 +303,8 @@ class Session(AsyncTaskRunner):
     ):
         if self._session.win is None:
             logger.debug("opening window")
+            params = windowParams.model_dump()
+            params["color"] = convertToPsychopy(params["color"])
             self._session.setupWindowFromParams(
                 measureFrameRate=True, blocking=True, params=windowParams.model_dump()
             )
