@@ -16,7 +16,13 @@ from psychopy_session_webserver.async_task_runner import AsyncTaskRunner
 from psychopy_session_webserver.dependency_checker import DependencyChecker
 from psychopy_session_webserver.file_event_handler import FileEventHandler
 from psychopy_session_webserver.participants_registry import ParticipantRegistry
-from psychopy_session_webserver.types import Catalog, Error, Experiment, Participant
+from psychopy_session_webserver.types import (
+    Catalog,
+    Error,
+    Experiment,
+    Participant,
+    WindowParameters,
+)
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 
 _validPsyexpFileRe = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*\\.psyexp$")
@@ -71,6 +77,9 @@ class Session(AsyncTaskRunner):
     @property
     def participants(self) -> Dict[str, Participant]:
         return self._participants._participants
+
+    def openWindow(self, logger=None, param: WindowParameters = WindowParameters()):
+        pass
 
     def closeWindow(self, logger=None):
         if self._session.win is None:
@@ -283,11 +292,19 @@ class Session(AsyncTaskRunner):
         return expInfo
 
     def _runExperiment(
-        self, key, *, expInfo, logger, earlyFuture: Optional[asyncio.Future] = None
+        self,
+        key,
+        *,
+        expInfo,
+        logger,
+        windowParams: WindowParameters,
+        earlyFuture: Optional[asyncio.Future] = None,
     ):
         if self._session.win is None:
             logger.debug("opening window")
-            self._session.setupWindowFromExperiment(key, blocking=True)
+            self._session.setupWindowFromParams(
+                measureFrameRate=True, blocking=True, params=windowParams.model_dump()
+            )
             self._updates.broadcast("window", True)
 
             self._currentExperiment = key
@@ -306,12 +323,26 @@ class Session(AsyncTaskRunner):
             self._updates.broadcast("experiment", "")
             logger.debug("done", current=self._currentExperiment)
 
-    def runExperiment(self, key: str, logger=None, **kwargs):
+    def runExperiment(
+        self,
+        key: str,
+        logger=None,
+        windowParams: WindowParameters = WindowParameters(),
+        **kwargs,
+    ):
         logger = self._bind_logger(logger).bind(experiment=key)
         expInfo = self._prepareExperiment(key, logger=logger, **kwargs)
-        self._runExperiment(key, logger=logger, expInfo=expInfo)
+        self._runExperiment(
+            key, logger=logger, expInfo=expInfo, windowParams=windowParams
+        )
 
-    async def asyncRunExperiment(self, key: str, logger=None, **kwargs):
+    async def asyncRunExperiment(
+        self,
+        key: str,
+        logger=None,
+        windowParams: WindowParameters = WindowParameters(),
+        **kwargs,
+    ):
         logger = self._bind_logger(logger).bind(experiment=key)
         # we make all necessary check before sending the task
         expInfo = self._prepareExperiment(key, logger=logger, **kwargs)
@@ -323,7 +354,13 @@ class Session(AsyncTaskRunner):
         def run():
             # by passing early future, it will be done before the completion of the
             # experiment.
-            self._runExperiment(key, logger=logger, expInfo=expInfo, earlyFuture=future)
+            self._runExperiment(
+                key,
+                logger=logger,
+                expInfo=expInfo,
+                earlyFuture=future,
+                windowParams=windowParams,
+            )
 
         await run()
 

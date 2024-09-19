@@ -3,7 +3,7 @@ import ipaddress
 import logging
 import os
 import time
-from typing import Dict
+from typing import Dict, Optional
 
 from pydantic_core import ValidationError, to_json
 import structlog
@@ -16,7 +16,13 @@ from pydantic import BaseModel
 from psychopy_session_webserver.options import parse_options
 from psychopy_session_webserver.server import BackgroundServer
 from psychopy_session_webserver.session import Session
-from psychopy_session_webserver.types import Catalog, Experiment, Parameter, Participant
+from psychopy_session_webserver.types import (
+    Catalog,
+    Experiment,
+    Parameter,
+    Participant,
+    WindowParameters,
+)
 from psychopy_session_webserver.utils import format_ns
 
 app = FastAPI()
@@ -157,12 +163,16 @@ async def get_participants() -> Dict[str, Participant]:
 class RunExperimentRequest(BaseModel):
     key: str
     parameters: Parameter
+    window: Optional[WindowParameters]
 
 
 @app.post("/experiment")
 async def run_experiment(body: RunExperimentRequest, request: Request) -> None:
     await session.asyncRunExperiment(
-        body.key, logger=request.state.slog, **body.parameters
+        body.key,
+        logger=request.state.slog,
+        windowParams=body.window or WindowParameters(),
+        **body.parameters,
     )
 
 

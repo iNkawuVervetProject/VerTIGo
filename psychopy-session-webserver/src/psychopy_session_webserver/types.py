@@ -1,9 +1,24 @@
-from typing import Any, Dict, List, TypeAlias, Union
+from typing import Any, Dict, List, Tuple, TypeAlias, Union
 from pydantic import BaseModel, Field
 
 
 ParameterDeclaration: TypeAlias = List[str]
 Parameter: TypeAlias = Dict[str, Any]
+
+
+class WindowParameters(BaseModel):
+    size: Tuple[int, int] = (1280, 800)
+    winType: str = "pyglet"
+    allowStencil: bool = False
+    monitor: str = "testMonitor"
+    color: str = "#7f7f00"
+    colorSpace: str = "rgb"
+    blendMode: str = "avg"
+    useFBO: bool = True
+    units: str = "height"
+    checkTiming: bool = False
+    fullscr: bool = True
+    screen: int = 0
 
 
 class Error(BaseModel):
