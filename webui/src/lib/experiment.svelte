@@ -5,6 +5,7 @@
 	import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton';
 	import { flip } from 'svelte/animate';
 	import { slide } from 'svelte/transition';
+	import { settings } from '$lib/settings';
 
 	export let experiment: Experiment;
 
@@ -77,7 +78,13 @@
 
 		if ((await mayStartCamera()) === true) {
 			try {
-				await fetch('/api/camera', { method: 'POST', body: '{}' });
+				await fetch('/api/camera', {
+					method: 'POST',
+					body: JSON.stringify($settings.camera),
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				});
 			} catch (err) {
 				console.log(err);
 			}
@@ -85,7 +92,11 @@
 
 		await fetch('/psysw/api/experiment', {
 			method: 'POST',
-			body: JSON.stringify({ key: experiment.key, parameters: params }),
+			body: JSON.stringify({
+				key: experiment.key,
+				parameters: params,
+				window: { color: $settings.backgroundColor }
+			}),
 			headers: {
 				'Content-Type': 'application/json'
 			}

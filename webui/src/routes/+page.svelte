@@ -9,6 +9,8 @@
 	import WhepPlayer from '$lib/whep_player.svelte';
 	import { flip } from 'svelte/animate';
 	import { page } from '$app/stores';
+	import { settings } from '$lib/settings';
+	import type { CameraParameter } from '$lib/types';
 
 	const modalStore = getModalStore();
 
@@ -18,8 +20,12 @@
 
 	const fadeOptions = { delay: 0, duration: 300 };
 
-	async function startCamera(): Promise<void> {
-		await fetch('/api/camera', { method: 'POST', body: '{}' });
+	async function startCamera(params: CameraParameter): Promise<void> {
+		await fetch('/api/camera', {
+			method: 'POST',
+			body: JSON.stringify(params),
+			headers: { 'Content-Type': 'application/json' }
+		});
 	}
 
 	async function confirmStopCamera(key: string): Promise<boolean> {
@@ -50,7 +56,7 @@
 				await stopCamera();
 			}
 		} else {
-			await startCamera();
+			await startCamera($settings.camera);
 		}
 	}
 </script>
