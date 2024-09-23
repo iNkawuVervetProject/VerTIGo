@@ -15,7 +15,12 @@ from xdg import BaseDirectory
 
 from psychopy_session_webserver.participants_registry import ParticipantRegistry
 from psychopy_session_webserver.session import Session
-from psychopy_session_webserver.types import Error, Experiment, Participant
+from psychopy_session_webserver.types import (
+    Error,
+    Experiment,
+    Participant,
+    WindowParameters,
+)
 from psychopy_session_webserver.update_broadcaster import UpdateEvent
 
 from tests.mock_session import build_mock_session
@@ -214,7 +219,7 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("participantsUpdate", event.type)
 
         event = await anext(self.updates)
-        self.assertEqual(UpdateEvent(type="windowUpdate", data=False), event)
+        self.assertEqual(UpdateEvent(type="windowUpdate", data=None), event)
 
     async def asyncTearDown(self) -> None:
         self.session.close()
@@ -265,7 +270,7 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
 
         event = await anext(self.updates)
         self.assertEqual(event.type, "windowUpdate")
-        self.assertEqual(event.data, True)
+        self.assertEqual(event.data, WindowParameters())
 
         event = await anext(self.updates)
         self.assertEqual(event.type, "experimentUpdate")
@@ -278,7 +283,7 @@ class SessionEventTest(unittest.IsolatedAsyncioTestCase):
         self.session.closeWindow()
         event = await anext(self.updates)
         self.assertEqual(event.type, "windowUpdate")
-        self.assertEqual(event.data, False)
+        self.assertEqual(event.data, None)
 
     @contextmanager
     def with_file(self, path):

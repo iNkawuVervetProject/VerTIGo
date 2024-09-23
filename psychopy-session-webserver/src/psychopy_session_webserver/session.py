@@ -52,7 +52,7 @@ class Session(AsyncTaskRunner):
 
         self._currentExperiment = None
         self._updates.broadcast("experiment", "")
-        self._updates.broadcast("window", False)
+        self._updates.broadcast("window", None)
         self._updates.broadcast("catalog", {})
         self._participants = ParticipantRegistry(self._updates, dataDir=dataDir)
 
@@ -79,9 +79,6 @@ class Session(AsyncTaskRunner):
     def participants(self) -> Dict[str, Participant]:
         return self._participants._participants
 
-    def openWindow(self, logger=None, param: WindowParameters = WindowParameters()):
-        pass
-
     def closeWindow(self, logger=None):
         if self._session.win is None:
             raise RuntimeError("window is already closed")
@@ -92,7 +89,7 @@ class Session(AsyncTaskRunner):
         self._session.win.close()
         self._session.win = None
         self._bind_logger(logger).info("closed window")
-        self._updates.broadcast("window", False)
+        self._updates.broadcast("window", None)
 
     @AsyncTaskRunner.in_loop()
     def asyncCloseWindow(self, logger=None):
@@ -308,7 +305,7 @@ class Session(AsyncTaskRunner):
             self._session.setupWindowFromParams(
                 measureFrameRate=True, blocking=True, params=windowParams.model_dump()
             )
-            self._updates.broadcast("window", True)
+            self._updates.broadcast("window", windowParams)
 
             self._currentExperiment = key
 

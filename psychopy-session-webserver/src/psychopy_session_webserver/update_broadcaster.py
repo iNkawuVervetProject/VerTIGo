@@ -1,7 +1,13 @@
 from asyncio.queues import Queue
-from typing import Any, Mapping, Union
+from typing import Union
 
-from psychopy_session_webserver.types import Experiment, Participant, UpdateEvent
+
+from psychopy_session_webserver.types import (
+    Updatable,
+    UpdateEvent,
+    Experiment,
+    Participant,
+)
 
 
 class UpdateBroadcaster:
@@ -21,7 +27,7 @@ class UpdateBroadcaster:
     def close(self):
         self._push_all(None)
 
-    def broadcastDict(self, name: str, key: str, value):
+    def broadcastDict(self, name: str, key: str, value: Union[Experiment, Participant]):
         if name not in self._stores:
             self._stores[name] = {}
         if isinstance(self._stores, dict) == False:
@@ -33,7 +39,7 @@ class UpdateBroadcaster:
 
         self._push_all(UpdateEvent(type=name + "Update", data={key: value}))
 
-    def broadcast(self, name: str, value: Any):
+    def broadcast(self, name: str, value: Updatable):
         if isinstance(value, dict) and isinstance(self._stores.get(name, None), dict):
             deletedKeys = [
                 k for k in self._stores.get(name, {}).keys() if k not in value.keys()

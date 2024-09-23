@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple, TypeAlias, Union
+from typing import Any, Dict, List, Optional, Tuple, TypeAlias, Union
 from pydantic import BaseModel, Field
 
 
@@ -56,7 +56,7 @@ Catalog: TypeAlias = Dict[str, Experiment]
 
 Updatable: TypeAlias = Union[
     str,
-    bool,
+    Optional[WindowParameters],
     Dict[str, Union[None, Experiment]],
     Dict[str, Union[None, Participant]],
 ]
