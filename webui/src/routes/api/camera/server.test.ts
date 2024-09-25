@@ -40,6 +40,7 @@ describe('api/camera', () => {
 		it('POST should start the camera', async () => {
 			const resp = await POST(mockEvent);
 			expect(resp.status).toEqual(200);
+			expect(mockEvent.request.json).toBeCalled();
 			const data = await resp.json();
 			expect(data).toMatchObject({ path: '/camera-live' });
 		});
