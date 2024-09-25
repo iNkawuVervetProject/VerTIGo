@@ -1,12 +1,14 @@
 import {
+	cameraParameterFromServer,
 	Participant,
 	type BatteryState,
 	type CameraParameter,
 	type Catalog,
 	type Parameters,
-	type ParticipantByName
+	type ParticipantByName,
+	type WindowParameter
 } from '$lib/types';
-import { server, stream } from '$lib/application_state';
+import { server, camera as _camera } from '$lib/application_state';
 import { get, readable } from 'svelte/store';
 
 export const catalog: Catalog = {
@@ -42,7 +44,7 @@ export const catalog: Catalog = {
 	}
 };
 
-export const camera: CameraParameter = {
+export const camera = {
 	Framerate: 30,
 	FileResolution: { Width: 1920, Height: 1080 },
 	FileBitrate: 1500,
@@ -70,8 +72,8 @@ export const participants: ParticipantByName = Object.assign(
 
 let _timeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
-export function openWindow(): void {
-	server.window?.set(true);
+export function openWindow(params: WindowParameter): void {
+	server.window?.set(params);
 }
 
 let _onChargerCount = 0;
@@ -125,7 +127,7 @@ export function clearFakeData(): void {
 	}
 }
 
-export function runExperiment(key: string, parameters: Parameters): void {
+export function runExperiment(key: string, parameters: Parameters, window: WindowParameter): void {
 	let exp = catalog[key];
 	if (exp === undefined) {
 		throw new Error(`unknown experiment '${key}'`);
@@ -135,7 +137,7 @@ export function runExperiment(key: string, parameters: Parameters): void {
 		throw new Error(`experiment '${currExperiment}' is already running`);
 	}
 
-	openWindow();
+	openWindow(window);
 	server.experiment?.set(key);
 	const participant = parameters.participant;
 	if (!(participant in participants)) {
@@ -168,25 +170,41 @@ function _stopExperiment(): void {
 }
 
 export function closeWindow(): void {
-	if (get(server.window || readable(false)) == false) {
+	if (get(server.window || readable(null)) == null) {
 		throw new Error('window is not opened');
 	}
-	server.window?.set(false);
+	server.window?.set(null);
 }
 
 export function startCamera(params: Partial<CameraParameter>): CameraParameter {
-	if (get(stream) != '') {
+	if (get(_camera) !== null) {
 		throw Error('camera is already started');
 	}
-	Object.assign(camera, params);
+	Object.assign(camera, {
+		Framerate: params.framerate ?? 30,
+		FileBitrate: params.fileBitrate ?? '1500',
+		FileSpeedPreset: params.fileSpeedPreset ?? 'fast',
 
-	server.stream?.set(new URL(camera.RtspServerPath).pathname);
-	return camera;
+		AwbMode: params.awbMode ?? 'awb-auto',
+		AutoFocusMode: params.autoFocusMode ?? 'automatic-auto-focus',
+		AfRange: params.autoFocusRange ?? 'af-range-normal',
+		LensPosition: params.lensPosition ?? 0.0
+	});
+	const res = cameraParameterFromServer(camera);
+	server.camera?.set(res);
+	return res;
 }
 
 export function stopCamera(): void {
-	if (get(stream) == '') {
+	if (get(_camera) === null) {
 		throw Error('camera is not started');
 	}
-	server.stream?.set('');
+	server.camera?.set(null);
+}
+
+export function getCamera(): any {
+	if (get(_camera) === null) {
+		throw Error('camera is not started');
+	}
+	return camera;
 }
