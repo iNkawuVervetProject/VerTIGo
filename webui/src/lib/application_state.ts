@@ -1,5 +1,15 @@
 import { readonly, writable, type Writable, type Readable, type Unsubscriber } from 'svelte/store';
-import type { BatteryState, Catalog, Experiment, Participant, ParticipantByName } from './types';
+import {
+	cameraParameterFromServer,
+	windowParameterFromServer,
+	type BatteryState,
+	type CameraParameter,
+	type Catalog,
+	type Experiment,
+	type Participant,
+	type ParticipantByName,
+	type WindowParameter
+} from './types';
 import { browser } from '$app/environment';
 
 function dictDiff<Value, Dict extends { [key: string]: Value }>(a: Dict, b: Dict): Dict {
@@ -58,19 +68,22 @@ function dictStore<Value, Dict extends { [key: string]: Value }>(obj: Dict) {
 	};
 }
 
+export type MaybeWindowParameter = WindowParameter | null;
+export type MaybeCameraParameter = CameraParameter | null;
+
 const _catalog = dictStore<Experiment, Catalog>({});
-const _window: Writable<boolean> = writable<boolean>(false);
+const _window: Writable<MaybeWindowParameter> = writable<MaybeWindowParameter>(null);
 const _experiment: Writable<string> = writable<string>('');
 const _participants = dictStore<Participant, ParticipantByName>({});
 const _battery: Writable<Partial<BatteryState>> = writable<Partial<BatteryState>>({});
-const _stream: Writable<string> = writable<string>('');
+const _camera: Writable<MaybeCameraParameter> = writable<MaybeCameraParameter>(null);
 
-export const window: Readable<boolean> = readonly<boolean>(_window);
+export const window: Readable<MaybeWindowParameter> = readonly<MaybeWindowParameter>(_window);
 export const catalog: Readable<Catalog> = readonly<Catalog>(_catalog);
 export const experiment: Readable<string> = readonly<string>(_experiment);
 export const participants: Readable<ParticipantByName> = readonly<ParticipantByName>(_participants);
 export const battery: Readable<Partial<BatteryState>> = readonly(_battery);
-export const stream: Readable<string> = readonly(_stream);
+export const camera: Readable<MaybeCameraParameter> = readonly(_camera);
 
 const _eventListeners = {
 	catalogUpdate: (event: MessageEvent): void => {
@@ -78,8 +91,12 @@ const _eventListeners = {
 		_catalog.mergeDiffs(updates);
 	},
 	windowUpdate: (event: MessageEvent): void => {
-		const data = JSON.parse(event.data) as boolean;
-		_window.set(data);
+		const data = JSON.parse(event.data);
+		if (data !== null) {
+			_window.set(windowParameterFromServer(data));
+		} else {
+			_window.set(null);
+		}
 	},
 	experimentUpdate: (event: MessageEvent): void => {
 		const data = JSON.parse(event.data) as string;
@@ -93,9 +110,13 @@ const _eventListeners = {
 		const data = JSON.parse(event.data) as Partial<BatteryState>;
 		_battery.set(data);
 	},
-	streamUpdate: (event: MessageEvent): void => {
-		const data = JSON.parse(event.data) as string;
-		_stream.set(data);
+	cameraUpdate: (event: MessageEvent): void => {
+		const data = JSON.parse(event.data);
+		if (event.data !== null) {
+			_camera.set(cameraParameterFromServer(data));
+		} else {
+			_camera.set(null);
+		}
 	}
 };
 
@@ -105,7 +126,7 @@ const _eventSubscriptions = {
 	windowUpdate: _window.subscribe,
 	participantsUpdate: _participants.subscribeToDiff,
 	batteryUpdate: _battery.subscribe,
-	streamUpdate: _stream.subscribe
+	cameraUpdate: _camera.subscribe
 };
 
 let _source: EventSource | undefined = undefined;
@@ -165,5 +186,5 @@ export const server = {
 	participants: browser ? undefined : _participants,
 	catalog: browser ? undefined : _catalog,
 	battery: browser ? undefined : _battery,
-	stream: browser ? undefined : _stream
+	camera: browser ? undefined : _camera
 };

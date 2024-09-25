@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 import { describe, it, expect } from 'vitest';
-import { testing } from '$lib/application_state';
+import { camera, catalog, experiment, testing, window } from '$lib/application_state';
 const { dictStore, dictDiff } = testing;
 
 describe('dictStore', () => {
@@ -44,5 +44,14 @@ describe('dictDiff', () => {
 
 	it('should report removed values', () => {
 		expect(dictDiff({ a: 1 }, {})).toStrictEqual({ a: null });
+	});
+});
+
+describe('ApplicationState', () => {
+	it('should have correct initial state', () => {
+		expect(get(window)).toBeNull();
+		expect(get(camera)).toBeNull();
+		expect(get(experiment)).toEqual('');
+		expect(get(catalog)).toEqual({});
 	});
 });
