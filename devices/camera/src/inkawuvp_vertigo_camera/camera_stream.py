@@ -1,5 +1,14 @@
 from datetime import datetime, timezone
-from enum import StrEnum
+
+try:
+    from enum import StrEnum
+except:
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        pass
+
+
 import time
 from typing import List, Optional
 import pickle
