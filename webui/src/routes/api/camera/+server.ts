@@ -1,10 +1,14 @@
-import { server, stream } from '$lib/application_state';
+import { server } from '$lib/application_state';
 import { FAKE_BACKEND } from '$lib/env';
 import { CAMERA_URL } from '$lib/server/env';
 import { camera, startCamera, stopCamera } from '$lib/server/stub_state';
-import type { CameraParameter } from '$lib/types';
+import {
+	cameraParameterFromServer,
+	cameraParameterToServer,
+	type CameraParameter
+} from '$lib/types';
 import { error, json, type RequestHandler } from '@sveltejs/kit';
-import { get } from 'svelte/store';
+import { get, readable } from 'svelte/store';
 
 export const DELETE: RequestHandler = async ({ fetch }) => {
 	if (FAKE_BACKEND) {
@@ -20,7 +24,7 @@ export const DELETE: RequestHandler = async ({ fetch }) => {
 			if (resp.status !== 200) {
 				return new Response(await resp.text(), { status: resp.status });
 			}
-			server.stream?.set('');
+			server.camera?.set(null);
 			return json(await resp.json());
 		} catch (err) {
 			error(502, `bad gateway: ${err}`);
@@ -28,28 +32,21 @@ export const DELETE: RequestHandler = async ({ fetch }) => {
 	}
 };
 
-function streamPath(params: Partial<CameraParameter>): string {
-	if (params.RtspServerPath === undefined) {
-		return 'camera-live';
-	}
-	return new URL(params.RtspServerPath).pathname;
-}
-
 export const GET: RequestHandler = async ({ fetch }) => {
 	if (FAKE_BACKEND) {
-		if (get(stream) == '') {
-			error(404, 'camera is not started');
-		} else {
-			return json(camera);
+		if (get(server.camera || readable(null)) === null) {
+			error(404, 'Error: camera is not running');
 		}
+
+		return json(cameraParameterFromServer(camera));
 	} else {
 		try {
 			const resp = await fetch(CAMERA_URL);
 			if (resp.status !== 200) {
 				return new Response(await resp.text(), { status: resp.status });
 			}
-			const params = (await resp.json()) as CameraParameter;
-			server.stream?.set(streamPath(params));
+			const params = cameraParameterFromServer(await resp.json());
+			server.camera?.set(params);
 			return json(params);
 		} catch (err) {
 			error(502, `bad gateway: ${err}`);
@@ -67,7 +64,7 @@ export const POST: RequestHandler = async ({ fetch, request }) => {
 
 	if (FAKE_BACKEND) {
 		try {
-			return json(startCamera(params));
+			return json(startCamera(cameraParameterToServer(params)));
 		} catch (err: any) {
 			error(400, err.toString());
 		}
@@ -78,14 +75,14 @@ export const POST: RequestHandler = async ({ fetch, request }) => {
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify(params)
+				body: JSON.stringify(cameraParameterToServer(params))
 			});
 			if (resp.status !== 200) {
 				// do not use error here.
 				return new Response(await resp.text(), { status: resp.status });
 			}
-			params = (await resp.json()) as CameraParameter;
-			server.stream?.set(streamPath(params));
+			params = cameraParameterFromServer(await resp.json());
+			server.camera?.set(params);
 			return json(params);
 		} catch (err: any) {
 			error(502, `bad gateway: ${err}`);
