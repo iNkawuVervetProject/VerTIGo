@@ -73,7 +73,7 @@ export function cameraParameterFromServer(v: any): CameraParameter {
 	if (v.RtspServerPath !== undefined) {
 		path = new URL(v.RtspServerPath).pathname;
 	} else {
-		path = v.Path ?? 'camera-live';
+		path = v.Path ?? '/camera-live';
 	}
 
 	const res = {
@@ -95,5 +95,5 @@ export interface WindowParameter {
 }
 
 export function windowParameterFromServer(v: any) {
-	return { color: v.color ?? '#7f7f7f' };
+	return { color: v.color ?? '#000000' };
 }

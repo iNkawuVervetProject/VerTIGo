@@ -80,7 +80,7 @@
 			try {
 				await fetch('/api/camera', {
 					method: 'POST',
-					body: JSON.stringify($settings.camera.toServer()),
+					body: JSON.stringify($settings.camera),
 					headers: {
 						'Content-Type': 'application/json'
 					}

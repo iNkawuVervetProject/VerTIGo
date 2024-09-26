@@ -113,7 +113,8 @@ const _eventListeners = {
 	},
 	cameraUpdate: (event: MessageEvent): void => {
 		const data = JSON.parse(event.data);
-		if (event.data !== null) {
+
+		if (data !== null) {
 			_camera.set(cameraParameterFromServer(data));
 		} else {
 			_camera.set(null);
