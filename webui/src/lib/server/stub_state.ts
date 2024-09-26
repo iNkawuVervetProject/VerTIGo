@@ -112,6 +112,8 @@ export function initFakeData(): void {
 		charging: false
 	};
 
+	server.battery?.set(state);
+
 	if (_batteryInterval === undefined) {
 		_batteryInterval = setInterval(() => {
 			state = _incrementStubBatteryState(state);

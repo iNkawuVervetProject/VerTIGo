@@ -70,19 +70,20 @@ function dictStore<Value, Dict extends { [key: string]: Value }>(obj: Dict) {
 
 export type MaybeWindowParameter = WindowParameter | null;
 export type MaybeCameraParameter = CameraParameter | null;
+export type MaybeBatteryState = BatteryState | null;
 
 const _catalog = dictStore<Experiment, Catalog>({});
 const _window: Writable<MaybeWindowParameter> = writable<MaybeWindowParameter>(null);
 const _experiment: Writable<string> = writable<string>('');
 const _participants = dictStore<Participant, ParticipantByName>({});
-const _battery: Writable<Partial<BatteryState>> = writable<Partial<BatteryState>>({});
+const _battery: Writable<MaybeBatteryState> = writable<MaybeBatteryState>(null);
 const _camera: Writable<MaybeCameraParameter> = writable<MaybeCameraParameter>(null);
 
 export const window: Readable<MaybeWindowParameter> = readonly<MaybeWindowParameter>(_window);
 export const catalog: Readable<Catalog> = readonly<Catalog>(_catalog);
 export const experiment: Readable<string> = readonly<string>(_experiment);
 export const participants: Readable<ParticipantByName> = readonly<ParticipantByName>(_participants);
-export const battery: Readable<Partial<BatteryState>> = readonly(_battery);
+export const battery: Readable<MaybeBatteryState> = readonly(_battery);
 export const camera: Readable<MaybeCameraParameter> = readonly(_camera);
 
 const _eventListeners = {
@@ -107,7 +108,7 @@ const _eventListeners = {
 		_participants.mergeDiffs(data);
 	},
 	batteryUpdate: (event: MessageEvent): void => {
-		const data = JSON.parse(event.data) as Partial<BatteryState>;
+		const data = JSON.parse(event.data) as MaybeBatteryState;
 		_battery.set(data);
 	},
 	cameraUpdate: (event: MessageEvent): void => {
