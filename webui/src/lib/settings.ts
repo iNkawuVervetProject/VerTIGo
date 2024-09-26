@@ -1,15 +1,15 @@
 import type { Writable } from 'svelte/store';
-import type { CameraParameter } from './types';
+import { cameraParameterFromServer, type CameraParameter, type WindowParameter } from './types';
 import { persisted } from 'svelte-persisted-store';
 
 export interface Settings {
 	camera: CameraParameter;
 
-	backgroundColor: string;
+	window: WindowParameter;
 }
 
 export const settings: Writable<Settings> = persisted<Settings>('settings', {
-	camera: {
+	camera: cameraParameterFromServer({
 		Framerate: 30.0,
 		FileBitrate: 2000,
 		FileSpeedPreset: 'fast',
@@ -17,6 +17,6 @@ export const settings: Writable<Settings> = persisted<Settings>('settings', {
 		AutoFocusMode: 'automatic-auto-focus',
 		AfRange: 'af-range-normal',
 		LensPosition: 0.0
-	},
-	backgroundColor: '#7f007f'
+	}),
+	window: { color: '#7f007f' }
 });

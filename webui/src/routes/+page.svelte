@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Experiment from '$lib/experiment.svelte';
-	import { catalog, window, experiment, stream } from '$lib/application_state';
+	import { catalog, window, experiment, camera } from '$lib/application_state';
 	import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton';
 
 	import ParticipantInput from '$lib/participant_input.svelte';
@@ -49,7 +49,7 @@
 		await fetch('/api/camera', { method: 'DELETE' });
 	}
 
-	$: streaming = $stream != '';
+	$: streaming = $camera !== null;
 	async function toggleCamera(): Promise<void> {
 		if (streaming) {
 			if (await confirmStopCamera($experiment)) {
@@ -63,8 +63,8 @@
 
 <div
 	class="grid {streaming ? 'lg:grid-cols-2' : ''}"
-	class:gap-8={$stream}
-	class:gap-0={$stream.length === 0}
+	class:gap-8={streaming}
+	class:gap-0={!streaming}
 	style="transition: gap {fadeOptions.delay}ms;"
 >
 	<section
@@ -86,7 +86,7 @@
 				</div>
 				<span class="min-w-24">{streaming ? 'Stop Camera' : 'Record'}</span>
 			</button>
-			{#if $window}
+			{#if $window !== null}
 				<div transition:slide={fadeOptions}>
 					<button
 						class="variant-filled-primary btn"
@@ -100,9 +100,9 @@
 			{/if}
 		</div>
 	</section>
-	{#if $stream}
+	{#if streaming}
 		<div class="order-1 lg:order-2" transition:slide={fadeOptions}>
-			<WhepPlayer url={$page.url.origin + $stream} />
+			<WhepPlayer url={$page.url.origin + $camera?.path} />
 		</div>
 	{/if}
 </div>

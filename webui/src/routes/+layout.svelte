@@ -5,9 +5,17 @@
 	import { AppShell, AppBar, LightSwitch } from '@skeletonlabs/skeleton';
 
 	import { setEventSource, clearEventSource, battery } from '$lib/application_state';
-	import { initializeStores, Modal, Toast, getToastStore } from '@skeletonlabs/skeleton';
+	import {
+		initializeStores,
+		Modal,
+		Toast,
+		getToastStore,
+		Drawer,
+		getDrawerStore
+	} from '@skeletonlabs/skeleton';
 	import { onMount } from 'svelte';
 	import BatteryIndicator from '$lib/battery_indicator.svelte';
+	import Settings from '$lib/settings.svelte';
 
 	initializeStores();
 
@@ -46,6 +54,7 @@
 	});
 
 	const toasts = getToastStore();
+	const drawer = getDrawerStore();
 
 	let previous: number | undefined = 100;
 	let alertToast: string | undefined = undefined;
@@ -110,6 +119,9 @@
 
 <Modal />
 <Toast />
+<Drawer>
+	<Settings />
+</Drawer>
 <!-- App Shell -->
 <AppShell>
 	<svelte:fragment slot="header">
@@ -127,6 +139,18 @@
 				>
 					GitHub
 				</a>
+				<button
+					type="button"
+					class="variant-soft btn-icon"
+					on:click={() => {
+						drawer.open({
+							position: 'top'
+						});
+					}}
+				>
+					<i class="fa-solid fa-gear" />
+				</button>
+
 				<BatteryIndicator state={$battery} />
 				<LightSwitch />
 			</svelte:fragment>

@@ -3,7 +3,7 @@ import { FAKE_BACKEND } from '$lib/env';
 import { BACKEND_HOST, CAMERA_URL, DEBUG, MEDIAMTX_HOST } from '$lib/server/env';
 import { readBatteryState } from '$lib/server/battery';
 import { clearFakeData, initFakeData } from '$lib/server/stub_state';
-import type { CameraParameter } from '$lib/types';
+import { cameraParameterFromServer } from '$lib/types';
 import { error, type Handle } from '@sveltejs/kit';
 import EventSource from 'eventsource';
 import { logger } from '$lib/logger';
@@ -52,26 +52,22 @@ async function updateBattery(): Promise<void> {
 	}
 }
 
-let streamError = 0;
-async function updateStream(): Promise<void> {
+let cameraError = 0;
+async function updateCamera(): Promise<void> {
 	logger.info('updating camera');
 	try {
 		const resp = await fetch(CAMERA_URL);
-		streamError = 0;
+		cameraError = 0;
 		if (resp.status !== 200) {
-			server.stream?.set('');
+			server.camera?.set(null);
 		} else {
-			const params = (await resp.json()) as Partial<CameraParameter>;
-			if (params.RtspServerPath) {
-				server.stream?.set(new URL(params.RtspServerPath).pathname || '');
-			} else {
-				server.stream?.set('');
-			}
+			const params = cameraParameterFromServer(await resp.json());
+			server.camera?.set(params);
 		}
 	} catch (err) {
 		console.error('could not read camera parameters: ' + err);
-		if (++streamError >= 5) {
-			server.stream?.set('');
+		if (++cameraError >= 5) {
+			server.camera?.set(null);
 		}
 	}
 }
@@ -82,9 +78,9 @@ if (FAKE_BACKEND) {
 	console.log("Will redirect /psysw/api' to http://" + BACKEND_HOST);
 	_connect();
 	updateBattery();
-	updateStream();
+	updateCamera();
 	setInterval(updateBattery, 5000);
-	setInterval(updateStream, 5000);
+	setInterval(updateCamera, 5000);
 }
 
 if (import.meta && import.meta.hot) {

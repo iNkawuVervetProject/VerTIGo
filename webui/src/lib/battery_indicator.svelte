@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { BatteryState } from './types';
+	import type { MaybeBatteryState } from './application_state';
 
-	export let state: Partial<BatteryState>;
+	export let state: MaybeBatteryState;
 </script>
 
 <div class="flex flex-row items-center gap-1">
