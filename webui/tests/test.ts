@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('home page has expected VERTIGO title', async ({ page }) => {
+test('home page has expected VerTIGo title', async ({ page }) => {
 	await page.goto('/');
+	await expect(page).toHaveTitle(/VerTIGo/);
 });

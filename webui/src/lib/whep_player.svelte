@@ -136,5 +136,5 @@
 		</div>
 	{/if}
 	<!-- svelte-ignore a11y-media-has-caption -->
-	<video bind:this={video} autoplay="true" class="z-10 aspect-video min-w-full" />
+	<video bind:this={video} autoplay={true} class="z-10 aspect-video min-w-full" />
 </div>

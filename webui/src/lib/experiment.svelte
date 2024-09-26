@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Experiment, Participant } from '$lib/types';
 	import { parameters } from './parameters';
-	import { experiment as currentExperiment, participants, stream } from '$lib/application_state';
+	import { camera, experiment as currentExperiment, participants } from '$lib/application_state';
 	import { getModalStore, type ModalSettings } from '@skeletonlabs/skeleton';
 	import { flip } from 'svelte/animate';
 	import { slide } from 'svelte/transition';
@@ -26,7 +26,7 @@
 	}
 
 	async function mayStartCamera(): Promise<boolean> {
-		if ($stream != '') {
+		if ($camera !== null) {
 			return false;
 		}
 		return new Promise<boolean>((resolve) => {
@@ -80,7 +80,7 @@
 			try {
 				await fetch('/api/camera', {
 					method: 'POST',
-					body: JSON.stringify($settings.camera),
+					body: JSON.stringify($settings.camera.toServer()),
 					headers: {
 						'Content-Type': 'application/json'
 					}
@@ -95,7 +95,7 @@
 			body: JSON.stringify({
 				key: experiment.key,
 				parameters: params,
-				window: { color: $settings.backgroundColor }
+				window: $settings.window
 			}),
 			headers: {
 				'Content-Type': 'application/json'

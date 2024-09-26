@@ -357,6 +357,7 @@ class Connection {
 
 		this._connection = new RTCPeerConnection({
 			iceServers: iceServer,
+			// @ts-ignore: the comprehension of this settings is far beyond my humble understanding.
 			// https://webrtc.org/getting-started/unified-plan-transition-guide
 			sdpSemantics: 'unified-plan'
 		});

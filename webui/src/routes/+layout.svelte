@@ -5,28 +5,37 @@
 	import { AppShell, AppBar, LightSwitch } from '@skeletonlabs/skeleton';
 
 	import { setEventSource, clearEventSource, battery } from '$lib/application_state';
-	import { initializeStores, Modal, Toast, getToastStore } from '@skeletonlabs/skeleton';
+	import {
+		initializeStores,
+		Modal,
+		Toast,
+		getToastStore,
+		Drawer,
+		getDrawerStore
+	} from '@skeletonlabs/skeleton';
 	import { onMount } from 'svelte';
 	import BatteryIndicator from '$lib/battery_indicator.svelte';
+	import Settings from '$lib/settings.svelte';
 
 	initializeStores();
 
-	let timeout: ReturnType<typeof setInterval> | undefined = undefined;
+	let reconnectTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
 	function connect() {
-		if (timeout !== undefined) {
-			clearTimeout(timeout);
-			timeout = undefined;
+		if (reconnectTimeout !== undefined) {
+			clearTimeout(reconnectTimeout);
+			reconnectTimeout = undefined;
 		}
+
 		console.log('connect to /api/events');
 		const source = new EventSource('api/events');
 		setEventSource(source);
 		source.onerror = () => {
 			console.log('/api/events: got error while reading events');
 			clearEventSource();
-			if (timeout === undefined) {
-				timeout = setTimeout(() => {
-					timeout = undefined;
+			if (reconnectTimeout === undefined) {
+				reconnectTimeout = setTimeout(() => {
+					reconnectTimeout = undefined;
 					connect();
 				}, 2000);
 			}
@@ -37,15 +46,16 @@
 		connect();
 
 		return () => {
-			if (timeout !== undefined) {
-				clearTimeout(timeout);
-				timeout = undefined;
+			if (reconnectTimeout !== undefined) {
+				clearTimeout(reconnectTimeout);
+				reconnectTimeout = undefined;
 			}
 			clearEventSource();
 		};
 	});
 
 	const toasts = getToastStore();
+	const drawer = getDrawerStore();
 
 	let previous: number | undefined = 100;
 	let alertToast: string | undefined = undefined;
@@ -105,11 +115,14 @@
 		}
 	}
 
-	$: onNewBatteryValue($battery.level, $battery.charging ?? false);
+	$: onNewBatteryValue($battery?.level, $battery?.charging ?? false);
 </script>
 
 <Modal />
 <Toast />
+<Drawer>
+	<Settings />
+</Drawer>
 <!-- App Shell -->
 <AppShell>
 	<svelte:fragment slot="header">
@@ -127,6 +140,18 @@
 				>
 					GitHub
 				</a>
+				<button
+					type="button"
+					class="variant-soft btn-icon"
+					on:click={() => {
+						drawer.open({
+							position: 'top'
+						});
+					}}
+				>
+					<i class="fa-solid fa-gear" />
+				</button>
+
 				<BatteryIndicator state={$battery} />
 				<LightSwitch />
 			</svelte:fragment>
