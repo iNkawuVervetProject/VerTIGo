@@ -61,6 +61,11 @@
 	}
 </script>
 
+<svelte:head>
+	<title>VerTIGo</title>
+	<meta name="description" content="UI for VerTIGo" />
+</svelte:head>
+
 <div
 	class="grid {streaming ? 'lg:grid-cols-2' : ''}"
 	class:gap-8={streaming}
