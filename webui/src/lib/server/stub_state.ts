@@ -1,6 +1,6 @@
 import {
 	cameraParameterFromServer,
-	Participant,
+	type Participant,
 	type BatteryState,
 	type CameraParameter,
 	type Catalog,
@@ -64,9 +64,9 @@ export const camera = {
 export const participants: ParticipantByName = Object.assign(
 	{},
 	...[
-		new Participant('asari', 123453),
-		new Participant('turian', 1),
-		new Participant('salarian', 42)
+		{ name: 'asari', nextSession: 123453 },
+		{ name: 'turian', nextSession: 1 },
+		{ name: 'salarian', nextSession: 42 }
 	].map((p: Participant) => ({ [p.name]: p }))
 );
 
@@ -143,7 +143,7 @@ export function runExperiment(key: string, parameters: Parameters, window: Windo
 	server.experiment?.set(key);
 	const participant = parameters.participant;
 	if (!(participant in participants)) {
-		participants[participant] = new Participant(participant, 0);
+		participants[participant] = { name: participant, nextSession: 0 };
 	}
 	participants[participant].nextSession = Math.max(
 		participants[participant].nextSession,

@@ -20,11 +20,9 @@ export interface Experiment {
 	errors: PsychopyError[];
 }
 
-export class Participant {
-	public constructor(
-		public name: string,
-		public nextSession: number = 1
-	) {}
+export interface Participant {
+	name: string;
+	nextSession: number;
 }
 
 export interface ParticipantByName {
