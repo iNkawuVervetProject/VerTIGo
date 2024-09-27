@@ -2,7 +2,9 @@
 	import { settings } from '$lib/settings';
 	import { window } from './application_state';
 
-	$: modifiedWindow = JSON.stringify($window) !== JSON.stringify($settings.window);
+	const modifiedWindow = true;
+	let color = '#000000';
+	$: console.log($window);
 </script>
 
 <div class="card m-4">
@@ -14,7 +16,7 @@
 			<span>Background Color</span>
 
 			<div class="grid grid-cols-[auto_1fr] gap-2">
-				<input class="input" type="color" bind:value={$settings.window.color} />
+				<input class="input" type="color" bind:value={color} />
 				<input
 					class="input"
 					type="text"
@@ -24,6 +26,12 @@
 				/>
 			</div>
 		</label>
+		{#if modifiedWindow}
+			<p>
+				Experiment's window is already opened. Changes won't take effect until you close it
+				and reopen it again.
+			</p>
+		{/if}
 		<footer class="card-footer"></footer>
 	</section>
 </div>

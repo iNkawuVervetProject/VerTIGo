@@ -8,7 +8,7 @@ export interface Settings {
 	window: WindowParameter;
 }
 
-export const settings: Writable<Settings> = persisted<Settings>('settings', {
+export const defaultSettings: Settings = {
 	camera: cameraParameterFromServer({
 		Framerate: 30.0,
 		FileBitrate: 2000,
@@ -19,4 +19,13 @@ export const settings: Writable<Settings> = persisted<Settings>('settings', {
 		LensPosition: 0.0
 	}),
 	window: { color: '#7f007f' }
+};
+
+export const settings: Writable<Settings> = persisted<Settings>('settings', defaultSettings, {
+	beforeRead: (value: Settings): Settings => {
+		if (validateSettings(value) === false) {
+			return defaultSettings;
+		}
+		return value;
+	}
 });
