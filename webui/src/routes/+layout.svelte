@@ -145,7 +145,8 @@
 					class="variant-soft btn-icon"
 					on:click={() => {
 						drawer.open({
-							position: 'top'
+							position: 'top',
+							height: 'h-auto max-h-[90%]'
 						});
 					}}
 				>
