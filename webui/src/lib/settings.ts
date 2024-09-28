@@ -22,7 +22,7 @@ export const defaultSettings: Settings = {
 		AwbMode: 'awb-auto',
 		AutoFocusMode: 'automatic-auto-focus',
 		AfRange: 'af-range-normal',
-		LensPosition: 0.0
+		LensPosition: 10.0
 	}),
 	window: { color: '#7f007f' }
 };
