@@ -12,7 +12,7 @@ import {
 	testing,
 	window
 } from '$lib/application_state';
-import type { BatteryState, Experiment, Participant } from './types';
+import type { BatteryState, Participant } from './types';
 const { dictStore, dictDiff } = testing;
 
 describe('dictStore', () => {
