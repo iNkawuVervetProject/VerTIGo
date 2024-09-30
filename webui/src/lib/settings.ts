@@ -19,10 +19,10 @@ export const defaultSettings: Settings = {
 		Framerate: 30.0,
 		FileBitrate: 2500,
 		FileSpeedPreset: 'fast',
-		AwbMode: 'awb-auto',
-		AutoFocusMode: 'automatic-auto-focus',
+		AwbMode: 'awb-daylight',
+		AutoFocusMode: 'manual-focus',
 		AfRange: 'af-range-normal',
-		LensPosition: 10.0
+		LensPosition: 100.0 / 15.0
 	}),
 	window: { color: '#000000' }
 };
