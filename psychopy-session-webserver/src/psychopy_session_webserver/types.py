@@ -11,7 +11,7 @@ class WindowParameters(BaseModel):
     winType: str = "pyglet"
     allowStencil: bool = False
     monitor: str = "testMonitor"
-    color: str = "#7f7f00"
+    color: str = "#000000"
     colorSpace: str = "rgb"
     blendMode: str = "avg"
     useFBO: bool = True

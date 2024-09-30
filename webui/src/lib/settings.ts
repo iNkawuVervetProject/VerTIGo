@@ -17,14 +17,14 @@ export interface Settings {
 export const defaultSettings: Settings = {
 	camera: cameraParameterFromServer({
 		Framerate: 30.0,
-		FileBitrate: 2000,
+		FileBitrate: 2500,
 		FileSpeedPreset: 'fast',
 		AwbMode: 'awb-auto',
 		AutoFocusMode: 'automatic-auto-focus',
 		AfRange: 'af-range-normal',
 		LensPosition: 10.0
 	}),
-	window: { color: '#7f007f' }
+	window: { color: '#000000' }
 };
 
 export const settings: Writable<Settings> = persisted<Settings>('settings', defaultSettings, {
