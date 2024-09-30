@@ -61,6 +61,8 @@
       - '--exclude=*~'
       - '--exclude=.direnv'
       - '--exclude=venv'
+      - '--exclude=build'
+      - '--delete'
 
 - name: installs inkawuvp_vertigo_camera package
   pip:

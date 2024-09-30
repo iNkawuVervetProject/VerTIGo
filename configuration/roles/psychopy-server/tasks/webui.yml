@@ -16,6 +16,7 @@
       - '--exclude=routes.yml'
       - '--exclude=docker-compose.yml'
       - '--exclude=*~'
+      - '--delete'
 
 - name: installs reverse proxy configuration
   template:
