@@ -60,6 +60,7 @@ class Session(AsyncTaskRunner):
         self._event_handler = FileEventHandler(session=self, root=root)
         self._observer.schedule(self._event_handler, root, recursive=True)
         self._observer.start()
+        self._windowParams = None
 
         for p in glob("**/*.psyexp", root_dir=root, recursive=True):
             self.addExperiment(file=p)
@@ -302,10 +303,10 @@ class Session(AsyncTaskRunner):
             logger.debug("opening window")
             params = windowParams.model_dump()
             params["color"] = convertToPsychopy(params["color"])
-            self._session.setupWindowFromParams(
-                measureFrameRate=False, blocking=True, params=windowParams.model_dump()
-            )
-            expInfo["frameRate"] = self._session.win.getActualFrameRate()
+            self._session.setupWindowFromExperiment(key, expInfo, blocking=True)
+
+            # todo: merge actual and wanted params
+            self._windowParams = windowParams
             self._updates.broadcast("window", windowParams)
 
             self._currentExperiment = key
@@ -322,6 +323,15 @@ class Session(AsyncTaskRunner):
         finally:
             self._currentExperiment = None
             self._updates.broadcast("experiment", "")
+            self._session.win.hideMessage()
+
+            if self._windowParams is not None:
+                self._session.win.color = convertToPsychopy(self._windowParams.color)
+
+            self._session.win.clearBuffer(color=True)
+            self._session.win.flip()
+            self._session.win.flip()
+
             logger.debug("done", current=self._currentExperiment)
 
     def runExperiment(
