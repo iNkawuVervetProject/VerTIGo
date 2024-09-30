@@ -303,8 +303,9 @@ class Session(AsyncTaskRunner):
             params = windowParams.model_dump()
             params["color"] = convertToPsychopy(params["color"])
             self._session.setupWindowFromParams(
-                measureFrameRate=True, blocking=True, params=windowParams.model_dump()
+                measureFrameRate=False, blocking=True, params=windowParams.model_dump()
             )
+            expInfo["frameRate"] = self._session.win.getActualFrameRate()
             self._updates.broadcast("window", windowParams)
 
             self._currentExperiment = key
