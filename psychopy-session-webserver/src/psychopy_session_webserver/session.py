@@ -391,8 +391,8 @@ class Session(AsyncTaskRunner):
     def emulateKeyPress(self, key: str, logger=None):
         if self._session.currentExperiment is None:
             raise RuntimeError("no experiment is running")
-        self._bind_logger(logger).info("emulating keypress")
-        _onPygletKey(key, 0, emulated=True)
+        self._bind_logger(logger).info(f"emulating keypress '{key}'")
+        _onPygletKey(key, 0)
 
     @AsyncTaskRunner.in_loop()
     def asyncEmulateKeyPress(self, key: str, logger=None):
@@ -402,7 +402,7 @@ class Session(AsyncTaskRunner):
         if self._session.currentExperiment is None:
             raise RuntimeError("no experiment is running")
         self._bind_logger(logger).info("emulating mousepress")
-        _onPygletMousePress(x, y, LEFT, 0, emulated=True)
+        _onPygletMousePress(x, y, LEFT, 0)
 
     @AsyncTaskRunner.in_loop()
     def asyncEmulateMousePress(self, x: int, y: int, logger=None):

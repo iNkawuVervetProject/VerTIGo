@@ -118,7 +118,13 @@
 
 	$: onNewBatteryValue($battery?.level, $battery?.charging ?? false);
 	async function manualDispense(): Promise<void> {
-		await fetch('/psysw/api/keyboard', { method: 'POST', body: '{"key":"d"}' });
+		await fetch('/psysw/api/keyboard', {
+			method: 'POST',
+			body: '{"key":"d"}',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
 	}
 </script>
 
