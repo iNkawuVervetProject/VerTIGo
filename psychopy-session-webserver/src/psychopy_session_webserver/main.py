@@ -7,7 +7,7 @@ from typing import Dict, Optional
 
 from pydantic_core import ValidationError, to_json
 import structlog
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from hypercorn.config import Config
 from psychopy.session import asyncio
@@ -138,6 +138,31 @@ async def get_events():
 @app.delete("/window")
 async def close_window(request: Request) -> None:
     await session.asyncCloseWindow(logger=request.state.slog)
+
+
+class MouseClickRequest:
+    x: int
+    y: int
+
+
+@app.post("/mouse")
+async def mouse(body: MouseClickRequest, request: Request) -> None:
+    try:
+        pyautogui.click(body, x, body.y)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"pyautogui error: {e}")
+
+
+class KeyboardRequest:
+    key: str
+
+
+@app.post("/keyboard")
+async def keyboard(body: KeyboardRequest, request: Request) -> None:
+    try:
+        pyautogui.press(body.key)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"pyautogui error: {e}")
 
 
 @app.get(

@@ -26,7 +26,8 @@ dependencies = [
    "structlog",
    "numpy<2",
    "netifaces",
-   "PyXDG"
+   "PyXDG",
+   "pyautogui"
 ]
 
 [project.optional-dependencies]
