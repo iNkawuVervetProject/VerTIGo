@@ -25,6 +25,8 @@ from psychopy_session_webserver.types import (
 )
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 from psychopy_session_webserver.utils import convertToPsychopy
+from psychopy.event import _onPygletKey, _onPygletMousePress, LEFT
+
 
 _validPsyexpFileRe = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*\\.psyexp$")
 
@@ -385,6 +387,26 @@ class Session(AsyncTaskRunner):
     @AsyncTaskRunner.in_loop()
     def asyncStopExperiment(self, logger=None):
         self.stopExperiment(logger)
+
+    def emulateKeyPress(self, key: str, logger=None):
+        if self._session.currentExperiment is None:
+            raise RuntimeError("no experiment is running")
+        self._bind_logger(logger).info("emulating keypress")
+        _onPygletKey(key, 0, emulated=True)
+
+    @AsyncTaskRunner.in_loop()
+    def asyncEmulateKeyPress(self, key: str, logger=None):
+        self.emulateKeyPress(key, logger)
+
+    def emulateMousePress(self, x: int, y: int, logger=None):
+        if self._session.currentExperiment is None:
+            raise RuntimeError("no experiment is running")
+        self._bind_logger(logger).info("emulating mousepress")
+        _onPygletMousePress(x, y, LEFT, 0, emulated=True)
+
+    @AsyncTaskRunner.in_loop()
+    def asyncEmulateMousePress(self, x: int, y: int, logger=None):
+        self.emulateMousePress(x, y, logger)
 
     def validateResources(self, paths):
         modifiedExperiments = self._resourceChecker.validate(paths)

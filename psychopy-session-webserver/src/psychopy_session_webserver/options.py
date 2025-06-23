@@ -40,5 +40,6 @@ def parse_options(args=None):
         "session_dir",
         help="directory containing all .psyexp file available in the session",
     )
+    parser.add_argument("--pilot", help="use pilotin", action="store_true")
 
     return vars(parser.parse_args(args))
