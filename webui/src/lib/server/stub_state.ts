@@ -210,3 +210,9 @@ export function getCamera(): any {
 	}
 	return camera;
 }
+
+export function emulateKeyPress(key: string): void {
+	if (_timeout === undefined) {
+		throw new Error('no experiment started');
+	}
+}

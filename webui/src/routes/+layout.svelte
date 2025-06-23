@@ -14,6 +14,7 @@
 		getDrawerStore
 	} from '@skeletonlabs/skeleton';
 	import { onMount } from 'svelte';
+	import { experiment as currentExperiment } from '$lib/application_state';
 	import BatteryIndicator from '$lib/battery_indicator.svelte';
 	import Settings from '$lib/settings.svelte';
 
@@ -116,6 +117,9 @@
 	}
 
 	$: onNewBatteryValue($battery?.level, $battery?.charging ?? false);
+	async function manualDispense(): Promise<void> {
+		await fetch('/psysw/api/keyboard', { method: 'POST', body: '{"key":"d"}' });
+	}
 </script>
 
 <Modal />
@@ -132,6 +136,14 @@
 				<strong class="text-xl uppercase">VerTIGo</strong>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
+				<button
+					class="variant-filled-tertiary btn"
+					on:click={manualDispense}
+					disabled={$currentExperiment == ''}
+				>
+					Manual Dispense
+				</button>
+
 				<a
 					class="variant-ghost-surface btn btn-sm"
 					href="https://github.com/iNkawuVervetProject/VerTIGo"
