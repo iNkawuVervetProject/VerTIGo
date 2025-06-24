@@ -1,7 +1,5 @@
 import asyncio
 import importlib
-import os
-from functools import partial
 from gettext import Catalog
 from glob import glob
 from pathlib import Path
@@ -25,8 +23,6 @@ from psychopy_session_webserver.types import (
 )
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 from psychopy_session_webserver.utils import convertToPsychopy
-from psychopy.event import _onPygletKey, _onPygletMousePress, LEFT
-
 
 _validPsyexpFileRe = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*\\.psyexp$")
 
@@ -34,6 +30,7 @@ _validPsyexpFileRe = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*\\.psyexp$")
 class Session(AsyncTaskRunner):
 
     def __init__(self, root, session=None, loop=None, dataDir=None, logger=None):
+
         root = Path(root).resolve()
         self._root = str(root)
         self.logger = None
@@ -388,25 +385,16 @@ class Session(AsyncTaskRunner):
     def asyncStopExperiment(self, logger=None):
         self.stopExperiment(logger)
 
-    def emulateKeyPress(self, key: str, logger=None):
+    def setFlag(self, name: str, value: bool, logger=None):
         if self._session.currentExperiment is None:
             raise RuntimeError("no experiment is running")
-        self._bind_logger(logger).info(f"emulating keypress '{key}'")
-        _onPygletKey(key, 0)
-
-    @AsyncTaskRunner.in_loop()
-    def asyncEmulateKeyPress(self, key: str, logger=None):
-        self.emulateKeyPress(key, logger)
-
-    def emulateMousePress(self, x: int, y: int, logger=None):
-        if self._session.currentExperiment is None:
-            raise RuntimeError("no experiment is running")
-        self._bind_logger(logger).info("emulating mousepress")
-        _onPygletMousePress(x, y, LEFT, 0)
-
-    @AsyncTaskRunner.in_loop()
-    def asyncEmulateMousePress(self, x: int, y: int, logger=None):
-        self.emulateMousePress(x, y, logger)
+        exp = self._session.experiments[self._session.currentExperiment.name]
+        if exp is None:
+            raise RuntimeError("should not happen, really")
+        if name not in dir(exp):
+            raise KeyError(f"current experiment has no '{name}' attribute")
+        setattr(exp, name, value)
+        self._bind_logger(logger).info(f"set '{name}' to {value}")
 
     def validateResources(self, paths):
         modifiedExperiments = self._resourceChecker.validate(paths)

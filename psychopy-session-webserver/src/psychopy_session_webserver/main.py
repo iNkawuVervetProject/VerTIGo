@@ -140,29 +140,14 @@ async def close_window(request: Request) -> None:
     await session.asyncCloseWindow(logger=request.state.slog)
 
 
-class MouseClickRequest:
-    x: int
-    y: int
+class FlagRequest(BaseModel):
+    Name: str
+    Value: bool = True
 
 
-@app.post("/mouse")
-async def mouse(body: MouseClickRequest, request: Request) -> None:
-    try:
-        pyautogui.click(body, x, body.y)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"pyautogui error: {e}")
-
-
-class KeyboardRequest:
-    key: str
-
-
-@app.post("/keyboard")
-async def keyboard(body: KeyboardRequest, request: Request) -> None:
-    try:
-        pyautogui.press(body.key)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"pyautogui error: {e}")
+@app.post("/flag")
+async def keyboard(body: FlagRequest, request: Request) -> None:
+    session.setFlag(body.Name, body.Value, request.state.slog)
 
 
 @app.get(
