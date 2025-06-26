@@ -133,13 +133,19 @@ class Session(AsyncTaskRunner):
             pass
         resources = self._session.experimentObjects[key].getResourceFiles()
 
-        self._resourceChecker.addDependencies(
-            key,
-            [
-                r["rel"] if r["rel"].startswith("..") == False else r["abs"]
-                for r in resources
-            ],
-        )
+        resources = [
+            r["rel"] if r["rel"].startswith("..") == False else r["abs"]
+            for r in resources
+        ]
+
+        resources = [
+            r
+            for r in resources
+            if r.startswith("http://") == False and r.startswith("https://") == False
+        ]
+
+        self._resourceChecker.addDependencies(key, resources)
+
         try:
             infos = self._buildExperimentInfo(key)
         except Exception as e:
