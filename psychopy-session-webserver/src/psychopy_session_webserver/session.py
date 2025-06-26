@@ -24,6 +24,7 @@ from psychopy_session_webserver.types import (
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 from psychopy_session_webserver.utils import convertToPsychopy
 from typing import Union
+from psychopy import data
 
 _validPsyexpFileRe = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*\\.psyexp$")
 
@@ -323,6 +324,7 @@ class Session(AsyncTaskRunner):
             earlyFuture.get_loop().call_soon_threadsafe(earlyFuture.set_result, None)
 
         try:
+            expInfo["date"] = data.getDateStr()
             self._session.runExperiment(key, expInfo, blocking=True)
         finally:
             self._currentExperiment = None
