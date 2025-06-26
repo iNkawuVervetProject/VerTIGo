@@ -65,15 +65,9 @@
 				[p]: $parameters[p]
 			}))
 		);
-		if ($parameters.session != undefined && $parameters.participant != undefined) {
-			const session = $parameters.session;
-			const p = $participants[$parameters.participant];
-			if (p != undefined && session < p.nextSession) {
-				const confirm = await confirmStart(p, session);
-				if (confirm == false) {
-					return;
-				}
-			}
+
+		if ($parameters.session == undefined || $parameters.participant == undefined) {
+			return;
 		}
 
 		if ((await mayStartCamera()) === true) {
