@@ -110,7 +110,10 @@
 		.map(([path, _]) => path);
 
 	$: missingParameters = experiment.parameters?.filter(
-		(p) => !(p in $parameters) || (p == 'participant' && $parameters.participant?.length === 0)
+		(p) =>
+			!(p in $parameters) ||
+			(p == 'participant' && $parameters.participant?.length === 0) ||
+			(p == 'session' && $parameters.session === undefined)
 	);
 	$: errors = experiment.errors;
 	$: canRun =

@@ -25,9 +25,9 @@
 	<input
 		class="input xl:max-w-sm"
 		type="search"
-		name="Group"
+		name="participant"
 		bind:value={$parameters.participant}
-		placeholder="Participant"
+		placeholder="Group"
 		on:focus={() => {
 			showSuggestions = true;
 		}}
