@@ -289,6 +289,19 @@ class Session(AsyncTaskRunner):
 
         return expInfo
 
+    def _openWindow(self, key, *, windowParams: WindowParameters, logger):
+        if self._session.win is not None:
+            return
+
+        logger.debug("opening window")
+        params = windowParams.model_dump()
+        params["color"] = convertToPsychopy(params["color"])
+        self._session.setupWindowFromExperiment(key, expInfo=None, blocking=True)
+
+        # todo: merge actual and wanted params
+        self._windowParams = windowParams
+        self._updates.broadcast("window", windowParams)
+
     def _runExperiment(
         self,
         key,
@@ -298,18 +311,9 @@ class Session(AsyncTaskRunner):
         windowParams: WindowParameters,
         earlyFuture: Optional[asyncio.Future] = None,
     ):
-        if self._session.win is None:
-            logger.debug("opening window")
-            params = windowParams.model_dump()
-            params["color"] = convertToPsychopy(params["color"])
-            self._session.setupWindowFromExperiment(key, expInfo, blocking=True)
+        self._openWindow(key, windowParams=windowParams, logger=logger)
 
-            # todo: merge actual and wanted params
-            self._windowParams = windowParams
-            self._updates.broadcast("window", windowParams)
-
-            self._currentExperiment = key
-
+        self._currentExperiment = key
         self._updates.broadcast("experiment", key)
 
         logger.info("starting", current=self._currentExperiment)
