@@ -3,7 +3,7 @@ import ipaddress
 import logging
 import os
 import time
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from pydantic_core import ValidationError, to_json
 import structlog
@@ -148,6 +148,16 @@ class FlagRequest(BaseModel):
 @app.post("/flag")
 async def keyboard(body: FlagRequest, request: Request) -> None:
     session.setFlag(body.Name, body.Value, request.state.slog)
+
+
+class ExpInfoRequest(BaseModel):
+    Name: str
+    Value: Union[str, int, bool]
+
+
+@app.post("/expinfo")
+async def setExpInfo(body: ExpInfoRequest, request: Request) -> None:
+    session.setExpInfo(body.Name, body.Value, request.state.slog)
 
 
 @app.get(

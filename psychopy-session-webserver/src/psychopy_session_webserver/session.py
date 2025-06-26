@@ -23,6 +23,7 @@ from psychopy_session_webserver.types import (
 )
 from psychopy_session_webserver.update_broadcaster import UpdateBroadcaster
 from psychopy_session_webserver.utils import convertToPsychopy
+from typing import Union
 
 _validPsyexpFileRe = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*\\.psyexp$")
 
@@ -289,14 +290,14 @@ class Session(AsyncTaskRunner):
 
         return expInfo
 
-    def _openWindow(self, key, *, windowParams: WindowParameters, logger):
+    def _openWindow(self, key, *, windowParams: WindowParameters, logger, expInfo):
         if self._session.win is not None:
             return
 
         logger.debug("opening window")
         params = windowParams.model_dump()
         params["color"] = convertToPsychopy(params["color"])
-        self._session.setupWindowFromExperiment(key, expInfo=None, blocking=True)
+        self._session.setupWindowFromExperiment(key, expInfo=expInfo, blocking=True)
 
         # todo: merge actual and wanted params
         self._windowParams = windowParams
@@ -311,7 +312,7 @@ class Session(AsyncTaskRunner):
         windowParams: WindowParameters,
         earlyFuture: Optional[asyncio.Future] = None,
     ):
-        self._openWindow(key, windowParams=windowParams, logger=logger)
+        self._openWindow(key, windowParams=windowParams, logger=logger, expInfo=expInfo)
 
         self._currentExperiment = key
         self._updates.broadcast("experiment", key)
@@ -399,6 +400,17 @@ class Session(AsyncTaskRunner):
             raise KeyError(f"current experiment has no '{name}' attribute")
         setattr(exp, name, value)
         self._bind_logger(logger).info(f"set '{name}' to {value}")
+
+    def setExpInfo(self, name: str, value: Union[str, int, bool], logger=None):
+        if self._session.currentExperiment is None:
+            raise RuntimeError("no experiment is running")
+        exp = self._session.experiments[self._session.currentExperiment.name]
+        if exp is None:
+            raise RuntimeError("should not happen, really")
+        if "expInfo" not in dir(exp):
+            raise KeyError(f"current experiment has no 'expInfo' attribute")
+        exp.expInfo[name] = value
+        self._bind_logger(logger).info(f"set expInfo['{name}'] to {value}")
 
     def validateResources(self, paths):
         modifiedExperiments = self._resourceChecker.validate(paths)
