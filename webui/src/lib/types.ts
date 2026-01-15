@@ -95,3 +95,14 @@ export interface WindowParameter {
 export function windowParameterFromServer(v: any) {
 	return { color: v.color ?? '#000000' };
 }
+
+export interface Individual {
+	name: string;
+	idt: string;
+}
+
+export interface Group {
+	name: string;
+	idt: string;
+	individuals: Individual[];
+}

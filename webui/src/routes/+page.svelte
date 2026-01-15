@@ -68,14 +68,14 @@
 
 <div
 	class="grid {streaming ? 'lg:grid-cols-2' : ''}"
-	class:gap-8={streaming}
+	class:gap-4={streaming}
 	class:gap-0={!streaming}
 	style="transition: gap {fadeOptions.delay}ms;"
 >
 	<section
 		class="card variant-ghost-primary order-2 flex w-full flex-col space-y-4 p-4 lg:order-1"
 	>
-		<div class="grid gap-4 {streaming ? 'xl:grid-cols-2' : 'lg:grid-cols-2'}">
+		<div class="grid gap-2 {streaming ? 'xl:grid-cols-2' : 'lg:grid-cols-2'}">
 			<ParticipantInput />
 			<SessionInput />
 		</div>

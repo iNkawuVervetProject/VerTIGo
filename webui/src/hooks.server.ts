@@ -80,6 +80,7 @@ if (FAKE_BACKEND) {
 	_connect();
 	updateBattery();
 	updateCamera();
+	readGroups();
 	setInterval(updateBattery, 5000);
 	setInterval(updateCamera, 5000);
 }

@@ -135,10 +135,10 @@
 	<Settings />
 </Drawer>
 <!-- App Shell -->
-<AppShell>
+<AppShell slotHeader="z-10 h-16">
 	<svelte:fragment slot="header">
 		<!-- App Bar -->
-		<AppBar>
+		<AppBar padding="py-2 px-4 h-16">
 			<svelte:fragment slot="lead">
 				<strong class="text-xl uppercase">VerTIGo</strong>
 			</svelte:fragment>
@@ -178,9 +178,10 @@
 		</AppBar>
 	</svelte:fragment>
 	<!-- Page Route Content -->
-	<div class="container mx-auto space-y-8 p-8">
+	<div class="container mx-auto space-y-4 px-8 py-4">
 		<slot />
 	</div>
 </AppShell>
 
-<style></style>
+<style>
+</style>

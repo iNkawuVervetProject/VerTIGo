@@ -2,23 +2,24 @@ import asyncio
 import ipaddress
 import logging
 import os
+from pathlib import Path
 import time
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Any
 
 from pydantic_core import ValidationError, to_json
 import structlog
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from hypercorn.config import Config
 from psychopy.session import asyncio
 from pydantic import BaseModel
 
 from psychopy_session_webserver.options import parse_options
+from psychopy_session_webserver.resource_manager import ResourceManager
 from psychopy_session_webserver.server import BackgroundServer
 from psychopy_session_webserver.session import Session
 from psychopy_session_webserver.types import (
     Catalog,
-    Experiment,
     Parameter,
     Participant,
     WindowParameters,
@@ -28,6 +29,7 @@ from psychopy_session_webserver.utils import format_ns
 app = FastAPI()
 
 session: Session = None
+resource: ResourceManager = None
 
 windowParams = {}
 
@@ -201,6 +203,12 @@ async def stop_experiment(request: Request) -> None:
     session.stopExperiment(logger=request.state.slog)
 
 
+
+@app.get("/resources/{resource_id}"):
+async def get_resource(resource_id: str) -> Any:
+    return resources.getResource(resource_id)
+
+
 def list_ip_address():
     from netifaces import AF_INET, AF_INET6, ifaddresses, interfaces
 
@@ -236,6 +244,7 @@ def validate_address(address):
 
 def main():
     global session
+    global resources
 
     from psychopy import plugins
 
@@ -245,6 +254,8 @@ def main():
 
     loop = asyncio.new_event_loop()
 
+    resourceDir = Path(opts["session_dir"]).resolve().parent.joinpath("/resources")
+    resources = ResourceManager(resourceDir)
     session = Session(root=opts["session_dir"], loop=loop, dataDir=opts["data_dir"])
 
     config = Config()

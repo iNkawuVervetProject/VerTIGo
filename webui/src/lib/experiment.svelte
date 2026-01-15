@@ -127,7 +127,7 @@
 </script>
 
 <section
-	class="card min-h-24 w-full space-y-4 p-8"
+	class="card min-h-24 w-full space-y-4 p-4"
 	class:variant-ghost-surface={!isRunning}
 	class:variant-ghost-secondary={isRunning}
 >
