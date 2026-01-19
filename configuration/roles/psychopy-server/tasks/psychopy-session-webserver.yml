@@ -85,6 +85,7 @@
     extra_args: --upgrade -f /usr/local/wheels
     name:
       - pip
+      - git+https://github.com/nbmorgan/pypi-search
       - psychopy==2024.1.4
       - /home/vertigo/.local/src/inkawuvp-pellet-dispenser
       - /home/vertigo/.local/src/psychopy-ivp

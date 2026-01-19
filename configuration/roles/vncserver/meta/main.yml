@@ -1,0 +1,5 @@
+---
+dependencies:
+  - role: ensure-default-user
+    vars:
+      user: vertigo
