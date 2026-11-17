@@ -27,6 +27,9 @@ class _NoDevice:
         self.start = self.clock.getTime()
         self.count = 0
 
+    def reset_dispensed(self):
+        pass
+
     def dispensed(self) -> Union[None, int, PelletDispenserError]:
         t = self.clock.getTime()
         if (t - self.start) < _NoDevice._Delay:
@@ -50,6 +53,7 @@ class _AsyncDevice:
         self.logger.info("[PelletDispenser] starting thread")
         self.thread = threading.Thread(target=partial(self.loop))
         self.thread.start()
+        self._dispensed = None
 
     def close(self):
         self.logger.info("[PelletDispenser] closing device")
@@ -66,6 +70,9 @@ class _AsyncDevice:
         self.logger.info(f"[PelletDispenser] dispensing {count}")
         self._dispensed = None
         self.inqueue.put(count)
+
+    def reset_dispensed(self):
+        self._dispensed = None
 
     def dispensed(self) -> Union[None, int, PelletDispenserError]:
         # return last result if any
@@ -142,6 +149,9 @@ class PelletDispenserDevice:
     # this is needed by PsychoPy
     def setCount(self, count):
         self.count = count
+
+    def reset_dispensed(self):
+        self.device.reset_dispensed()
 
     @property
     def dispensed(self) -> Union[None, int, PelletDispenserError]:

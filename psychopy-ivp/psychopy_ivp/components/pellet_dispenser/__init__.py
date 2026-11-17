@@ -54,6 +54,7 @@ class PelletDispenserComponent(BaseComponent):
         startEstim="",
         durationEstim="",
         endRoutineOnDispense=True,
+        resetEachIteration=True,
     ):
         super(PelletDispenserComponent, self).__init__(
             exp,
@@ -117,6 +118,15 @@ class PelletDispenserComponent(BaseComponent):
             label=_translate("Save number of dispensed pellets"),
         )
 
+        self.params["reset_on_each_iterations"] = Param(
+            resetEachIteration,
+            categ="Data",
+            valType="bool",
+            updates="constant",
+            hint=_translate("Resets the dispensed count on each iteration"),
+            label=_translate("Resets the dispensed count on each iteration"),
+        )
+
     def writeInitCode(self, buff):
         tmplVars = {"name": self.params["name"]}
         # fmt: off
@@ -131,13 +141,22 @@ class PelletDispenserComponent(BaseComponent):
 
     def writeRoutineStartCode(self, _buff):
         super().writeRoutineStartCode(_buff)
+        resetOnEachIterations = self.params["reset_on_each_iterations"].val
+        if (
+            resetOnEachIterations is False
+            and self.params["count"].updates == "constant"
+        ):
+            return
+        tmplVars = {"name": self.params["name"]}
+        buff = _BufferContext(_buff)
+        buff.write("# *{name}* routine start\n".format(**tmplVars))
+        if resetOnEachIterations is True:
+            buff.write("{name}.reset_dispensed()\n".format(**tmplVars))
+
         if self.params["count"].updates != "constant":
             return
 
-        buff = _BufferContext(_buff)
-        buff.write(
-            "# *%(name)s* routine start\n%(name)s.count = None\n" % self.params
-        )
+        buff.write("{name}.count = None\n".format(**tmplVars))
 
     def writeFrameCode(self, _buff):
         buff = _BufferContext(_buff)
